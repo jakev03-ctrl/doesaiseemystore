@@ -48,3 +48,23 @@ export async function increment(key, ttlSeconds) {
   mem.set(key, { value: n, exp: e?.exp ?? Date.now() + ttlSeconds * 1000 });
   return n;
 }
+
+// Lists (newest first), used for the owner's stats page.
+const memLists = new Map();
+
+export async function pushToList(key, item, max = 1000) {
+  if (redis) {
+    await redis.lpush(key, item);
+    await redis.ltrim(key, 0, max - 1);
+    return;
+  }
+  const arr = memLists.get(key) || [];
+  arr.unshift(item);
+  if (arr.length > max) arr.length = max;
+  memLists.set(key, arr);
+}
+
+export async function getList(key, start = 0, end = 99) {
+  if (redis) return (await redis.lrange(key, start, end)) || [];
+  return (memLists.get(key) || []).slice(start, end + 1);
+}

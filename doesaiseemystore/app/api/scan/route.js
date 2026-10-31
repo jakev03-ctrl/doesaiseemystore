@@ -4,6 +4,7 @@ import { readShop, normaliseUrl } from "../../../lib/shop";
 import { auditShop, testVisibility, label } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
+import { countEvent, logScan } from "../../../lib/stats";
 import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan } from "../../../lib/limits";
 
 export const runtime = "nodejs";
@@ -88,12 +89,15 @@ export async function POST(req) {
       const cached = cachedId ? await getJSON(`report:${cachedId}`) : null;
       if (cached) {
         const limit = await checkLimit({ deviceId, ip, owner });
+        await countEvent("cached");
+        await logScan({ id: cached.id, domain: cached.shop.domain, name: cached.shop.name, category, extra, overall: cached.overall, visibility: cached.visibility, owner, cached: true });
         return reply({ ...publicView(cached), cached: true, remaining: limit.remaining }, 200, deviceId, newDevice);
       }
     }
 
     const limit = await checkLimit({ deviceId, ip, owner });
     if (!limit.ok) {
+      await countEvent("limited");
       return fail(
         `You've used your ${limit.limit} free ${limit.limit === 1 ? "scan" : "scans"} for today. Come back tomorrow!`,
         429
@@ -136,10 +140,14 @@ export async function POST(req) {
     const remaining = await recordScan({ deviceId, ip, owner });
 
     console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
+    await countEvent(owner ? "ownerScans" : "scans");
+    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra, overall, visibility, owner, cached: false });
 
     return reply({ ...publicView(report), remaining }, 200, deviceId, newDevice);
   } catch (e) {
     console.error("Scan failed:", e);
+    await countEvent("errors");
+    await logScan({ domain: url.slice(0, 80), category, extra, owner, error: String(e?.message || "error").slice(0, 160) });
     const msg =
       e?.message && !/api|key|anthropic|openai|json|redis|upstash/i.test(e.message)
         ? e.message
