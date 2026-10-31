@@ -1,6 +1,6 @@
 export default function NotFound() {
   return (
-    <main>
+    <main className="wrap">
       <header className="top">
         <a href="/" className="logo">
           DoesAI<b>See</b>MyStore

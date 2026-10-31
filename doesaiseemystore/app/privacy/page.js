@@ -2,7 +2,7 @@ export const metadata = { title: "Privacy | DoesAISeeMyStore" };
 
 export default function Privacy() {
   return (
-    <main>
+    <main className="wrap">
       <header className="top">
         <a href="/" className="logo">
           DoesAI<b>See</b>MyStore

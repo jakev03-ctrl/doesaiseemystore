@@ -25,7 +25,7 @@ export default async function ReportPage({ params }) {
   if (!report) notFound();
 
   return (
-    <main>
+    <main className="wrap">
       <header className="top">
         <a href="/" className="logo">
           DoesAI<b>See</b>MyStore
