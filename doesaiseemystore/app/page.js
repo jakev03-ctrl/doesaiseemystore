@@ -1,27 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Script from "next/script";
+import Report from "./components/Report";
+
+const BOT_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const LOADING = [
   "Opening your store…",
   "Reading your products…",
   "Thinking like a shopper…",
-  "Asking AI what it would recommend…",
+  "Asking AI assistants what they'd recommend…",
   "Checking who gets mentioned…",
+  "Still searching, nearly there…",
   "Adding up your score…",
 ];
-
-function Ring({ value }) {
-  const colour = value >= 70 ? "var(--good)" : value >= 40 ? "var(--mid)" : "var(--bad)";
-  return (
-    <div className="ring" style={{ "--v": value, "--c": colour }}>
-      <div className="ring-inner">
-        <span className="ring-num">{value}</span>
-        <span className="ring-of">/100</span>
-      </div>
-    </div>
-  );
-}
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -30,11 +23,16 @@ export default function Home() {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const [botToken, setBotToken] = useState("");
+
+  useEffect(() => {
+    window.onBotToken = (t) => setBotToken(t);
+  }, []);
 
   useEffect(() => {
     if (!loading) return;
     setStep(0);
-    const t = setInterval(() => setStep((s) => Math.min(s + 1, LOADING.length - 1)), 7000);
+    const t = setInterval(() => setStep((s) => Math.min(s + 1, LOADING.length - 1)), 9000);
     return () => clearInterval(t);
   }, [loading]);
 
@@ -47,7 +45,7 @@ export default function Home() {
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, category }),
+        body: JSON.stringify({ url, category, botToken }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
@@ -57,23 +55,29 @@ export default function Home() {
       setError(err.message);
     } finally {
       setLoading(false);
+      if (BOT_KEY && window.turnstile) {
+        window.turnstile.reset();
+        setBotToken("");
+      }
     }
   }
 
   return (
     <main>
+      {BOT_KEY && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />}
+
       <header className="top">
-        <span className="logo">
+        <a href="/" className="logo">
           DoesAI<b>See</b>MyStore
-        </span>
+        </a>
       </header>
 
       <section className="hero">
         <p className="eyebrow">Free check · takes about a minute</p>
         <h1>Does AI see your store?</h1>
         <p className="lead">
-          More shoppers now ask AI assistants what to buy. Find out if they recommend you, or your
-          competitors instead.
+          More shoppers now ask AI assistants like ChatGPT what to buy. Find out if they recommend
+          you, or your competitors instead.
         </p>
 
         <form className="card form" onSubmit={scan}>
@@ -102,7 +106,10 @@ export default function Home() {
             />
             <span className="hint">Be specific: "scented candles" works better than "lifestyle".</span>
           </label>
-          <button type="submit" disabled={loading}>
+
+          {BOT_KEY && <div className="cf-turnstile" data-sitekey={BOT_KEY} data-callback="onBotToken" />}
+
+          <button type="submit" disabled={loading || (BOT_KEY && !botToken)}>
             {loading ? "Checking…" : "Check my store"}
           </button>
           {loading && (
@@ -112,79 +119,20 @@ export default function Home() {
             </div>
           )}
           {error && <p className="error">{error}</p>}
+          {result && typeof result.remaining === "number" && (
+            <p className="hint">
+              {result.cached ? "Showing a result from earlier today. " : ""}
+              {result.remaining} free {result.remaining === 1 ? "scan" : "scans"} left today.
+            </p>
+          )}
         </form>
       </section>
 
-      {result && (
-        <section id="results" className="results">
-          <div className="card score">
-            <Ring value={result.overall} />
-            <div>
-              <p className="eyebrow">{result.shop.name}</p>
-              <h2>{result.label}</h2>
-              <p>
-                Your store appeared in <b>{result.appeared}</b> of <b>{result.total}</b> AI shopping
-                searches.
-              </p>
-            </div>
-          </div>
+      {result && <Report report={result} />}
 
-          <div className="card">
-            <h3>The searches we tested</h3>
-            <ul className="qs">
-              {result.questions.map((q, i) => (
-                <li key={i} className={q.ok ? (q.found ? "yes" : "no") : "skip"}>
-                  <span className="mark">{q.ok ? (q.found ? "✓" : "✕") : "–"}</span>
-                  <span>“{q.question}”</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="grid">
-            <div className="card">
-              <h3>Who AI recommends instead</h3>
-              {result.competitors.length ? (
-                <ol className="comp">
-                  {result.competitors.map((c, i) => (
-                    <li key={i}>
-                      <span>{c.name}</span>
-                      <span className="count">
-                        {c.count} {c.count === 1 ? "mention" : "mentions"}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="muted">No clear competitors came up this time.</p>
-              )}
-            </div>
-
-            <div className="card">
-              <h3>
-                Product info score <span className="pill">{result.dataScore}/100</span>
-              </h3>
-              <p className="muted">{result.summary}</p>
-            </div>
-          </div>
-
-          <div className="card">
-            <h3>Your top fixes</h3>
-            <ol className="fixes">
-              {result.fixes.map((f, i) => (
-                <li key={i}>{f}</li>
-              ))}
-            </ol>
-          </div>
-
-          <p className="note">
-            AI answers change from search to search, so this is a snapshot, not a guarantee. Run it
-            again after making changes to see how you improve.
-          </p>
-        </section>
-      )}
-
-      <footer>© {new Date().getFullYear()} DoesAISeeMyStore</footer>
+      <footer>
+        © {new Date().getFullYear()} DoesAISeeMyStore · <a href="/privacy">Privacy</a>
+      </footer>
     </main>
   );
 }

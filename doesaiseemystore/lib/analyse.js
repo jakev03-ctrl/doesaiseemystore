@@ -83,7 +83,7 @@ Product types across the shop: ${catalogueSummary(shop.products)}
 Sample of products (mostly ones matching the category):
 ${JSON.stringify(sample, null, 1)}`;
   } else {
-    evidence = `No product list available. Homepage text:\n${shop.pageText}`;
+    evidence = `We could not read a product list (the shop may block it). Homepage text:\n${shop.pageText}\n\nBe fair: judge only what you can see, and mention that a full product check wasn't possible.`;
   }
 
   const prompt = `You are auditing a small online shop to see how well AI shopping assistants (like ChatGPT, Claude, Gemini and Perplexity) could understand and recommend it.
@@ -91,7 +91,9 @@ ${JSON.stringify(sample, null, 1)}`;
 Shop name: ${shop.shopName}
 Website: ${shop.domain}
 What the owner says they sell: ${category}
-Has structured product data on homepage: ${shop.hasStructuredData ? "yes" : "no"}
+Shop platform: ${shop.platform}
+Structured product data (schema) found on a product page: ${shop.productSchema}
+(Only mention structured data as a problem if this says "no".)
 
 Product information found:
 ${evidence}
@@ -128,11 +130,11 @@ Write the fixes in simple, friendly language a non-technical shop owner understa
   };
 }
 
-// Step 2: ask one shopping question to Claude with web search, like a shopper would.
-async function askAssistant(question) {
-  const system = `You are a helpful shopping assistant for a customer in the UK. Search the web, then recommend 3 to 6 specific shops or products, naming the shop each one comes from. Keep it brief.
+// Step 2: ask a shopping question to each AI with web search, like a shopper would.
+const SHOPPER_INSTRUCTIONS = `You are a helpful shopping assistant for a customer in the UK. Search the web, then recommend 3 to 6 specific shops or products, naming the shop each one comes from. Keep it brief.
 On the very last line, write exactly: SHOPS: name1 | name2 | name3 (the shop or brand names you recommended, nothing else on that line).`;
 
+async function askClaude(question) {
   const messages = [{ role: "user", content: question }];
   let text = "";
   const urls = [];
@@ -143,11 +145,11 @@ On the very last line, write exactly: SHOPS: name1 | name2 | name3 (the shop or 
       {
         model: SEARCH_MODEL,
         max_tokens: 1200,
-        system,
+        system: SHOPPER_INSTRUCTIONS,
         messages,
         tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2, user_location: { type: "approximate", country: "GB" } }],
       },
-      { timeout: 40000 }
+      { timeout: 60000 }
     );
 
     for (const block of res.content || []) {
@@ -164,8 +166,52 @@ On the very last line, write exactly: SHOPS: name1 | name2 | name3 (the shop or 
   return { text, urls };
 }
 
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+
+async function askChatGPT(question) {
+  const res = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      instructions: SHOPPER_INSTRUCTIONS,
+      input: question,
+      tools: [{ type: "web_search", user_location: { type: "approximate", country: "GB" } }],
+      // Keep reasoning light on reasoning models: faster and cheaper.
+      ...(/^(gpt-5|o\d)/.test(OPENAI_MODEL) ? { reasoning: { effort: "low" } } : {}),
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`ChatGPT error ${res.status}: ${body.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  let text = "";
+  const urls = [];
+  for (const item of data.output || []) {
+    if (item.type !== "message") continue;
+    for (const part of item.content || []) {
+      if (part.type !== "output_text") continue;
+      text += part.text || "";
+      for (const a of part.annotations || []) if (a.type === "url_citation" && a.url) urls.push(a.url);
+    }
+  }
+  return { text, urls };
+}
+
+// Which AIs we test. ChatGPT is only used if its key is set in Vercel.
+export function engines() {
+  const list = [{ id: "claude", name: "Claude", ask: askClaude }];
+  if (process.env.OPENAI_API_KEY) list.unshift({ id: "chatgpt", name: "ChatGPT", ask: askChatGPT });
+  return list;
+}
+
 function cleanName(s) {
-  return s.replace(/[*_`#]/g, "").trim();
+  return s.replace(/[*_`#\[\]]/g, "").replace(/\(https?:[^)]*\)/g, "").trim();
 }
 
 // Did the answer mention this shop?
@@ -191,13 +237,13 @@ function shopsListed(answer) {
   const line = answer.text.split("\n").reverse().find((l) => /^\s*\**\s*SHOPS\s*:/i.test(l));
   if (!line) return [];
   return line
-    .replace(/^\s*\**\s*SHOPS\s*:\s*/i, "")
+    .replace(/^\s*\**\s*SHOPS\s*:\s*\**/i, "")
     .split("|")
     .map(cleanName)
     .filter((s) => s && s.length < 60);
 }
 
-// Run a few questions at a time so we don't hit rate limits.
+// Run several checks at a time, but not too many at once.
 async function inBatches(items, size, fn) {
   const out = [];
   for (let i = 0; i < items.length; i += size) {
@@ -207,21 +253,32 @@ async function inBatches(items, size, fn) {
 }
 
 export async function testVisibility(shop, questions) {
-  const results = await inBatches(questions, Number(process.env.PARALLEL_SEARCHES || 5), async (q) => {
+  const ais = engines();
+  const tasks = [];
+  for (const q of questions) for (const ai of ais) tasks.push({ q, ai });
+
+  const checks = await inBatches(tasks, Number(process.env.PARALLEL_SEARCHES || 10), async ({ q, ai }) => {
     try {
-      const answer = await askAssistant(q);
-      return { question: q, found: mentionsShop(answer, shop), shops: shopsListed(answer), ok: true };
+      const answer = await ai.ask(q);
+      return { question: q, ai: ai.id, found: mentionsShop(answer, shop), shops: shopsListed(answer), ok: true };
     } catch (e) {
-      console.error("Question failed:", q, e?.message);
-      return { question: q, found: false, shops: [], ok: false };
+      console.error(`${ai.name} check failed:`, q, e?.message);
+      return { question: q, ai: ai.id, found: false, shops: [], ok: false };
     }
+  });
+
+  // Group by question: { question, results: { chatgpt: true/false/null, claude: ... } }
+  const byQuestion = questions.map((q) => {
+    const results = {};
+    for (const c of checks.filter((c) => c.question === q)) results[c.ai] = c.ok ? c.found : null;
+    return { question: q, results };
   });
 
   // Count which other shops come up most.
   const counts = new Map();
   const own = [shop.shopName.toLowerCase(), shop.domain.split(".")[0]];
-  for (const r of results) {
-    for (const s of r.shops) {
+  for (const c of checks) {
+    for (const s of c.shops) {
       const key = s.toLowerCase();
       if (own.some((o) => o.length >= 4 && key.includes(o))) continue;
       const existing = counts.get(key) || { name: s, count: 0 };
@@ -231,7 +288,14 @@ export async function testVisibility(shop, questions) {
   }
   const competitors = [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 5);
 
-  return { results, competitors };
+  const ok = checks.filter((c) => c.ok);
+  return {
+    ais: ais.map((a) => ({ id: a.id, name: a.name, checked: ok.filter((c) => c.ai === a.id).length, found: ok.filter((c) => c.ai === a.id && c.found).length })),
+    questions: byQuestion,
+    competitors,
+    checked: ok.length,
+    found: ok.filter((c) => c.found).length,
+  };
 }
 
 export function label(visibilityPct) {

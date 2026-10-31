@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: "Does AI See My Store? | Free AI visibility check",
@@ -11,7 +12,10 @@ export const viewport = { width: "device-width", initialScale: 1 };
 export default function RootLayout({ children }) {
   return (
     <html lang="en-GB">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
