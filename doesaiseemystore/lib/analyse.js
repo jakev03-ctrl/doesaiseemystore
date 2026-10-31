@@ -22,17 +22,75 @@ function parseJson(text) {
   return JSON.parse(text.slice(start, end + 1));
 }
 
+// Simple word matching so we pick products related to what the owner sells.
+function words(s) {
+  return String(s || "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3)
+    .map((w) => (w.endsWith("ies") ? w.slice(0, -3) + "y" : w.endsWith("ss") ? w : w.replace(/s$/, "")));
+}
+
+// Pick a fair sample: mostly products matching the category, plus a spread of others.
+function sampleProducts(products, category, size = 12) {
+  const target = new Set(words(category));
+  const scored = products.map((p) => {
+    const hay = words(`${p.title} ${p.type} ${(p.tags || []).join(" ")} ${p.description.slice(0, 300)}`);
+    const score = hay.filter((w) => target.has(w)).length;
+    return { p, score };
+  });
+  const matching = scored.filter((x) => x.score > 0).sort((a, b) => b.score - a.score).map((x) => x.p);
+  const picked = matching.slice(0, 8);
+
+  // Add one product from each other product type, for variety.
+  const seenTypes = new Set(picked.map((p) => p.type));
+  for (const p of products) {
+    if (picked.length >= size) break;
+    if (!picked.includes(p) && !seenTypes.has(p.type)) {
+      picked.push(p);
+      seenTypes.add(p.type);
+    }
+  }
+  for (const p of products) {
+    if (picked.length >= size) break;
+    if (!picked.includes(p)) picked.push(p);
+  }
+  return { sample: picked, matchingCount: matching.length };
+}
+
+function catalogueSummary(products) {
+  const counts = {};
+  for (const p of products) {
+    const t = p.type || "Uncategorised";
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([t, n]) => `${t}: ${n}`)
+    .join(", ");
+}
+
 // Step 1: grade the product data and write realistic shopping questions.
 export async function auditShop(shop, category) {
-  const evidence = shop.products.length
-    ? JSON.stringify(shop.products.slice(0, 10), null, 1)
-    : `No product list available. Homepage text:\n${shop.pageText}`;
+  let evidence;
+  if (shop.products.length) {
+    const { sample, matchingCount } = sampleProducts(shop.products, category);
+    evidence = `Total products read: ${shop.products.length} (this may not be the whole shop).
+Products matching the chosen category: ${matchingCount}
+Product types across the shop: ${catalogueSummary(shop.products)}
+
+Sample of products (mostly ones matching the category):
+${JSON.stringify(sample, null, 1)}`;
+  } else {
+    evidence = `No product list available. Homepage text:\n${shop.pageText}`;
+  }
 
   const prompt = `You are auditing a small online shop to see how well AI shopping assistants (like ChatGPT, Claude, Gemini and Perplexity) could understand and recommend it.
 
 Shop name: ${shop.shopName}
 Website: ${shop.domain}
-Category the owner chose: ${category}
+What the owner says they sell: ${category}
 Has structured product data on homepage: ${shop.hasStructuredData ? "yes" : "no"}
 
 Product information found:
@@ -40,9 +98,10 @@ ${evidence}
 
 Do two things:
 
-A) Score the product information from 0 to 100 for how easily an AI assistant could recommend these products. Check for: detailed descriptions, materials, sizes or dimensions, who it's for, use cases, clear prices, and delivery/returns information. Be honest and specific.
+A) Score the product information from 0 to 100 for how easily an AI assistant could recommend these products. Check for: detailed descriptions, materials, sizes or dimensions, who it's for, use cases, clear prices, and delivery/returns information. Be honest and specific. Focus your feedback on the products that match what the owner sells.
+Important: you are only seeing a sample of the shop. Trust the owner about what they sell. Never tell them to "add" a type of product they say they sell; if few matching products were found, assume they exist but may be hard for AI to find, and say so.
 
-B) Write exactly ${QUESTION_COUNT} realistic questions a UK shopper might type into an AI assistant when looking for products in this category. Make them varied (budget, gift, quality, specific features). Do NOT mention this shop's name.
+B) Write exactly ${QUESTION_COUNT} realistic questions a UK shopper might type into an AI assistant when looking for: ${category}. Every question must be about that category specifically. Make them varied (budget, gift, quality, specific features). Do NOT mention this shop's name.
 
 Reply with ONLY this JSON, nothing else:
 {
@@ -86,7 +145,7 @@ On the very last line, write exactly: SHOPS: name1 | name2 | name3 (the shop or 
         max_tokens: 1200,
         system,
         messages,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1, user_location: { type: "approximate", country: "GB" } }],
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2, user_location: { type: "approximate", country: "GB" } }],
       },
       { timeout: 40000 }
     );

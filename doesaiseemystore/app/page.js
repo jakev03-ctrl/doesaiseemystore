@@ -100,6 +100,7 @@ export default function Home() {
               maxLength={80}
               disabled={loading}
             />
+            <span className="hint">Be specific: "scented candles" works better than "lifestyle".</span>
           </label>
           <button type="submit" disabled={loading}>
             {loading ? "Checking…" : "Check my store"}

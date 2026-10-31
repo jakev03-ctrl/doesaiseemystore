@@ -89,7 +89,7 @@ export async function readShop(input) {
   // 2. Shopify product list (works for most Shopify shops).
   let products = [];
   try {
-    const res = await get(`${origin}/products.json?limit=50`);
+    const res = await get(`${origin}/products.json?limit=250`, 15000);
     if (res.ok && (res.headers.get("content-type") || "").includes("json")) {
       const data = await res.json();
       if (Array.isArray(data.products)) {
