@@ -53,7 +53,8 @@ a { color: var(--accent-2); }
 
 /* ---------- Homepage scroll intro ---------- */
 .track { height: calc(100vh + 320px); position: relative; }
-.stage { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+/* Fixed-height pinned stage; on very short screens the form simply continues below and scrolls into view. */
+.stage { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: visible; }
 
 .hero { position: relative; text-align: center; padding: 0 16px; max-width: 1060px; }
 .hero::before {
@@ -88,12 +89,12 @@ h1 .see { color: #cfe0ff; text-shadow: 0 0 22px rgba(150, 190, 255, 0.85), 0 0 6
 
 /* ---------- Form ---------- */
 .form {
-  width: min(560px, calc(100% - 32px)); margin-top: 36px; padding: 28px;
-  display: flex; flex-direction: column; gap: 18px;
+  width: min(560px, calc(100% - 32px)); margin-top: 28px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
 }
 label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 600; color: #e3e8f7; }
 input {
-  font: inherit; font-weight: 400; font-size: 16px; padding: 15px 16px; border-radius: 12px;
+  font: inherit; font-weight: 400; font-size: 16px; padding: 13px 16px; border-radius: 12px;
   border: 1px solid var(--field-line); background: var(--field); color: #fff;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -203,3 +204,10 @@ footer { margin-top: 48px; padding-bottom: 32px; text-align: center; color: var(
 
 .wrap .top { padding-left: 0; padding-right: 0; }
 .wrap .results { padding-left: 0; padding-right: 0; }
+
+.optional { font-weight: 500; font-size: 12px; color: var(--muted); margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.examples-intro { margin: -4px 0 14px; font-size: 14px; }
+@media (max-height: 820px) {
+  .stage .top { padding-top: 16px; padding-bottom: 12px; }
+  .form .hint { font-size: 12px; }
+}

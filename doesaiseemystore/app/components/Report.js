@@ -23,6 +23,7 @@ function Mark({ value }) {
 export default function Report({ report, shared = false }) {
   const [copied, setCopied] = useState(false);
   const ais = report.ais || [];
+  const examples = report.examples || (report.questions || []).slice(0, 3);
   const link = typeof window !== "undefined" ? `${window.location.origin}/report/${report.id}` : `/report/${report.id}`;
 
   async function copy() {
@@ -78,17 +79,22 @@ export default function Report({ report, shared = false }) {
       )}
 
       <div className="card">
-        <h3>The searches we tested</h3>
+        <h3>
+          We tested {report.questionCount ?? examples.length} shopper searches
+        </h3>
+        <p className="muted examples-intro">
+          Real questions a shopper might ask an AI assistant. Here are {examples.length} of them:
+        </p>
         <div className="table" style={{ "--cols": Math.max(1, ais.length) }}>
           <div className="row head">
-            <span>Shopper's question</span>
+            <span>Example search</span>
             {ais.map((a) => (
               <span key={a.id} className="col">
                 {a.name}
               </span>
             ))}
           </div>
-          {report.questions.map((q, i) => (
+          {examples.map((q, i) => (
             <div className="row" key={i}>
               <span>“{q.question}”</span>
               {ais.map((a) => (

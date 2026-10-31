@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { getJSON } from "../../../lib/store";
 import Report from "../../components/Report";
+import { publicView } from "../../../lib/report";
 
 export const dynamic = "force-dynamic";
 
 async function load(id) {
   if (!/^[A-Za-z0-9_-]{4,20}$/.test(id)) return null;
-  return getJSON(`report:${id}`);
+  const report = await getJSON(`report:${id}`);
+  return report ? publicView(report) : null;
 }
 
 export async function generateMetadata({ params }) {

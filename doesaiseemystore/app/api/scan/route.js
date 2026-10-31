@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
 import { auditShop, testVisibility, label } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
+import { publicView } from "../../../lib/report";
 import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan } from "../../../lib/limits";
 
 export const runtime = "nodejs";
@@ -70,6 +71,7 @@ export async function POST(req) {
   const url = String(body.url || "").slice(0, 300);
   const category = String(body.category || "").trim().slice(0, 80);
   if (category.length < 2) return fail("Please tell us what you sell (e.g. scented candles).");
+  const extra = String(body.extra || "").trim().slice(0, 120);
 
   if (!owner && !(await passesBotCheck(body.botToken, ip))) {
     return fail("Please complete the quick 'are you human?' check, then try again.", 403);
@@ -78,7 +80,7 @@ export async function POST(req) {
   try {
     // Work out the shop's address first, so we can reuse a recent result.
     const { domain } = normaliseUrl(url);
-    const cacheKey = `cache:${domain}:${slug(category)}`;
+    const cacheKey = `cache:${domain}:${slug(category)}:${slug(extra)}`;
 
     // Reuse a result from the last day (free, and doesn't use up a scan). Owners always get a fresh scan.
     if (!owner) {
@@ -86,7 +88,7 @@ export async function POST(req) {
       const cached = cachedId ? await getJSON(`report:${cachedId}`) : null;
       if (cached) {
         const limit = await checkLimit({ deviceId, ip, owner });
-        return reply({ ...cached, cached: true, remaining: limit.remaining }, 200, deviceId, newDevice);
+        return reply({ ...publicView(cached), cached: true, remaining: limit.remaining }, 200, deviceId, newDevice);
       }
     }
 
@@ -99,7 +101,7 @@ export async function POST(req) {
     }
 
     const shop = await readShop(url);
-    const audit = await auditShop(shop, category);
+    const audit = await auditShop(shop, category, extra);
     const vis = await testVisibility(shop, audit.questions);
 
     if (vis.checked === 0) {
@@ -115,6 +117,7 @@ export async function POST(req) {
       createdAt: new Date().toISOString(),
       shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
       category,
+      extra,
       overall,
       visibility,
       label: label(visibility),
@@ -132,9 +135,9 @@ export async function POST(req) {
     await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
     const remaining = await recordScan({ deviceId, ip, owner });
 
-    console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, overall, visibility, owner }));
+    console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
 
-    return reply({ ...report, remaining }, 200, deviceId, newDevice);
+    return reply({ ...publicView(report), remaining }, 200, deviceId, newDevice);
   } catch (e) {
     console.error("Scan failed:", e);
     const msg =

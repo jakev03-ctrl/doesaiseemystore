@@ -19,6 +19,7 @@ const LOADING = [
 export default function Home() {
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("");
+  const [extra, setExtra] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
@@ -50,10 +51,10 @@ export default function Home() {
       const e = 1 - Math.pow(1 - p, 3);
       const lerp = (a, b) => a + (b - a) * e;
 
-      hero.style.marginTop = lerp(window.innerHeight * 0.26, 16) + "px";
-      title.style.fontSize = lerp(small ? 54 : 112, small ? 36 : 58) + "px";
-      sub.style.fontSize = lerp(small ? 19 : 25, small ? 16 : 19) + "px";
-      sub.style.marginTop = lerp(26, 12) + "px";
+      hero.style.marginTop = lerp(window.innerHeight * 0.26, 4) + "px";
+      title.style.fontSize = lerp(small ? 54 : 112, small ? 34 : 52) + "px";
+      sub.style.fontSize = lerp(small ? 19 : 25, small ? 15 : 18) + "px";
+      sub.style.marginTop = lerp(26, 10) + "px";
 
       const f = Math.max(0, Math.min(1, (p - 0.25) / 0.75));
       form.style.opacity = String(f);
@@ -86,7 +87,7 @@ export default function Home() {
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, category, botToken }),
+        body: JSON.stringify({ url, category, extra, botToken }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
@@ -151,6 +152,20 @@ export default function Home() {
                 disabled={loading}
               />
               <span className="hint">Be specific: "scented candles" works better than "lifestyle".</span>
+            </label>
+            <label>
+              <span>
+                Anything else? <span className="optional">Optional</span>
+              </span>
+              <input
+                type="text"
+                placeholder="e.g. based in Manchester, eco-friendly, under £30"
+                value={extra}
+                onChange={(e) => setExtra(e.target.value)}
+                maxLength={120}
+                disabled={loading}
+              />
+              <span className="hint">Add a location, style, price range or who it's for, to make the searches more like your customers'.</span>
             </label>
 
             {BOT_KEY && <div className="cf-turnstile" data-sitekey={BOT_KEY} data-callback="onBotToken" data-theme="dark" />}
