@@ -26,3 +26,5 @@ Optional:
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`: Cloudflare "are you human?" check
 
 Remember to redeploy after changing settings.
+
+Updated 1 November
