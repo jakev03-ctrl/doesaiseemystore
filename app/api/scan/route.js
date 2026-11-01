@@ -141,6 +141,7 @@ export async function POST(req) {
       competitors: vis.competitors,
       dataScore: audit.dataScore,
       summary: audit.summary,
+      highlights: audit.highlights,
       fixes: audit.fixes,
       previous,
     };

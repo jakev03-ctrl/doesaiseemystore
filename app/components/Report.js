@@ -20,48 +20,40 @@ function Mark({ value }) {
   return <span className="mark skip" title="Couldn't check">–</span>;
 }
 
-// Placeholder content shown blurred behind the lock. It's made-up filler on purpose:
-// the real details are never sent to the browser for locked reports.
-function LockedPreview({ report }) {
-  const fixes = report.teaser?.fixes || 5;
-  const competitors = report.teaser?.competitors || 0;
-  const requestHref = `/request?website=${encodeURIComponent(report.shop.domain)}${report.id ? `&report=${report.id}` : ""}`;
+// Placeholder lines shown blurred. They're filler on purpose: the real hidden
+// details are never sent to the browser for locked reports.
+function BlurredRows({ count, text }) {
+  return Array.from({ length: Math.min(count, 3) }, (_, i) => (
+    <li key={`b${i}`} className="blurred" aria-hidden="true">
+      {text}
+    </li>
+  ));
+}
 
+function LockedBottom({ report }) {
+  const requestHref = `/request?website=${encodeURIComponent(report.shop.domain)}${report.id ? `&report=${report.id}` : ""}`;
   return (
-    <div className="locked-wrap">
-      <div className="locked-content" aria-hidden="true">
+    <div className="fadewrap">
+      <div className="fade" aria-hidden="true">
         <div className="card">
-          <h3>The searches we tested</h3>
+          <h3>Your step-by-step action plan</h3>
+          <ol className="fixes">
+            <li>Week one: placeholder text for the first stage of your plan.</li>
+            <li>Week two: placeholder text for the second stage of your plan.</li>
+            <li>Week three: placeholder text for the third stage of your plan.</li>
+          </ol>
+        </div>
+        <div className="card">
+          <h3>Every search we tested</h3>
           <div className="table" style={{ "--cols": 1 }}>
-            {["Best handmade gifts for someone who has everything", "Where can I buy eco-friendly products in the UK", "Top rated independent shops for quality and value"].map((q, i) => (
-              <div className="row" key={i}>
+            {["Placeholder search question number four", "Placeholder search question number five", "Placeholder search question number six"].map((q) => (
+              <div className="row" key={q}>
                 <span>“{q}”</span>
                 <span className="col">
                   <span className="mark skip">?</span>
                 </span>
               </div>
             ))}
-          </div>
-        </div>
-        <div className="grid">
-          <div className="card">
-            <h3>Who AI recommends instead</h3>
-            <ol className="comp">
-              {["Competitor brand one", "Another store name", "A bigger retailer"].map((c) => (
-                <li key={c}>
-                  <span>{c}</span>
-                  <span className="count">2 mentions</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="card">
-            <h3>Your top fixes</h3>
-            <ol className="fixes">
-              <li>Add clearer details to your product pages so assistants understand them.</li>
-              <li>Make delivery and returns information easy to find on every product.</li>
-              <li>Describe who each product is for and when it's used.</li>
-            </ol>
           </div>
         </div>
       </div>
@@ -77,12 +69,10 @@ function LockedPreview({ report }) {
           <p className="eyebrow">Full report</p>
           <h3>Unlock your full report</h3>
           <ul className="lock-list">
-            <li>The real shopper searches we tested, and where you appeared</li>
-            <li>
-              {competitors > 0 ? `The ${competitors} competitors AI recommends instead of you` : "Who AI recommends instead of you"}
-            </li>
-            <li>Your top {fixes} fixes, in plain English, ranked by impact</li>
-            <li>A clear, step-by-step plan to get recommended more often</li>
+            <li>Every shopper search we tested, and where you appeared</li>
+            <li>All the competitors AI recommends instead of you</li>
+            <li>All your fixes, ranked by impact</li>
+            <li>A step-by-step plan to get recommended more often</li>
           </ul>
           <a className="button" href={requestHref}>
             Enquire now
@@ -97,6 +87,11 @@ function LockedPreview({ report }) {
 export default function Report({ report, shared = false }) {
   const [copied, setCopied] = useState(false);
   const ais = report.ais || [];
+  const examples = report.examples || [];
+  const competitors = report.competitors || [];
+  const fixes = report.fixes || [];
+  const highlights = report.highlights || [];
+  const hidden = report.hidden || { competitors: 0, fixes: 0 };
   const link = typeof window !== "undefined" ? `${window.location.origin}/report/${report.id}` : `/report/${report.id}`;
 
   async function copy() {
@@ -107,11 +102,9 @@ export default function Report({ report, shared = false }) {
     } catch {}
   }
 
-  const date = new Date(report.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const change = report.previous
     ? {
         diff: report.overall - report.previous.overall,
-        id: report.previous.id,
         date: new Date(report.previous.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" }),
       }
     : null;
@@ -120,7 +113,7 @@ export default function Report({ report, shared = false }) {
     <section id="results" className="results">
       <p className="print-only print-brand">DoesAISeeMyStore · AI visibility report for {report.shop.domain}</p>
 
-      {/* ---------- Free part ---------- */}
+      {/* 1. Score */}
       <div className="card score">
         <Ring value={report.overall} />
         <div className="score-text">
@@ -135,9 +128,6 @@ export default function Report({ report, shared = false }) {
               <>Not recommended in any of the AI shopping searches we tested.</>
             )}
           </p>
-          <p className="tested">
-            Tested on {ais.map((a) => a.name).join(" and ")} · {date}
-          </p>
           {change && (
             <p className={`change ${change.diff > 0 ? "up" : change.diff < 0 ? "down" : "same"}`}>
               {change.diff > 0 ? `▲ Up ${change.diff} points` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)} points` : "No change"}{" "}
@@ -147,108 +137,98 @@ export default function Report({ report, shared = false }) {
         </div>
       </div>
 
-      <div className="card">
-        <h3>
-          Product info score <span className="pill">{report.dataScore}/100</span>
-        </h3>
-        <p className="muted">{report.summary}</p>
-      </div>
-
-      {/* ---------- Locked or full part ---------- */}
-      {report.locked ? (
-        <LockedPreview report={report} />
-      ) : (
-        <>
-          {report.id && (
-            <div className="card share no-print">
-              <div>
-                <b>{shared ? "Full report (owner view)" : "Your report link"}</b>
-                <p className="muted">You're seeing the full report because you're signed in as the owner.</p>
-              </div>
-              <div className="share-actions">
-                <button type="button" className="secondary" onClick={copy}>
-                  {copied ? "Copied!" : "Copy link"}
-                </button>
-                <button type="button" className="secondary" onClick={() => window.print()}>
-                  Save as PDF
-                </button>
-              </div>
-            </div>
-          )}
-
-          {ais.length > 1 && (
-            <div className="grid">
-              {ais.map((a) => (
-                <div className="card stat" key={a.id}>
-                  <span className="muted">{a.name}</span>
-                  <span className="stat-num">{a.pct ?? 0}%</span>
-                  <span className="muted">of searches recommended you</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="card">
-            <h3>The searches we tested</h3>
-            <p className="muted examples-intro">
-              We tested your store against a wide range of realistic shopper searches, the kind of questions
-              customers ask AI assistants every day. Here are {report.examples.length} examples:
-            </p>
-            <div className="table" style={{ "--cols": Math.max(1, ais.length) }}>
-              <div className="row head">
-                <span>Example search</span>
-                {ais.map((a) => (
-                  <span key={a.id} className="col">
-                    {a.name}
-                  </span>
-                ))}
-              </div>
-              {report.examples.map((q, i) => (
-                <div className="row" key={i}>
-                  <span>“{q.question}”</span>
-                  {ais.map((a) => (
-                    <span key={a.id} className="col">
-                      <Mark value={q.results?.[a.id]} />
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
+      {/* Owner-only tools */}
+      {!report.locked && report.id && (
+        <div className="card share no-print">
+          <div>
+            <b>Full report (owner view)</b>
+            <p className="muted">You're seeing everything because you're signed in as the owner.</p>
           </div>
-
-          <div className="card">
-            <h3>Who AI recommends instead</h3>
-            {report.competitors.length ? (
-              <ol className="comp">
-                {report.competitors.map((c, i) => (
-                  <li key={i}>
-                    <span>{c.name}</span>
-                    <span className="count">
-                      {c.count} {c.count === 1 ? "mention" : "mentions"}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="muted">No clear competitors came up this time.</p>
-            )}
+          <div className="share-actions">
+            <button type="button" className="secondary" onClick={copy}>
+              {copied ? "Copied!" : "Copy link"}
+            </button>
+            <button type="button" className="secondary" onClick={() => window.print()}>
+              Save as PDF
+            </button>
           </div>
-
-          <div className="card">
-            <h3>Top fixes</h3>
-            <ol className="fixes">
-              {report.fixes.map((f, i) => (
-                <li key={i}>{f}</li>
-              ))}
-            </ol>
-          </div>
-        </>
+        </div>
       )}
 
-      <p className="note">
-        AI answers change from search to search, so this is a snapshot, not a guarantee. Run it again
-        after making changes to see how you improve.
-      </p>
+      {/* 2. Example searches */}
+      <div className="card">
+        <h3>The searches we tested</h3>
+        <p className="muted examples-intro">
+          We tested your store against a wide range of realistic shopper searches. Here are {examples.length} examples:
+        </p>
+        <div className="table" style={{ "--cols": 1 }}>
+          {examples.map((q, i) => (
+            <div className="row" key={i}>
+              <span>“{q.question}”</span>
+              <span className="col">
+                <Mark value={Object.values(q.results || {}).some((v) => v === true) ? true : Object.values(q.results || {}).some((v) => v === false) ? false : null} />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Competitors + product info */}
+      <div className="grid">
+        <div className="card">
+          <h3>Who AI recommends instead</h3>
+          {competitors.length ? (
+            <ol className="comp">
+              {competitors.map((c, i) => (
+                <li key={i}>
+                  <span>{c.name}</span>
+                  <span className="count">
+                    {c.count} {c.count === 1 ? "mention" : "mentions"}
+                  </span>
+                </li>
+              ))}
+              {report.locked && <BlurredRows count={hidden.competitors} text="Hidden competitor name" />}
+            </ol>
+          ) : (
+            <p className="muted">No clear competitors came up this time.</p>
+          )}
+        </div>
+
+        <div className="card">
+          <h3>
+            Product info score <span className="pill">{report.dataScore}/100</span>
+          </h3>
+          {highlights.length ? (
+            <ul className="points">
+              {highlights.map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">{report.summary}</p>
+          )}
+        </div>
+      </div>
+
+      {/* 4. Fixes */}
+      <div className="card">
+        <h3>Your top fixes</h3>
+        <ol className="fixes">
+          {fixes.map((f, i) => (
+            <li key={i}>{f}</li>
+          ))}
+          {report.locked && <BlurredRows count={hidden.fixes} text="A hidden fix, explained in plain English with what to change." />}
+        </ol>
+      </div>
+
+      {/* 5. Locked bottom */}
+      {report.locked ? (
+        <LockedBottom report={report} />
+      ) : (
+        <p className="note">
+          AI answers change from search to search, so this is a snapshot, not a guarantee.
+        </p>
+      )}
     </section>
   );
 }

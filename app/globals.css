@@ -397,3 +397,14 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4
 .included { margin-top: 28px; }
 .included ul { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; color: #e4eafa; }
 .included .small { margin: 0; }
+
+/* ---------- v11: partial results + fade to blur ---------- */
+.blurred { filter: blur(6px); user-select: none; -webkit-user-select: none; pointer-events: none; }
+.points { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: #e4eafa; }
+.fadewrap { position: relative; min-height: 540px; margin-bottom: 16px; }
+.fade { filter: blur(7px); opacity: 0.6; pointer-events: none; user-select: none; -webkit-user-select: none; }
+.fadewrap .lock-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: linear-gradient(to bottom, rgba(4, 8, 23, 0) 0%, rgba(4, 8, 23, 0.75) 35%, rgba(4, 8, 23, 0.92) 100%);
+}
+@media print { .fadewrap, .blurred { display: none !important; } }
