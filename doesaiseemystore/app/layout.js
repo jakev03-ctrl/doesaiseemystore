@@ -3,9 +3,17 @@ import { Analytics } from "@vercel/analytics/next";
 import Starfield from "./components/Starfield";
 
 export const metadata = {
+  metadataBase: new URL(process.env.SITE_URL || "https://www.doesaiseemystore.com"),
   title: "Does AI See My Store? | Free AI visibility check",
   description:
     "Find out if AI shopping assistants recommend your online store when customers ask what to buy. Free check in about a minute.",
+  openGraph: {
+    title: "Does AI see your store?",
+    description: "Find out if AI assistants recommend your online store, or your competitors instead. Free check in about a minute.",
+    siteName: "DoesAISeeMyStore",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport = { width: "device-width", initialScale: 1, themeColor: "#040817" };

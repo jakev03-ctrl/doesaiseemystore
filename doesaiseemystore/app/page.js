@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Footer from "./components/Footer";
+import HomeInfo from "./components/HomeInfo";
 import Script from "next/script";
 import Report from "./components/Report";
 
@@ -109,6 +111,7 @@ export default function Home() {
       {BOT_KEY && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />}
 
       <div className="track">
+        <span id="top" className="form-anchor" aria-hidden="true" />
         <div className="stage">
           <header className="top">
             <a href="/" className="logo">
@@ -200,9 +203,9 @@ export default function Home() {
 
       {result && <Report report={result} />}
 
-      <footer>
-        © {new Date().getFullYear()} DoesAISeeMyStore · <a href="/privacy">Privacy</a>
-      </footer>
+      <HomeInfo />
+
+      <Footer />
     </>
   );
 }

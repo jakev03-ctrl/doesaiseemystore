@@ -116,6 +116,15 @@ export async function POST(req) {
     const overall = Math.round(visibility * 0.6 + audit.dataScore * 0.4);
     const id = randomBytes(6).toString("base64url");
 
+    // Before and after: compare with the last check of this store for the same category.
+    const latestKey = `latest:${shop.domain}:${slug(category)}`;
+    let previous = null;
+    try {
+      const prevId = await getJSON(latestKey);
+      const prev = prevId ? await getJSON(`report:${prevId}`) : null;
+      if (prev) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+    } catch {}
+
     const report = {
       id,
       createdAt: new Date().toISOString(),
@@ -133,10 +142,12 @@ export async function POST(req) {
       dataScore: audit.dataScore,
       summary: audit.summary,
       fixes: audit.fixes,
+      previous,
     };
 
     await setJSON(`report:${id}`, report, REPORT_DAYS * 24 * 60 * 60);
     await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
+    await setJSON(latestKey, id, REPORT_DAYS * 24 * 60 * 60);
     const remaining = await recordScan({ deviceId, ip, owner });
 
     console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));

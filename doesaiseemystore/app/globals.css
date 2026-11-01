@@ -234,3 +234,111 @@ footer { margin-top: 48px; padding-bottom: 32px; text-align: center; color: var(
 table.log { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.log th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 10px 10px; white-space: nowrap; }
 table.log td { padding: 10px; border-top: 1px solid rgba(140, 170, 255, 0.12); vertical-align: top; color: #e4eafa; }
+
+/* ---------- Footer ---------- */
+.site-footer { display: flex; justify-content: center; align-items: center; gap: 10px 20px; flex-wrap: wrap; }
+.site-footer nav { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.site-footer a { color: var(--soft); text-decoration: none; }
+.site-footer a:hover { color: #fff; text-decoration: underline; }
+
+/* ---------- Contact page ---------- */
+.wrap.narrow { max-width: 640px; }
+.page-intro { text-align: center; margin: 24px 0 8px; }
+.page-intro h1 { font-size: clamp(40px, 8vw, 60px); }
+.page-intro .sub { font-size: 18px; margin-top: 14px; }
+.contact-form { width: 100%; margin: 28px auto 0; }
+textarea {
+  font: inherit; font-size: 16px; padding: 13px 16px; border-radius: 12px; resize: vertical; min-height: 140px;
+  border: 1px solid var(--field-line); background: var(--field); color: #fff;
+}
+textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(110, 155, 255, 0.18); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* ---------- Report extras ---------- */
+.share-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.change { font-size: 14px; font-weight: 600; margin-top: 8px !important; }
+.change.up { color: var(--good) !important; }
+.change.down { color: var(--bad) !important; }
+.change.same { color: var(--soft) !important; }
+.print-only { display: none; }
+
+/* ---------- Homepage info ---------- */
+.form-anchor { position: absolute; top: 320px; left: 0; width: 1px; height: 1px; }
+.info { max-width: 980px; margin: 0 auto; padding: 72px 16px 0; display: grid; gap: 72px; }
+.info-block { text-align: center; }
+.info-block h2 {
+  font-family: var(--serif); font-size: clamp(30px, 5vw, 44px); margin: 0 0 28px; letter-spacing: -0.02em;
+  text-shadow: 0 0 30px rgba(140, 175, 255, 0.3);
+}
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; text-align: left; }
+.steps .card { margin-bottom: 0; }
+@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+.step-n {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; margin-bottom: 14px;
+  background: rgba(110, 155, 255, 0.16); color: var(--accent-2); box-shadow: 0 0 18px rgba(110, 155, 255, 0.35);
+}
+.why { text-align: left; max-width: 760px; margin: 0 auto; }
+.why p { color: #e4eafa; margin: 0 0 12px; font-size: 17px; }
+.why p:last-child { margin-bottom: 0; }
+.faqs { display: grid; gap: 10px; text-align: left; max-width: 760px; margin: 0 auto; }
+.faq { margin-bottom: 0; padding: 0; }
+.faq summary { cursor: pointer; padding: 18px 22px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--accent-2); font-size: 20px; line-height: 1; }
+.faq[open] summary::after { content: "–"; }
+.faq p { padding: 0 22px 18px; }
+
+/* ---------- Admin extras ---------- */
+.tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inbox { display: grid; gap: 12px; }
+.msg { padding: 14px 16px; border-radius: 14px; background: rgba(4, 8, 23, 0.5); border: 1px solid rgba(140, 170, 255, 0.12); }
+.msg-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
+.msg-body { margin: 0; white-space: pre-wrap; color: #e4eafa; }
+
+/* ---------- Save as PDF / print ---------- */
+@media print {
+  @page { margin: 16mm; }
+  html, body { background: #fff !important; }
+  * { color: #111 !important; text-shadow: none !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sky, .glow, .track, .cue, .no-print, .site-footer, .info, .wrap > .top, .cta, .note, .form { display: none !important; }
+  .print-only { display: block !important; }
+  .print-brand { font-weight: 700; margin: 0 0 12px; }
+  .card { background: #fff !important; border: 1px solid #d6d9e3 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; break-inside: avoid; }
+  .results { padding-top: 0; }
+  .ring-inner { background: #fff !important; }
+  .mark.yes { background: #34d399 !important; }
+  .mark.no { background: #f87171 !important; }
+  a { text-decoration: none; }
+}
+
+/* ---------- In-depth report offer ---------- */
+.upsell {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  border-color: rgba(140, 170, 255, 0.35);
+  background: linear-gradient(135deg, rgba(40, 60, 140, 0.55), rgba(18, 28, 64, 0.55));
+}
+.upsell > div { flex: 1; min-width: 240px; }
+.upsell h3 { font-family: var(--serif); font-size: 24px; margin-bottom: 8px; }
+.upsell .button { white-space: nowrap; }
+
+/* ---------- Admin v2 ---------- */
+.db-ok { color: var(--good); font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+.warn { border-color: rgba(251, 191, 36, 0.45); }
+.warn b { color: var(--mid); }
+.warn p { margin-top: 6px; }
+.badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 3px 8px; border-radius: 99px; background: rgba(110, 155, 255, 0.2); color: var(--accent-2);
+}
+.muted-badge { background: rgba(140, 170, 255, 0.1); color: var(--muted); }
+.msg-report { border-color: rgba(110, 155, 255, 0.45); }
+.msg-meta { margin: 0 0 6px; color: var(--soft); }
+.chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.chart-head h3 { margin: 0; }
+.seg { display: inline-flex; padding: 3px; border-radius: 99px; border: 1px solid var(--glass-line); background: rgba(4, 8, 23, 0.5); }
+.seg a { padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--soft); }
+.seg a.on { background: var(--accent); color: #fff; }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.pager a { text-decoration: none; font-weight: 600; }
+.nowrap { white-space: nowrap; }

@@ -1,14 +1,20 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { OWNER_COOKIE, isOwner } from "../../lib/limits";
-import { loadStats } from "../../lib/stats";
-import { hasDatabase } from "../../lib/store";
+import { loadStats, loadLog } from "../../lib/stats";
+import { hasDatabase, databaseInfo, getList, getCount } from "../../lib/store";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Stats | DoesAISeeMyStore", robots: { index: false, follow: false } };
 
-function sum(arr) {
-  return arr.reduce((a, b) => a + b, 0);
+const VIEWS = [
+  { id: "day", label: "Days" },
+  { id: "month", label: "Months" },
+  { id: "year", label: "Years" },
+];
+
+function last(arr) {
+  return arr[arr.length - 1] || 0;
 }
 
 function topCounts(items, keyFn, n = 8) {
@@ -21,46 +27,75 @@ function topCounts(items, keyFn, n = 8) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 }
 
-function timeAgo(iso) {
-  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.round(hrs / 24)}d ago`;
+function when(iso) {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/London",
+  });
+}
+
+function link(params, changes) {
+  const q = new URLSearchParams();
+  const merged = { view: params.view, mine: params.mine, page: params.page, ...changes };
+  for (const [k, v] of Object.entries(merged)) if (v && !(k === "view" && v === "day") && !(k === "page" && v === 1)) q.set(k, v);
+  const s = q.toString();
+  return `/admin${s ? `?${s}` : ""}`;
 }
 
 export default async function Admin({ searchParams }) {
   const jar = await cookies();
   if (!isOwner(jar.get(OWNER_COOKIE)?.value)) notFound();
 
-  const params = await searchParams;
-  const showMine = params?.mine === "1";
-  const { dates, totals, daily, log } = await loadStats(14);
+  const sp = (await searchParams) || {};
+  const view = VIEWS.some((v) => v.id === sp.view) ? sp.view : "day";
+  const showMine = sp.mine === "1";
+  const page = Math.max(1, Number(sp.page) || 1);
+  const params = { view, mine: showMine ? "1" : "", page };
 
-  const visitorLog = log.filter((e) => showMine || !e.owner);
-  const realScans = visitorLog.filter((e) => !e.error && !e.cached);
+  const [chart, days, months, years, log, recent, inbox, messageTotal] = await Promise.all([
+    loadStats(view),
+    loadStats("day"),
+    loadStats("month"),
+    loadStats("year"),
+    loadLog(page, 50),
+    getList("stats:log", 0, 499),
+    getList("inbox", 0, 49),
+    getCount("stats:messages:all"),
+  ]);
+
+  const withMine = (m, i) => m.scans[i] + (showMine ? m.ownerScans[i] : 0);
+  const bars = chart.periods.map((_, i) => withMine(chart.series, i));
+  const max = Math.max(1, ...bars);
+
+  const recentVisitor = recent.filter((e) => showMine || !e.owner);
+  const realScans = recentVisitor.filter((e) => !e.error && !e.cached);
   const avgScore = realScans.length
     ? Math.round(realScans.reduce((a, e) => a + (e.overall || 0), 0) / realScans.length)
-    : null;
-  const topCategories = topCounts(visitorLog, (e) => (e.category || "").toLowerCase().trim());
-  const topStores = topCounts(visitorLog, (e) => (e.error ? null : e.domain));
-
-  const scansDaily = daily.scans.map((v, i) => v + (showMine ? daily.ownerScans[i] : 0));
-  const max = Math.max(1, ...scansDaily);
-  const today = scansDaily[scansDaily.length - 1];
-  const week = sum(scansDaily.slice(-7));
+    : "–";
+  const topCategories = topCounts(recentVisitor, (e) => (e.category || "").toLowerCase().trim());
+  const topStores = topCounts(recentVisitor, (e) => (e.error ? null : e.domain));
+  const tableRows = log.items.filter((e) => showMine || !e.owner);
 
   const tiles = [
-    { label: "Visitor scans, all time", value: totals.scans },
-    { label: "Scans today", value: today },
-    { label: "Last 7 days", value: week },
-    { label: "Average score", value: avgScore ?? "–" },
-    { label: "Reused results (free)", value: totals.cached },
-    { label: "Hit the daily limit", value: totals.limited },
-    { label: "Failed scans", value: totals.errors },
-    { label: "Your own scans", value: totals.ownerScans },
+    { label: "Scans today", value: last(days.series.scans) },
+    { label: "Scans this month", value: last(months.series.scans) },
+    { label: "Scans this year", value: last(years.series.scans) },
+    { label: "Scans, all time", value: chart.totals.scans },
+    { label: "Average score (recent)", value: avgScore },
+    { label: "In-depth report requests", value: chart.totals.requests },
+    { label: "Messages received", value: messageTotal },
+    { label: "Reused results (free)", value: chart.totals.cached },
+    { label: "Hit the daily limit", value: chart.totals.limited },
+    { label: "Failed scans", value: chart.totals.errors },
+    { label: "Your own scans", value: chart.totals.ownerScans },
+    { label: "Searches logged", value: log.total },
   ];
+
+  const viewLabel = view === "year" ? "per year (last 5 years)" : view === "month" ? "per month (last 12 months)" : "per day (last 30 days)";
 
   return (
     <main className="wrap admin">
@@ -71,16 +106,62 @@ export default async function Admin({ searchParams }) {
         <span className="tag">Owner stats · only you can see this</span>
       </header>
 
-      {!hasDatabase && (
-        <div className="card">
-          <b>Database not connected.</b>
-          <p className="muted">Stats reset whenever the site restarts until Upstash is connected in Vercel.</p>
+      {hasDatabase ? (
+        <p className="db-ok">● Database connected</p>
+      ) : (
+        <div className="card warn">
+          <b>Database not connected yet</b>
+          <p className="muted">
+            Stats and reports are only kept temporarily until a database is connected. In Vercel, open your project's{" "}
+            <b>Storage</b> tab, check your database says it's connected to this project (for <b>Production</b>), then
+            go to <b>Deployments → ⋯ → Redeploy</b>.
+          </p>
+          <p className="muted small">
+            Database settings the site can see:{" "}
+            {databaseInfo.seen.length ? databaseInfo.seen.join(", ") : "none"}
+          </p>
         </div>
       )}
 
+      <div className="card" id="inbox">
+        <h3>
+          Inbox <span className="pill">{inbox.length}</span>
+        </h3>
+        {inbox.length ? (
+          <div className="inbox">
+            {inbox.map((m, i) => (
+              <div className={`msg ${m.type === "report" ? "msg-report" : ""}`} key={i}>
+                <div className="msg-head">
+                  {m.type === "report" ? <span className="badge">In-depth report request</span> : <span className="badge muted-badge">Message</span>}
+                  <b>{m.business || m.name || "No name"}</b>
+                  <a href={`mailto:${m.email}?subject=${encodeURIComponent(m.type === "report" ? "Your in-depth AI visibility report" : "Re: DoesAISeeMyStore")}`}>
+                    {m.email}
+                  </a>
+                  <span className="muted small">{when(m.at)}</span>
+                </div>
+                {m.type === "report" && (
+                  <p className="msg-meta small">
+                    Website: <b>{m.website}</b>
+                    {m.reportId && (
+                      <>
+                        {" · "}
+                        <a href={`/report/${m.reportId}`}>Their free report</a>
+                      </>
+                    )}
+                  </p>
+                )}
+                <p className="msg-body">{m.message}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No messages yet. Contact messages and in-depth report requests will appear here.</p>
+        )}
+      </div>
+
       <div className="admin-head">
         <h2>Overview</h2>
-        <a className="toggle" href={showMine ? "/admin" : "/admin?mine=1"}>
+        <a className="toggle" href={link(params, { mine: showMine ? "" : "1", page: 1 })}>
           {showMine ? "Hide my own scans" : "Include my own scans"}
         </a>
       </div>
@@ -95,17 +176,26 @@ export default async function Admin({ searchParams }) {
       </div>
 
       <div className="card">
-        <h3>Scans per day (last 14 days)</h3>
-        <div className="bars" role="img" aria-label={`Scans per day: ${scansDaily.join(", ")}`}>
-          {scansDaily.map((v, i) => (
-            <div className="bar-col" key={dates[i]}>
+        <div className="chart-head">
+          <h3>Scans {viewLabel}</h3>
+          <div className="seg" role="group" aria-label="Time period">
+            {VIEWS.map((v) => (
+              <a key={v.id} href={link(params, { view: v.id, page: 1 })} className={v.id === view ? "on" : ""} aria-current={v.id === view ? "page" : undefined}>
+                {v.label}
+              </a>
+            ))}
+          </div>
+        </div>
+        <div className="bars" role="img" aria-label={`Scans ${viewLabel}: ${bars.join(", ")}`}>
+          {bars.map((v, i) => (
+            <div className="bar-col" key={chart.periods[i].key} title={`${chart.periods[i].key}: ${v}`}>
               <span className="bar-val">{v || ""}</span>
               <div className="bar" style={{ height: `${Math.max(2, (v / max) * 100)}%` }} />
-              <span className="bar-label">{dates[i].slice(8)}</span>
+              <span className="bar-label">{chart.periods[i].label}</span>
             </div>
           ))}
         </div>
-        <p className="muted small">For visitor numbers (not just scans), open the Analytics tab in Vercel.</p>
+        <p className="muted small">For website visitors (not just scans), open the Analytics tab in Vercel.</p>
       </div>
 
       <div className="grid">
@@ -141,15 +231,17 @@ export default async function Admin({ searchParams }) {
         </div>
       </div>
 
-      <div className="card">
-        <h3>Recent scans</h3>
-        {visitorLog.length ? (
+      <div className="card" id="searches">
+        <h3>
+          Every website searched <span className="pill">{log.total}</span>
+        </h3>
+        {tableRows.length ? (
           <div className="scroll-x">
             <table className="log">
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Store</th>
+                  <th>Date and time</th>
+                  <th>Website</th>
                   <th>Sells</th>
                   <th>Extra info</th>
                   <th>Score</th>
@@ -158,10 +250,10 @@ export default async function Admin({ searchParams }) {
                 </tr>
               </thead>
               <tbody>
-                {visitorLog.slice(0, 100).map((e, i) => (
+                {tableRows.map((e, i) => (
                   <tr key={i}>
-                    <td>{timeAgo(e.at)}</td>
-                    <td>{e.id ? <a href={`/report/${e.id}`}>{e.name || e.domain}</a> : e.domain}</td>
+                    <td className="nowrap">{when(e.at)}</td>
+                    <td>{e.id ? <a href={`/report/${e.id}`}>{e.domain}</a> : e.domain}</td>
                     <td>{e.category}</td>
                     <td>{e.extra || ""}</td>
                     <td>{e.error ? "–" : e.overall}</td>
@@ -176,7 +268,16 @@ export default async function Admin({ searchParams }) {
             </table>
           </div>
         ) : (
-          <p className="muted">No scans yet. Once people start checking their stores, they'll appear here.</p>
+          <p className="muted">No searches on this page.</p>
+        )}
+        {log.pages > 1 && (
+          <nav className="pager" aria-label="Pages">
+            {page > 1 ? <a href={`${link(params, { page: page - 1 })}#searches`}>← Newer</a> : <span />}
+            <span className="muted small">
+              Page {page} of {log.pages}
+            </span>
+            {page < log.pages ? <a href={`${link(params, { page: page + 1 })}#searches`}>Older →</a> : <span />}
+          </nav>
         )}
       </div>
     </main>

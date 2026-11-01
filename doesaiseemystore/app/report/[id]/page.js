@@ -1,3 +1,4 @@
+import Footer from "../../components/Footer";
 import { notFound } from "next/navigation";
 import { getJSON } from "../../../lib/store";
 import Report from "../../components/Report";
@@ -18,6 +19,11 @@ export async function generateMetadata({ params }) {
   return {
     title: `${report.shop.name} scored ${report.overall}/100 | DoesAISeeMyStore`,
     description: `Does AI recommend ${report.shop.name}? See the full AI visibility report, then check your own store free.`,
+    openGraph: {
+      title: `${report.shop.name} scored ${report.overall}/100 for AI visibility`,
+      description: "Does AI see your store? Check yours free in about a minute.",
+      type: "article",
+    },
   };
 }
 
@@ -44,9 +50,7 @@ export default async function ReportPage({ params }) {
         </a>
       </div>
 
-      <footer>
-        © {new Date().getFullYear()} DoesAISeeMyStore · <a href="/privacy">Privacy</a>
-      </footer>
+      <Footer />
     </main>
   );
 }

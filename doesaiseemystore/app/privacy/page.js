@@ -1,6 +1,9 @@
+import Footer from "../components/Footer";
+
 export const metadata = { title: "Privacy | DoesAISeeMyStore" };
 
 export default function Privacy() {
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
   return (
     <main className="wrap">
       <header className="top">
@@ -11,7 +14,7 @@ export default function Privacy() {
 
       <article className="card prose">
         <h1>Privacy</h1>
-        <p className="muted">Last updated: October 2026</p>
+        <p className="muted">Last updated: November 2026</p>
 
         <h3>What we collect</h3>
         <ul>
@@ -33,7 +36,13 @@ export default function Privacy() {
         </ul>
 
         <h3>What we don't collect</h3>
-        <p>We don't ask for your name or email, and we don't sell or share your information.</p>
+        <p>Running a check doesn't need your name or email, and we don't sell or share your information.</p>
+
+        <h3>Contact messages</h3>
+        <p>
+          If you send us a message or request an in-depth report, we keep the details you give us (such as
+          your name or business name, website, email address and message) so we can reply. We delete messages when they're no longer needed.
+        </p>
 
         <h3>Who helps us run the service</h3>
         <p>
@@ -49,14 +58,13 @@ export default function Privacy() {
 
         <h3>Questions or removal</h3>
         <p>
-          If you'd like a report removed or have any questions, contact us at{" "}
-          <b>[your contact email]</b>.
+          If you'd like a report removed, want to know what we hold about you, or have any questions,
+          email us at <a href={`mailto:${email}`}>{email}</a> or use our{" "}
+          <a href="/contact">contact page</a>.
         </p>
       </article>
 
-      <footer>
-        © {new Date().getFullYear()} DoesAISeeMyStore
-      </footer>
+      <Footer />
     </main>
   );
 }
