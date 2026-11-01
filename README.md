@@ -19,6 +19,7 @@ Recommended:
 - `ADMIN_KEY`: your private owner password. Visit /api/owner?key=YOUR_ADMIN_KEY once per device for the owner allowance. /api/owner?logout=1 removes it.
 
 Optional:
+- `RESEND_API_KEY`: emails you each new enquiry (to NOTIFY_EMAIL, default doesaiseemystore@outlook.com)
 - `NEXT_PUBLIC_CONTACT_EMAIL`: email shown in the footer and on the contact page
 - `FREE_SCANS_PER_DAY` (default 2), `OWNER_SCANS_PER_DAY` (default 20), `IP_SCANS_PER_DAY` (default 6)
 - `QUESTION_COUNT` (default 10), `CACHE_HOURS` (default 24), `REPORT_DAYS` (default 90)
@@ -26,5 +27,3 @@ Optional:
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`: Cloudflare "are you human?" check
 
 Remember to redeploy after changing settings.
-
-Updated 1 November

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function ContactForm() {
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
   const [form, setForm] = useState({ name: "", email: "", message: "", company_site: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | sent
   const [error, setError] = useState("");
@@ -32,7 +33,10 @@ export default function ContactForm() {
     return (
       <div className="card cta">
         <h3>Thanks, message sent!</h3>
-        <p className="muted">We'll reply to {form.email} as soon as we can.</p>
+        <p className="muted">
+          We'll reply to {form.email} from <b>{email}</b> as soon as we can. Keep an eye on your inbox,
+          and your junk folder just in case.
+        </p>
         <a className="button" href="/">
           Back to the homepage
         </a>

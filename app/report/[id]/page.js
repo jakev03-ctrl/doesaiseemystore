@@ -1,15 +1,17 @@
 import Footer from "../../components/Footer";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { OWNER_COOKIE, isOwner } from "../../../lib/limits";
 import { getJSON } from "../../../lib/store";
 import Report from "../../components/Report";
 import { publicView } from "../../../lib/report";
 
 export const dynamic = "force-dynamic";
 
-async function load(id) {
+async function load(id, full = false) {
   if (!/^[A-Za-z0-9_-]{4,20}$/.test(id)) return null;
   const report = await getJSON(`report:${id}`);
-  return report ? publicView(report) : null;
+  return report ? publicView(report, { full }) : null;
 }
 
 export async function generateMetadata({ params }) {
@@ -29,7 +31,8 @@ export async function generateMetadata({ params }) {
 
 export default async function ReportPage({ params }) {
   const { id } = await params;
-  const report = await load(id);
+  const jar = await cookies();
+  const report = await load(id, isOwner(jar.get(OWNER_COOKIE)?.value));
   if (!report) notFound();
 
   return (

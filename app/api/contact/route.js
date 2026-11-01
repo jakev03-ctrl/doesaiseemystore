@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { increment, pushToList } from "../../../lib/store";
 import { countEvent } from "../../../lib/stats";
+import { notifyOwner } from "../../../lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +63,7 @@ export async function POST(req) {
     await pushToList("inbox", { at: new Date().toISOString(), ...entry }, 1000);
     if (isReport) await countEvent("requests");
     else await increment("stats:messages:all", 3650 * 24 * 60 * 60);
+    await notifyOwner(entry);
     return Response.json({ ok: true });
   } catch (e) {
     console.error("Contact failed:", e);

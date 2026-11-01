@@ -154,7 +154,7 @@ export async function POST(req) {
     await countEvent(owner ? "ownerScans" : "scans");
     await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra, overall, visibility, owner, cached: false });
 
-    return reply({ ...publicView(report), remaining }, 200, deviceId, newDevice);
+    return reply({ ...publicView(report, { full: owner }), remaining }, 200, deviceId, newDevice);
   } catch (e) {
     console.error("Scan failed:", e);
     await countEvent("errors");

@@ -33,6 +33,20 @@ export default async function RequestPage({ searchParams }) {
           </p>
         </div>
 
+        <div className="card included">
+          <h3>What's included</h3>
+          <ul>
+            <li>The real shopper searches we tested, and exactly where your store appeared</li>
+            <li>Who AI assistants recommend instead of you, and why</li>
+            <li>Your top fixes in plain English, ranked by impact</li>
+            <li>A clear, step-by-step plan to get recommended more often</li>
+          </ul>
+          <p className="muted small">
+            Enquiring is free and doesn't commit you to anything. We'll email you the price and delivery time
+            before you decide.
+          </p>
+        </div>
+
         <RequestForm website={website} reportId={reportId} />
       </main>
       <Footer />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function RequestForm({ website = "", reportId = "" }) {
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
   const [form, setForm] = useState({ business: "", website, email: "", message: "", company_site: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | sent
   const [error, setError] = useState("");
@@ -33,7 +34,8 @@ export default function RequestForm({ website = "", reportId = "" }) {
       <div className="card cta">
         <h3>Request received!</h3>
         <p className="muted">
-          Thanks, {form.business}. We'll be in touch at {form.email} about your in-depth report.
+          Thanks, {form.business}. We'll email you at {form.email} from <b>{email}</b>. Keep an eye on
+          your inbox, and your junk folder just in case.
         </p>
         <a className="button" href="/">
           Back to the homepage
