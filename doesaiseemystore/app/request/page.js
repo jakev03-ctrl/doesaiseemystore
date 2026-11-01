@@ -18,6 +18,9 @@ export default async function RequestPage({ searchParams }) {
           <a href="/" className="logo">
             DoesAI<b>See</b>MyStore
           </a>
+          <nav className="topnav" aria-label="Main">
+            <a href="/news">News</a>
+          </nav>
         </header>
 
         <div className="page-intro">

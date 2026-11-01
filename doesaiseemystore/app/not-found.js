@@ -5,6 +5,9 @@ export default function NotFound() {
         <a href="/" className="logo">
           DoesAI<b>See</b>MyStore
         </a>
+        <nav className="topnav" aria-label="Main">
+          <a href="/news">News</a>
+        </nav>
       </header>
       <div className="card cta">
         <h3>We couldn't find that page</h3>

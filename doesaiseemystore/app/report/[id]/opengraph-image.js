@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getJSON } from "../../../lib/store";
-import { OG_SIZE, Stars, Logo, background } from "../../../lib/ogStyle";
+import { OG_SIZE, stars, logo, background } from "../../../lib/ogStyle";
 
 export const runtime = "nodejs";
 export const alt = "AI visibility report from DoesAISeeMyStore";
@@ -23,7 +23,7 @@ export default async function Image({ params }) {
   return new ImageResponse(
     (
       <div style={background}>
-        <Stars />
+        {stars()}
         <div
           style={{
             display: "flex",
@@ -34,7 +34,7 @@ export default async function Image({ params }) {
             padding: "64px 72px",
           }}
         >
-          <Logo />
+          {logo()}
 
           <div style={{ display: "flex", alignItems: "center" }}>
             <div
@@ -50,30 +50,30 @@ export default async function Image({ params }) {
                 flexShrink: 0,
               }}
             >
-              <div style={{ display: "flex", alignItems: "baseline", fontFamily: "sans-serif" }}>
+              <div style={{ display: "flex", alignItems: "baseline" }}>
                 <span style={{ fontSize: 96, fontWeight: 800 }}>{score ?? "?"}</span>
                 <span style={{ fontSize: 30, color: "#8590b5", marginLeft: 4 }}>/100</span>
               </div>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", maxWidth: 680 }}>
-              <div style={{ display: "flex", fontSize: 28, color: "#9dbbff", fontFamily: "sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>
+              <div style={{ display: "flex", fontSize: 28, color: "#9dbbff", textTransform: "uppercase", letterSpacing: 2 }}>
                 {name}
               </div>
               <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.05, marginTop: 12, letterSpacing: -1 }}>
                 {report ? report.label : "AI visibility report"}
               </div>
-              {report && (
-                <div style={{ display: "flex", fontSize: 30, color: "#c3cce6", marginTop: 18, fontFamily: "sans-serif" }}>
+              {report ? (
+                <div style={{ display: "flex", fontSize: 30, color: "#c3cce6", marginTop: 18 }}>
                   {report.visibility > 0
                     ? `Recommended in ${report.visibility}% of AI shopping searches`
                     : "Not recommended in AI shopping searches"}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
-          <div style={{ display: "flex", fontSize: 26, color: "#9dbbff", fontFamily: "sans-serif" }}>
+          <div style={{ display: "flex", fontSize: 26, color: "#9dbbff" }}>
             Does AI see your store? Check free at doesaiseemystore.com
           </div>
         </div>

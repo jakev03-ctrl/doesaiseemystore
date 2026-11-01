@@ -38,6 +38,9 @@ export default async function ReportPage({ params }) {
         <a href="/" className="logo">
           DoesAI<b>See</b>MyStore
         </a>
+        <nav className="topnav" aria-label="Main">
+          <a href="/news">News</a>
+        </nav>
       </header>
 
       <Report report={report} shared />

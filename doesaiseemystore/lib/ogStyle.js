@@ -10,7 +10,9 @@ const STARS = Array.from({ length: 70 }, (_, i) => {
   return { x: Math.round(r(1) * 1200), y: Math.round(r(2) * 630), s: r(3) < 0.2 ? 3 : 2, o: 0.25 + r(4) * 0.6 };
 });
 
-export function Stars() {
+// Called as a plain function ({stars()}), not as <Stars />: the image generator
+// can't handle a component that returns a list.
+export function stars() {
   return STARS.map((st, i) => (
     <div
       key={i}
@@ -36,12 +38,12 @@ export const background = {
   backgroundImage:
     "radial-gradient(circle at 80% 15%, rgba(88, 110, 255, 0.35), transparent 45%), radial-gradient(circle at 10% 90%, rgba(120, 70, 255, 0.25), transparent 45%)",
   color: "#ffffff",
-  fontFamily: "serif",
 };
 
-export function Logo() {
+// Called as a plain function ({logo()}).
+export function logo() {
   return (
-    <div style={{ display: "flex", fontSize: 30, fontWeight: 800, fontFamily: "sans-serif", letterSpacing: -0.5 }}>
+    <div style={{ display: "flex", fontSize: 30, fontWeight: 800, letterSpacing: -0.5 }}>
       <span>DoesAI</span>
       <span style={{ color: "#9dbbff" }}>See</span>
       <span>MyStore</span>

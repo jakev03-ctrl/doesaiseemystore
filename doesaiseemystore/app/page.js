@@ -117,6 +117,9 @@ export default function Home() {
             <a href="/" className="logo">
               DoesAI<b>See</b>MyStore
             </a>
+            <nav className="topnav" aria-label="Main">
+              <a href="/news">News</a>
+            </nav>
             <span className="tag">Free check · about a minute</span>
           </header>
 
