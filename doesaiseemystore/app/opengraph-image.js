@@ -4,6 +4,8 @@ import { OG_SIZE, stars, logo, background } from "../lib/ogStyle";
 export const alt = "Does AI see your store? Free AI visibility check for online stores.";
 export const size = OG_SIZE;
 export const contentType = "image/png";
+// Built when requested, not during deployment, so it can never block the site going live.
+export const dynamic = "force-dynamic";
 
 export default function Image() {
   return new ImageResponse(

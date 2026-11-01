@@ -6,6 +6,8 @@ export const runtime = "nodejs";
 export const alt = "AI visibility report from DoesAISeeMyStore";
 export const size = OG_SIZE;
 export const contentType = "image/png";
+// Built when requested, not during deployment, so it can never block the site going live.
+export const dynamic = "force-dynamic";
 
 export default async function Image({ params }) {
   const { id } = await params;

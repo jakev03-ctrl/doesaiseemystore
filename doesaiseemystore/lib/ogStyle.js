@@ -10,23 +10,27 @@ const STARS = Array.from({ length: 70 }, (_, i) => {
   return { x: Math.round(r(1) * 1200), y: Math.round(r(2) * 630), s: r(3) < 0.2 ? 3 : 2, o: 0.25 + r(4) * 0.6 };
 });
 
-// Called as a plain function ({stars()}), not as <Stars />: the image generator
-// can't handle a component that returns a list.
+// The stars sit inside ONE wrapper div, so the image generator receives a single
+// element (it can't handle a bare list of elements next to other items).
 export function stars() {
-  return STARS.map((st, i) => (
-    <div
-      key={i}
-      style={{
-        position: "absolute",
-        left: st.x,
-        top: st.y,
-        width: st.s,
-        height: st.s,
-        borderRadius: 99,
-        background: `rgba(220, 230, 255, ${st.o})`,
-      }}
-    />
-  ));
+  return (
+    <div style={{ position: "absolute", top: 0, left: 0, width: 1200, height: 630, display: "flex" }}>
+      {STARS.map((st, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: st.x,
+            top: st.y,
+            width: st.s,
+            height: st.s,
+            borderRadius: 99,
+            background: `rgba(220, 230, 255, ${st.o})`,
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export const background = {
