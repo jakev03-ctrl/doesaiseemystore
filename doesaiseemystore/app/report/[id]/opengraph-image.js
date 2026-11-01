@@ -1,86 +1,74 @@
 import { ImageResponse } from "next/og";
 import { getJSON } from "../../../lib/store";
-import { OG_SIZE, stars, logo, background } from "../../../lib/ogStyle";
 
+// Version 8d: simple share image (no helper functions or lists).
 export const runtime = "nodejs";
 export const alt = "AI visibility report from DoesAISeeMyStore";
-export const size = OG_SIZE;
+export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-// Built when requested, not during deployment, so it can never block the site going live.
 export const dynamic = "force-dynamic";
 
 export default async function Image({ params }) {
   const { id } = await params;
   let report = null;
-  if (/^[A-Za-z0-9_-]{4,20}$/.test(id)) {
+  if (/^[A-Za-z0-9_-]{4,20}$/.test(String(id))) {
     try {
       report = await getJSON(`report:${id}`);
     } catch {}
   }
 
-  const score = report?.overall ?? null;
-  const colour = score == null ? "#9dbbff" : score >= 70 ? "#34d399" : score >= 40 ? "#fbbf24" : "#f87171";
-  const name = (report?.shop?.name || "This store").slice(0, 40);
+  const score = report && typeof report.overall === "number" ? String(report.overall) : "?";
+  const n = report ? report.overall : 0;
+  const colour = !report ? "#9dbbff" : n >= 70 ? "#34d399" : n >= 40 ? "#fbbf24" : "#f87171";
+  const name = String((report && report.shop && report.shop.name) || "This store").slice(0, 40);
+  const label = String((report && report.label) || "AI visibility report");
+  const line = !report
+    ? "Check your own store free"
+    : report.visibility > 0
+      ? `Recommended in ${report.visibility}% of AI shopping searches`
+      : "Not recommended in AI shopping searches";
 
   return new ImageResponse(
     (
-      <div style={background}>
-        {stars()}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            width: "100%",
-            height: "100%",
-            padding: "64px 72px",
-          }}
-        >
-          {logo()}
-
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 260,
-                height: 260,
-                borderRadius: 999,
-                border: `14px solid ${colour}`,
-                marginRight: 56,
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "baseline" }}>
-                <span style={{ fontSize: 96, fontWeight: 800 }}>{score ?? "?"}</span>
-                <span style={{ fontSize: 30, color: "#8590b5", marginLeft: 4 }}>/100</span>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", maxWidth: 680 }}>
-              <div style={{ display: "flex", fontSize: 28, color: "#9dbbff", textTransform: "uppercase", letterSpacing: 2 }}>
-                {name}
-              </div>
-              <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.05, marginTop: 12, letterSpacing: -1 }}>
-                {report ? report.label : "AI visibility report"}
-              </div>
-              {report ? (
-                <div style={{ display: "flex", fontSize: 30, color: "#c3cce6", marginTop: 18 }}>
-                  {report.visibility > 0
-                    ? `Recommended in ${report.visibility}% of AI shopping searches`
-                    : "Not recommended in AI shopping searches"}
-                </div>
-              ) : null}
-            </div>
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "64px 72px",
+          backgroundColor: "#040817",
+          color: "#ffffff",
+        }}
+      >
+        <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#9dbbff" }}>DoesAISeeMyStore</div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 240,
+              height: 240,
+              borderRadius: 120,
+              border: `14px solid ${colour}`,
+              marginRight: 56,
+              fontSize: 96,
+              fontWeight: 700,
+            }}
+          >
+            {score}
           </div>
-
-          <div style={{ display: "flex", fontSize: 26, color: "#9dbbff" }}>
-            Does AI see your store? Check free at doesaiseemystore.com
+          <div style={{ display: "flex", flexDirection: "column", maxWidth: 700 }}>
+            <div style={{ display: "flex", fontSize: 28, color: "#9dbbff" }}>{name}</div>
+            <div style={{ display: "flex", fontSize: 68, fontWeight: 700, lineHeight: 1.05, marginTop: 12 }}>{label}</div>
+            <div style={{ display: "flex", fontSize: 30, color: "#c3cce6", marginTop: 18 }}>{line}</div>
           </div>
         </div>
+        <div style={{ display: "flex", fontSize: 26, color: "#9dbbff" }}>Does AI see your store? Check free at doesaiseemystore.com</div>
       </div>
     ),
-    size
+    { ...size }
   );
 }
