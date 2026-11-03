@@ -4,7 +4,7 @@ import { readShop, normaliseUrl } from "../../../lib/shop";
 import { auditShop, testVisibility, label } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
-import { countEvent, logScan } from "../../../lib/stats";
+import { countEvent, logScan, errorType } from "../../../lib/stats";
 import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan } from "../../../lib/limits";
 
 export const runtime = "nodejs";
@@ -51,7 +51,22 @@ async function passesBotCheck(token, ip) {
   }
 }
 
+// How many free checks this visitor has left today (shown under the form).
+export async function GET(req) {
+  const existingDevice = req.cookies.get(DEVICE_COOKIE)?.value;
+  const deviceId = existingDevice && existingDevice.length < 80 ? existingDevice : randomUUID();
+  const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
+  const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+  try {
+    const limit = await checkLimit({ deviceId, ip, owner });
+    return reply({ remaining: limit.remaining, limit: limit.limit, owner }, 200, deviceId, deviceId !== existingDevice);
+  } catch {
+    return reply({ remaining: null }, 200, deviceId, deviceId !== existingDevice);
+  }
+}
+
 export async function POST(req) {
+  const started = Date.now();
   // Who is this?
   const existingDevice = req.cookies.get(DEVICE_COOKIE)?.value;
   const deviceId = existingDevice && existingDevice.length < 80 ? existingDevice : randomUUID();
@@ -74,6 +89,7 @@ export async function POST(req) {
   if (category.length < 2) return fail("Please tell us what you sell (e.g. scented candles).");
   const extra = String(body.extra || "").trim().slice(0, 120);
   const location = String(body.location || "").trim().slice(0, 60);
+  const fresh = body.fresh === true; // "Check again": skip the saved result from earlier today
 
   if (!owner && !(await passesBotCheck(body.botToken, ip))) {
     return fail("Please complete the quick 'are you human?' check, then try again.", 403);
@@ -85,7 +101,7 @@ export async function POST(req) {
     const cacheKey = `cache:${domain}:${slug(category)}:${slug(location)}:${slug(extra)}`;
 
     // Reuse a result from the last day (free, and doesn't use up a scan). Owners always get a fresh scan.
-    if (!owner) {
+    if (!owner && !fresh) {
       const cachedId = await getJSON(cacheKey);
       const cached = cachedId ? await getJSON(`report:${cachedId}`) : null;
       if (cached) {
@@ -110,6 +126,8 @@ export async function POST(req) {
     const vis = await testVisibility(shop, audit.questions, audit.market);
 
     if (vis.checked === 0) {
+      await countEvent("errors");
+      await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true });
       return fail("Our AI checks didn't complete this time. Please try again in a minute.", 503);
     }
 
@@ -159,13 +177,14 @@ export async function POST(req) {
 
     console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
     await countEvent(owner ? "ownerScans" : "scans");
-    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false });
+    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false, ms: Date.now() - started });
 
     return reply({ ...publicView(report, { full: owner }), remaining }, 200, deviceId, newDevice);
   } catch (e) {
     console.error("Scan failed:", e);
     await countEvent("errors");
-    await logScan({ domain: url.slice(0, 80), category, extra, owner, error: String(e?.message || "error").slice(0, 160) });
+    const kind = errorType(e?.message);
+    await logScan({ domain: url.slice(0, 80), category, extra, owner, ms: Date.now() - started, error: String(e?.message || "error").slice(0, 160), errorType: kind.type, system: kind.system });
     const msg =
       e?.message && !/api|key|anthropic|openai|json|redis|upstash/i.test(e.message)
         ? e.message

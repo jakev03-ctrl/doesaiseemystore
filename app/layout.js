@@ -6,10 +6,10 @@ export const metadata = {
   metadataBase: new URL(process.env.SITE_URL || "https://www.doesaiseemystore.com"),
   title: "Does AI See My Store? | Free AI visibility check",
   description:
-    "Find out if AI shopping assistants recommend your online store when customers ask what to buy. Free check in about a minute.",
+    "Find out if AI shopping assistants recommend your online store when customers ask what to buy. Free check in under 60 seconds.",
   openGraph: {
     title: "Does AI see your store?",
-    description: "Find out if AI assistants recommend your online store, or your competitors instead. Free check in about a minute.",
+    description: "Find out if AI assistants recommend your online store, or your competitors instead. Free check in under 60 seconds.",
     siteName: "DoesAISeeMyStore",
     type: "website",
   },

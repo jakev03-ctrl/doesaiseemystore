@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { OWNER_COOKIE, isOwner } from "../../lib/limits";
-import { loadStats, loadLog } from "../../lib/stats";
+import { loadStats, loadLog, errorType } from "../../lib/stats";
 import { hasDatabase, databaseInfo, getList, getCount } from "../../lib/store";
 
 export const dynamic = "force-dynamic";
@@ -95,6 +95,38 @@ export default async function Admin({ searchParams }) {
     { label: "Searches logged", value: log.total },
   ];
 
+  // ---- System health (last 7 days, from the scan log) ----
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const week = recent.filter((e) => new Date(e.at).getTime() > weekAgo);
+  const timed = week.filter((e) => !e.error && !e.cached && typeof e.ms === "number");
+  const secs = timed.map((e) => e.ms / 1000);
+  const avgSecs = secs.length ? Math.round(secs.reduce((a, b) => a + b, 0) / secs.length) : null;
+  const under60 = secs.length ? Math.round((secs.filter((x) => x < 60).length / secs.length) * 100) : null;
+  const slowest = secs.length ? Math.round(Math.max(...secs)) : null;
+  const failures = week.filter((e) => e.error).map((e) => {
+    const k = e.errorType ? { type: e.errorType, system: e.system !== false } : errorType(e.error);
+    return { ...e, kind: k.type, system: k.system };
+  });
+  const systemFails = failures.filter((f) => f.system);
+  const attempts = week.filter((e) => !e.cached).length;
+  const failRate = attempts ? Math.round((systemFails.length / attempts) * 100) : 0;
+  const failGroups = topCounts(failures, (f) => f.kind);
+  const apiErrors = systemFails.filter((f) => /AI|API/.test(f.kind)).length;
+  const lastFail = systemFails[0];
+  const status =
+    !attempts ? { cls: "idle", text: "No scans in the last 7 days yet" }
+    : failRate >= 20 || (avgSecs && avgSecs > 90) ? { cls: "bad", text: "Needs attention" }
+    : failRate >= 8 || (avgSecs && avgSecs > 60) ? { cls: "mid", text: "Mostly fine, keep an eye on it" }
+    : { cls: "good", text: "All running smoothly" };
+  const healthTiles = [
+    { label: "Average scan time", value: avgSecs !== null ? `${avgSecs}s` : "–" },
+    { label: "Scans under 60 seconds", value: under60 !== null ? `${under60}%` : "–" },
+    { label: "Slowest scan", value: slowest !== null ? `${slowest}s` : "–" },
+    { label: "Failed scans (system)", value: `${systemFails.length}${attempts ? ` · ${failRate}%` : ""}` },
+    { label: "AI / API errors", value: apiErrors },
+    { label: "Visitor typos & closed sites", value: failures.length - systemFails.length },
+  ];
+
   const viewLabel = view === "year" ? "per year (last 5 years)" : view === "month" ? "per month (last 12 months)" : "per day (last 30 days)";
 
   return (
@@ -122,6 +154,44 @@ export default async function Admin({ searchParams }) {
           </p>
         </div>
       )}
+
+      <div className="card health" id="health">
+        <div className="chart-head">
+          <h3>System health · last 7 days</h3>
+          <span className={`status ${status.cls}`}>● {status.text}</span>
+        </div>
+        <div className="tiles health-tiles">
+          {healthTiles.map((t) => (
+            <div className="tile" key={t.label}>
+              <span className="tile-num">{t.value}</span>
+              <span className="muted">{t.label}</span>
+            </div>
+          ))}
+        </div>
+        {failGroups.length > 0 ? (
+          <>
+            <p className="muted small health-sub">Why scans failed:</p>
+            <ul className="comp">
+              {failGroups.map(([k, n]) => (
+                <li key={k}>
+                  <span>{k}</span>
+                  <span className="count">{n}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="muted small">No failed scans in the last 7 days.</p>
+        )}
+        {lastFail && (
+          <p className="muted small health-sub">
+            Last system error: {when(lastFail.at)} · <span className="bad">{lastFail.error}</span>
+          </p>
+        )}
+        <p className="muted small health-sub">
+          Scan times only count scans made after this update. "Out of API credit" means it's time to top up at console.anthropic.com.
+        </p>
+      </div>
 
       <div className="card" id="inbox">
         <h3>

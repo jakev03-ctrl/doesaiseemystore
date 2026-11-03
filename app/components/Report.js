@@ -1,18 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isRecent } from "./recent";
 
+// The score ring fills and the number counts up from 0.
 function Ring({ value }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(value);
+      return;
+    }
+    let frame;
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / 1400);
+      setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    const delay = setTimeout(() => (frame = requestAnimationFrame(tick)), 250);
+    return () => {
+      clearTimeout(delay);
+      cancelAnimationFrame(frame);
+    };
+  }, [value]);
   const colour = value >= 70 ? "var(--good)" : value >= 40 ? "var(--mid)" : "var(--bad)";
   return (
-    <div className="ring" style={{ "--v": value, "--c": colour }}>
+    <div className="ring" style={{ "--v": shown, "--c": colour }} aria-label={`Score ${value} out of 100`}>
       <div className="ring-inner">
-        <span className="ring-num">{value}</span>
+        <span className="ring-num">{shown}</span>
         <span className="ring-of">/100</span>
       </div>
     </div>
   );
 }
+
+// A small "i" button that shows a plain-English explanation.
+function Tip({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="tip">
+      <button
+        type="button"
+        className="tip-btn"
+        aria-label="What does this mean?"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onBlur={() => setOpen(false)}
+      >
+        i
+      </button>
+      {open && (
+        <span className="tip-box" role="tooltip">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
+const TIPS = {
+  score: "Your overall score out of 100. It combines how often AI recommended you with how easy your product info is for AI to read.",
+  visibility: "The share of realistic shopper searches where AI mentioned your store.",
+  topPick: "Searches where you were the very first shop AI recommended. Shoppers often go with the first suggestion.",
+  rank: "Where you place among all the shops AI recommended, based on how often each one was mentioned.",
+  market: "The country or area we searched from, so the results match what shoppers there would see.",
+  map: "How many of our searches each shop was recommended in. More mentions means AI trusts that shop more for what you sell.",
+  categories: "How often you were recommended for each type of search, like price, quality or gift searches.",
+  product: "How clear and complete your product details are for AI: descriptions, sizes, materials, prices, delivery and returns.",
+};
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -103,8 +159,19 @@ function LockedBottom({ report }) {
   );
 }
 
-export default function Report({ report }) {
+function recheckLink(report) {
+  const q = new URLSearchParams({ website: report.shop.domain, sell: report.category || "", recheck: "1" });
+  if (report.location) q.set("loc", report.location);
+  if (report.extra) q.set("extra", report.extra);
+  return `/?${q.toString()}`;
+}
+
+export default function Report({ report, onRecheck }) {
   const [copied, setCopied] = useState(false);
+  // On a report link, only show "Check again" to the person who ran the check (saved on their device), or the owner.
+  const [mine, setMine] = useState(false);
+  useEffect(() => setMine(isRecent(report.id) || !report.locked), [report.id, report.locked]);
+  const canRecheck = Boolean(onRecheck) || mine;
   const examples = report.examples || [];
   const wins = examples.filter((q) => q.found);
   const missed = examples.filter((q) => !q.found);
@@ -145,40 +212,69 @@ export default function Report({ report }) {
         <Ring value={report.overall} />
         <div className="score-text">
           <p className="eyebrow">{report.shop.name}</p>
-          <h2>{report.label}</h2>
+          <h2>
+            {report.label} <Tip text={TIPS.score} />
+          </h2>
           <p>{encouragement(report)}</p>
           {change && (
             <p className={`change ${change.diff > 0 ? "up" : change.diff < 0 ? "down" : "same"}`}>
+              <span className="before-after">
+                Before <b>{report.previous.overall}</b> → Now <b>{report.overall}</b>
+              </span>{" "}
               {change.diff > 0 ? `▲ Up ${change.diff} points` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)} points` : "No change"}{" "}
-              since the last check on {change.date}
+              since your last check on {change.date}
             </p>
           )}
         </div>
         <div className="kpis">
           <div className="kpi">
             <b>{report.visibility}%</b>
-            <span>Searches you appeared in</span>
+            <span>
+              Searches you appeared in <Tip text={TIPS.visibility} />
+            </span>
           </div>
           {report.topPicks !== null && (
             <div className="kpi">
               <b>{report.topPicks}</b>
-              <span>{report.topPicks === 1 ? "Top pick" : "Top picks"}</span>
+              <span>
+                {report.topPicks === 1 ? "Top pick" : "Top picks"} <Tip text={TIPS.topPick} />
+              </span>
             </div>
           )}
           {report.rank ? (
             <div className="kpi">
               <b>{ordinal(report.rank.position)}</b>
-              <span>Of {report.rank.of} shops recommended</span>
+              <span>
+                Of {report.rank.of} shops recommended <Tip text={TIPS.rank} />
+              </span>
             </div>
           ) : (
             report.market && (
               <div className="kpi">
                 <b className="kpi-text">{report.market}</b>
-                <span>Market tested</span>
+                <span>
+                  Market tested <Tip text={TIPS.market} />
+                </span>
               </div>
             )
           )}
         </div>
+        {canRecheck && (
+          <div className="recheck no-print">
+            <p className="muted small">
+              {change ? "Keep improving and check again to track your progress." : "Made changes to your store? Check again to see your before and after."}
+            </p>
+            {onRecheck ? (
+              <button type="button" className="secondary" onClick={onRecheck}>
+                ↻ Check again
+              </button>
+            ) : (
+              <a className="button secondary-link" href={recheckLink(report)}>
+                ↻ Check again
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Owner-only tools */}
@@ -240,7 +336,9 @@ export default function Report({ report }) {
       {/* 4. Competitive map */}
       {competitors.length > 0 && (
         <div className="card">
-          <h3>How often AI recommends you vs competitors</h3>
+          <h3>
+            How often AI recommends you vs competitors <Tip text={TIPS.map} />
+          </h3>
           <div className="bars-h">
             {mapRows.map((r, i) => (
               <Bar key={i} label={r.label} value={r.value} max={mapMax} you={r.you} />
@@ -263,7 +361,9 @@ export default function Report({ report }) {
       {/* 5. Categories */}
       {categories.length > 0 && (
         <div className="card">
-          <h3>Performance by category</h3>
+          <h3>
+            Performance by category <Tip text={TIPS.categories} />
+          </h3>
           <div className="cats">
             {categories.map((c, i) => {
               const s = strength(c.pct);
@@ -302,7 +402,7 @@ export default function Report({ report }) {
       {/* 6. Product info */}
       <div className="card">
         <h3>
-          Product info score <span className="pill">{report.dataScore}/100</span>
+          Product info score <span className="pill">{report.dataScore}/100</span> <Tip text={TIPS.product} />
         </h3>
         {highlights.length ? (
           <ul className="points">

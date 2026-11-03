@@ -20,7 +20,7 @@ export default function NewsPage() {
               News
             </a>
           </nav>
-          <span className="tag">Free check · about a minute</span>
+          <span className="tag">Free check in under 60 seconds</span>
         </header>
 
         <div className="page-intro">

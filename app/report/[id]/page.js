@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
     description: `Does AI recommend ${report.shop.name}? See the full AI visibility report, then check your own store free.`,
     openGraph: {
       title: `${report.shop.name} scored ${report.overall}/100 for AI visibility`,
-      description: "Does AI see your store? Check yours free in about a minute.",
+      description: "Does AI see your store? Check yours free in under 60 seconds.",
       type: "article",
     },
   };
@@ -50,7 +50,7 @@ export default async function ReportPage({ params }) {
 
       <div className="card cta">
         <h3>Does AI see your store?</h3>
-        <p className="muted">Run a free check on your own shop in about a minute.</p>
+        <p className="muted">Run a free check on your own shop in under 60 seconds.</p>
         <a className="button" href="/">
           Check my store
         </a>

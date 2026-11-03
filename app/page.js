@@ -5,17 +5,54 @@ import Footer from "./components/Footer";
 import HomeInfo from "./components/HomeInfo";
 import Script from "next/script";
 import Report from "./components/Report";
+import ChatDemo from "./components/ChatDemo";
+import { loadRecent, saveRecent } from "./components/recent";
 
 const BOT_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-const LOADING = [
-  "Opening your store…",
-  "Reading your products…",
-  "Thinking like a shopper…",
-  "Asking AI assistants what they'd recommend…",
-  "Checking who gets mentioned…",
-  "Still searching, nearly there…",
-  "Adding up your score…",
+// General progress steps. They never reveal the actual searches being run.
+function progressSteps(location) {
+  return [
+    "Reading your store through AI's eyes…",
+    "Analysing your AI appeal…",
+    "Understanding your customers…",
+    location ? `Thinking like a shopper in ${location}…` : "Thinking like a shopper in your market…",
+    "Scanning the competition…",
+    "Seeing who AI recommends first…",
+    "Finding where you could win…",
+    "Building your report…",
+  ];
+}
+
+const DID_YOU_KNOW = [
+  "Shoppers often go with the first shop AI recommends.",
+  "AI reads delivery times and returns policies when choosing who to recommend.",
+  "Clear product details make it easier for AI to recommend you.",
+  "AI assistants compare shops in seconds, not pages of search results.",
+];
+
+const STEP_MS = 6500;
+
+const LOCATIONS = [
+  "United Kingdom",
+  "England",
+  "Scotland",
+  "Wales",
+  "Northern Ireland",
+  "London",
+  "Manchester",
+  "Ireland",
+  "United States",
+  "Canada",
+  "Australia",
+  "New Zealand",
+  "Germany",
+  "France",
+  "Spain",
+  "Italy",
+  "Netherlands",
+  "Europe",
+  "Worldwide",
 ];
 
 export default function Home() {
@@ -25,9 +62,15 @@ export default function Home() {
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [botToken, setBotToken] = useState("");
+  const [remaining, setRemaining] = useState(null);
+  const [cachedNote, setCachedNote] = useState(false);
+  const [recent, setRecent] = useState([]);
+  const [fresh, setFresh] = useState(false);
+  const [showFloat, setShowFloat] = useState(false);
 
   const heroRef = useRef(null);
   const titleRef = useRef(null);
@@ -37,6 +80,25 @@ export default function Home() {
 
   useEffect(() => {
     window.onBotToken = (t) => setBotToken(t);
+  }, []);
+
+  // On load: free checks left, recent checks on this device, and any "Check again" details.
+  useEffect(() => {
+    fetch("/api/scan", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => typeof d.remaining === "number" && setRemaining(d.remaining))
+      .catch(() => {});
+    setRecent(loadRecent());
+
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("website")) {
+      setUrl(q.get("website") || "");
+      setCategory(q.get("sell") || "");
+      setLocation(q.get("loc") || "");
+      setExtra(q.get("extra") || "");
+      if (q.get("recheck") === "1") setFresh(true);
+      setTimeout(() => window.scrollTo({ top: 320, behavior: "smooth" }), 300);
+    }
   }, []);
 
   // Scroll intro: big title shrinks to the top, form slides in.
@@ -67,6 +129,9 @@ export default function Home() {
       extras.style.pointerEvents = p < 0.3 ? "auto" : "none";
       extras.style.maxHeight = lerp(220, 0) + "px";
       extras.style.marginTop = lerp(24, 0) + "px";
+
+      // Floating "Check my store" button once the form is well out of view.
+      setShowFloat(window.scrollY > window.innerHeight + 520);
     }
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -77,30 +142,49 @@ export default function Home() {
     };
   }, []);
 
+  // Progress while scanning.
   useEffect(() => {
     if (!loading) return;
+    const steps = progressSteps(location).length;
+    const start = Date.now();
     setStep(0);
-    const t = setInterval(() => setStep((s) => Math.min(s + 1, LOADING.length - 1)), 9000);
+    setProgress(2);
+    const t = setInterval(() => {
+      const ms = Date.now() - start;
+      setStep(Math.min(steps - 1, Math.floor(ms / STEP_MS)));
+      setProgress(Math.min(95, Math.round(100 * (1 - Math.exp(-ms / 22000)))));
+    }, 250);
     return () => clearInterval(t);
-  }, [loading]);
+  }, [loading, location]);
 
-  async function scan(e) {
-    e.preventDefault();
+  const toForm = (e) => {
+    e?.preventDefault();
+    window.scrollTo({ top: 320, behavior: "smooth" });
+  };
+
+  async function runScan(details, isFresh) {
     setError("");
     setResult(null);
+    setCachedNote(false);
     setLoading(true);
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, category, location, extra, botToken }),
+        body: JSON.stringify({ ...details, botToken, fresh: Boolean(isFresh) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+      setProgress(100);
       setResult(data);
+      setCachedNote(Boolean(data.cached));
+      if (typeof data.remaining === "number") setRemaining(data.remaining);
+      setRecent(saveRecent(data));
+      setFresh(false);
       setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 80);
     } catch (err) {
       setError(err.message);
+      if (/free (scan|check)/i.test(err.message)) setRemaining(0);
     } finally {
       setLoading(false);
       if (BOT_KEY && window.turnstile) {
@@ -109,6 +193,24 @@ export default function Home() {
       }
     }
   }
+
+  function scan(e) {
+    e.preventDefault();
+    runScan({ url, category, location, extra }, fresh);
+  }
+
+  // "Check again" from the report: same details, skipping today's saved result.
+  function recheck(r) {
+    const details = { url: r.shop.domain, category: r.category || category, location: r.location || "", extra: r.extra || "" };
+    setUrl(details.url);
+    setCategory(details.category);
+    setLocation(details.location);
+    setExtra(details.extra);
+    window.scrollTo({ top: 320, behavior: "smooth" });
+    runScan(details, true);
+  }
+
+  const steps = progressSteps(location);
 
   return (
     <>
@@ -124,7 +226,7 @@ export default function Home() {
             <nav className="topnav" aria-label="Main">
               <a href="/news">News</a>
             </nav>
-            <span className="tag">Free check · in 60 seconds</span>
+            <span className="tag">Free check in under 60 seconds</span>
           </header>
 
           <div className="hero" ref={heroRef}>
@@ -139,7 +241,7 @@ export default function Home() {
 
           <div className="extras" ref={extrasRef}>
             <ul className="chips" aria-label="What you get">
-              {["Free check", "No sign-up", "No account", "Under 60 seconds"].map((c) => (
+              {["Free check", "Under 60 seconds", "No account needed"].map((c) => (
                 <li key={c}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6 9 17l-5-5" />
@@ -148,14 +250,7 @@ export default function Home() {
                 </li>
               ))}
             </ul>
-            <a
-              className="cta-pill"
-              href="#top"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 320, behavior: "smooth" });
-              }}
-            >
+            <a className="cta-pill" href="#top" onClick={toForm}>
               Find out in 60 seconds <span className="arrow" aria-hidden="true">↓</span>
             </a>
           </div>
@@ -188,21 +283,27 @@ export default function Home() {
             </label>
             <label>
               <span>
-                Where are your customers? <span className="optional">Optional</span>
+                Location <span className="optional">Optional</span>
               </span>
               <input
                 type="text"
+                list="locations"
                 placeholder="e.g. United Kingdom, London, USA or Worldwide"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 maxLength={60}
                 disabled={loading}
-                autoComplete="country-name"
+                autoComplete="off"
               />
+              <datalist id="locations">
+                {LOCATIONS.map((l) => (
+                  <option key={l} value={l} />
+                ))}
+              </datalist>
             </label>
             <label>
               <span>
-                Anything else? <span className="optional">Optional</span>
+                Additional information <span className="optional">Optional</span>
               </span>
               <input
                 type="text"
@@ -218,27 +319,59 @@ export default function Home() {
             {BOT_KEY && <div className="cf-turnstile" data-sitekey={BOT_KEY} data-callback="onBotToken" data-theme="dark" />}
 
             <button type="submit" disabled={loading || Boolean(BOT_KEY && !botToken)}>
-              {loading ? "Checking…" : "Check my store"}
+              {loading ? "Checking…" : fresh ? "Check again" : "Check my store"}
             </button>
+
             {loading && (
-              <div className="loading" aria-live="polite">
-                <span className="dot" />
-                {LOADING[step]}
+              <div className="progress" aria-live="polite">
+                <div className="progress-top">
+                  <span className="progress-step" key={step}>
+                    {steps[step]}
+                  </span>
+                  <span className="progress-pct">{progress}%</span>
+                </div>
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="progress-tip">
+                  <b>Did you know?</b> {DID_YOU_KNOW[Math.floor(step / 2) % DID_YOU_KNOW.length]}
+                </p>
               </div>
             )}
+
             {error && <p className="error">{error}</p>}
-            {result && typeof result.remaining === "number" && (
-              <p className="hint">
-                {result.cached ? "Showing a result from earlier today. " : ""}
-                {result.remaining} free {result.remaining === 1 ? "scan" : "scans"} left today.
+
+            {!loading && (remaining !== null || cachedNote) && (
+              <p className="hint checks-left">
+                {cachedNote ? "Showing your result from earlier today. " : ""}
+                {remaining !== null &&
+                  (remaining > 0
+                    ? `${remaining} free ${remaining === 1 ? "check" : "checks"} left today`
+                    : "No free checks left today. Come back tomorrow!")}
               </p>
             )}
-          </form>
 
+            {!loading && recent.length > 0 && (
+              <div className="recent">
+                <span className="recent-label">Your recent checks:</span>
+                {recent.slice(0, 3).map((r) => (
+                  <a key={r.id} href={`/report/${r.id}`} className="recent-item">
+                    {r.name} <b>{r.overall}</b>
+                  </a>
+                ))}
+              </div>
+            )}
+          </form>
         </div>
       </div>
 
-      {result && <Report report={result} />}
+      <ChatDemo />
+
+      <a className={`float-cta${showFloat ? " show" : ""}`} href="#top" onClick={toForm} tabIndex={showFloat ? 0 : -1} aria-hidden={!showFloat}>
+        Check my store ↑
+      </a>
+
+      {result && <Report report={result} onRecheck={loading ? null : () => recheck(result)} />}
 
       <HomeInfo />
 

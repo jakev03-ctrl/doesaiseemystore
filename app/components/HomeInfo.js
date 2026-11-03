@@ -1,5 +1,6 @@
 // Information sections under the homepage form and results:
-// why now, who it's for, how it works, FAQs and a final call to action.
+// why now, who it's for, FAQs and a final call to action.
+import CountUp from "./CountUp";
 
 const STATS = [
   {
@@ -40,24 +41,6 @@ const WHO = [
   { icon: "shop", title: "Online shops", text: "Small and medium stores on Shopify, Etsy, WooCommerce and more, anywhere in the world." },
   { icon: "star", title: "Independent brands", text: "Great products, up against the big names AI tends to recommend by default." },
   { icon: "grow", title: "Ready to grow", text: "Businesses that want to get ahead of the shift to AI shopping before their competitors do." },
-];
-
-const STEPS = [
-  {
-    n: "1",
-    title: "We read your store",
-    text: "We look at your products the way an AI assistant would: descriptions, sizes, materials, prices, delivery and returns.",
-  },
-  {
-    n: "2",
-    title: "We search like your customers",
-    text: "We ask an AI assistant with live web search the kind of questions your customers ask, from where they are.",
-  },
-  {
-    n: "3",
-    title: "You see where you stand",
-    text: "Where you're winning, who's recommended instead, and your quickest win to start growing.",
-  },
 ];
 
 const FAQS = [
@@ -101,7 +84,7 @@ export default function HomeInfo() {
         <div className="grid3">
           {STATS.map((s) => (
             <div className="card" key={s.big}>
-              <div className="stat-big">{s.big}</div>
+              <CountUp text={s.big} />
               <p className="muted">{s.text}</p>
               <p className="src">{s.src}</p>
             </div>
@@ -125,22 +108,6 @@ export default function HomeInfo() {
               </div>
               <h3>{w.title}</h3>
               <p className="muted">{w.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="info-block" aria-labelledby="how">
-        <p className="eyebrow">How it works</p>
-        <h2 id="how">Your check in 60 seconds</h2>
-        <div className="grid3">
-          {STEPS.map((s) => (
-            <div className="card" key={s.n}>
-              <span className="step-n" aria-hidden="true">
-                {s.n}
-              </span>
-              <h3>{s.title}</h3>
-              <p className="muted">{s.text}</p>
             </div>
           ))}
         </div>

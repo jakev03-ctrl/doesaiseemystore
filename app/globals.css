@@ -486,3 +486,120 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4
 .more-link { margin-top: 20px; }
 .more-link a { font-weight: 600; text-decoration: none; }
 @media print { .kpi { border: 1px solid #d6d9e3 !important; background: #fff !important; } }
+
+/* ---------- v13b: progress steps ---------- */
+.progress { display: grid; gap: 8px; }
+.progress-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 15px; color: #e4eafa; font-weight: 600; }
+.progress-step { animation: stepIn 0.45s ease both; }
+@keyframes stepIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.progress-pct { color: var(--accent-2); font-variant-numeric: tabular-nums; font-size: 14px; }
+.progress-track { height: 8px; border-radius: 99px; background: rgba(140, 170, 255, 0.14); overflow: hidden; }
+.progress-fill {
+  height: 100%; border-radius: 99px; transition: width 0.4s ease;
+  background: linear-gradient(90deg, var(--accent), #9b7bff); box-shadow: 0 0 14px rgba(110, 155, 255, 0.7);
+}
+.progress-tip { margin: 0; font-size: 13px; color: var(--muted); }
+.progress-tip b { color: var(--accent-2); }
+
+/* ---------- v13b: checks left + recent checks ---------- */
+.checks-left { text-align: center; }
+.recent { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; font-size: 13px; }
+.recent-label { color: var(--muted); }
+.recent-item {
+  display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: 99px; text-decoration: none;
+  color: var(--soft); border: 1px solid var(--glass-line); background: rgba(4, 8, 23, 0.5); max-width: 200px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.recent-item b { color: var(--accent-2); }
+.recent-item:hover { color: #fff; border-color: var(--accent); }
+
+/* ---------- v13b: chat demo (bottom-left) ---------- */
+.chat-demo {
+  position: fixed; left: 20px; bottom: 20px; z-index: 5; width: 250px; padding: 12px; border-radius: 16px;
+  background: rgba(12, 20, 52, 0.82); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  font-size: 12.5px; line-height: 1.4; display: grid; gap: 8px; pointer-events: none;
+  transition: opacity 0.35s, transform 0.35s;
+}
+.chat-demo.gone { opacity: 0; transform: translateY(12px); }
+.chat-head { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
+.chat-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); }
+.bubble { padding: 8px 10px; border-radius: 12px; max-width: 92%; min-height: 32px; }
+.bubble.me { justify-self: end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.bubble.ai { justify-self: start; background: rgba(140, 170, 255, 0.14); color: #e4eafa; border-bottom-left-radius: 4px; animation: stepIn 0.35s ease both; }
+.bubble.ai ol { margin: 4px 0 0; padding-left: 18px; }
+.bubble.ai li { animation: stepIn 0.4s ease both; }
+.bubble.ai li.you { color: var(--gold, #fcd34d); font-weight: 700; }
+.bubble.thinking { display: flex; gap: 4px; align-items: center; }
+.bubble.thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--soft); animation: pulse 1s ease-in-out infinite; }
+.bubble.thinking span:nth-child(2) { animation-delay: 0.15s; }
+.bubble.thinking span:nth-child(3) { animation-delay: 0.3s; }
+.caret { display: inline-block; width: 2px; height: 1em; background: #fff; margin-left: 2px; vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (max-width: 900px), (max-height: 640px) { .chat-demo { display: none; } }
+
+/* ---------- v13b: floating button ---------- */
+.float-cta {
+  position: fixed; top: 16px; left: 50%; z-index: 6; transform: translate(-50%, -80px);
+  padding: 10px 20px; border-radius: 99px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none;
+  background: linear-gradient(135deg, rgba(110, 155, 255, 0.97), rgba(124, 92, 255, 0.97));
+  box-shadow: 0 10px 30px rgba(110, 155, 255, 0.45); opacity: 0; pointer-events: none; transition: transform 0.3s, opacity 0.3s;
+}
+.float-cta.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+
+/* ---------- v13b: report reveal ---------- */
+.results > .card, .results > .fadewrap, .results > .note { animation: rise 0.6s ease both; }
+.results > :nth-child(2) { animation-delay: 0.05s; }
+.results > :nth-child(3) { animation-delay: 0.35s; }
+.results > :nth-child(4) { animation-delay: 0.55s; }
+.results > :nth-child(5) { animation-delay: 0.75s; }
+.results > :nth-child(6) { animation-delay: 0.95s; }
+.results > :nth-child(7) { animation-delay: 1.15s; }
+.results > :nth-child(8) { animation-delay: 1.35s; }
+.results > :nth-child(n + 9) { animation-delay: 1.5s; }
+@keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.ring { transition: none; }
+
+/* ---------- v13b: "i" explainers ---------- */
+.tip { position: relative; display: inline-flex; vertical-align: middle; text-transform: none; letter-spacing: 0; }
+.tip-btn {
+  width: 18px; height: 18px; padding: 0; border-radius: 50%; font-size: 11px; font-weight: 800; font-family: Georgia, serif; font-style: italic;
+  background: rgba(110, 155, 255, 0.2); color: var(--accent-2); box-shadow: none; line-height: 18px; display: inline-grid; place-items: center;
+}
+.tip-btn:hover:not(:disabled) { transform: none; background: rgba(110, 155, 255, 0.35); box-shadow: none; }
+.tip-box {
+  position: absolute; z-index: 10; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 240px;
+  padding: 10px 12px; border-radius: 12px; background: #0d1638; border: 1px solid rgba(140, 170, 255, 0.35);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5); color: #e4eafa; font-size: 13px; font-weight: 400; line-height: 1.45;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; text-align: left; white-space: normal;
+}
+@media (max-width: 560px) { .tip-box { width: 200px; } }
+.score h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- v13b: check again ---------- */
+.recheck {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding-top: 14px; border-top: 1px solid rgba(140, 170, 255, 0.12);
+}
+.recheck p { margin: 0; }
+a.button.secondary-link {
+  font-size: 15px; padding: 11px 18px; background: rgba(110, 155, 255, 0.14); color: var(--accent-2);
+  box-shadow: 0 0 0 1px var(--glass-line) inset;
+}
+.before-after { display: inline-block; margin-right: 6px; color: #fff; }
+
+/* ---------- v13b: admin health ---------- */
+.health-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 10px 0 8px; }
+.health-tiles .tile { background: rgba(4, 8, 23, 0.5); border: 1px solid rgba(140, 170, 255, 0.12); border-radius: 14px; }
+.health-sub { margin-top: 10px !important; }
+.status { font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 99px; background: rgba(140, 170, 255, 0.12); }
+.status.good { color: var(--good); } .status.mid { color: var(--mid); } .status.bad { color: var(--bad); } .status.idle { color: var(--muted); }
+.stat-big.in { animation: rise 0.5s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .results > *, .progress-step, .bubble, .bubble li, .stat-big.in { animation: none !important; }
+}
+@media print { .tip-btn, .recheck, .chat-demo, .float-cta { display: none !important; } .results > * { animation: none !important; } }
+
+/* Keep the headline, boxes and form at full size inside the pinned intro (stops the boxes being squashed to nothing). */
+.stage > * { flex-shrink: 0; }
