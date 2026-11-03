@@ -1,4 +1,46 @@
-// Information sections under the homepage form: how it works, why it matters, FAQs.
+// Information sections under the homepage form and results:
+// why now, who it's for, how it works, FAQs and a final call to action.
+
+const STATS = [
+  {
+    big: "1 in 2",
+    text: "shoppers used AI to help them shop in the past three months.",
+    src: "McKinsey, October 2026",
+  },
+  {
+    big: "393%",
+    text: "growth in visits to online shops from AI assistants in a year, and those visitors were more likely to buy.",
+    src: "Adobe data via TechCrunch, April 2026",
+  },
+  {
+    big: "1 in 3",
+    text: "retail product pages aren't easy for AI to read, so many stores are being skipped.",
+    src: "Adobe data via TechCrunch, April 2026",
+  },
+];
+
+const ICONS = {
+  shop: (
+    <>
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </>
+  ),
+  star: <path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />,
+  grow: (
+    <>
+      <path d="M22 7 13.5 15.5 8.5 10.5 2 17" />
+      <path d="M16 7h6v6" />
+    </>
+  ),
+};
+
+const WHO = [
+  { icon: "shop", title: "Online shops", text: "Small and medium stores on Shopify, Etsy, WooCommerce and more, anywhere in the world." },
+  { icon: "star", title: "Independent brands", text: "Great products, up against the big names AI tends to recommend by default." },
+  { icon: "grow", title: "Ready to grow", text: "Businesses that want to get ahead of the shift to AI shopping before their competitors do." },
+];
 
 const STEPS = [
   {
@@ -8,13 +50,13 @@ const STEPS = [
   },
   {
     n: "2",
-    title: "We search like a shopper",
-    text: "We ask an AI assistant with live web search a wide range of realistic questions a customer might ask when looking for what you sell.",
+    title: "We search like your customers",
+    text: "We ask an AI assistant with live web search the kind of questions your customers ask, from where they are.",
   },
   {
     n: "3",
-    title: "You get a score and fixes",
-    text: "See how often you were recommended, who was recommended instead, and the top changes that would help AI understand you.",
+    title: "You see where you stand",
+    text: "Where you're winning, who's recommended instead, and your quickest win to start growing.",
   },
 ];
 
@@ -24,8 +66,12 @@ const FAQS = [
     a: "Yes. Everyone gets 2 free checks a day. No sign-up, card or email needed.",
   },
   {
-    q: "Which AI do you test?",
-    a: "We currently test with Claude using live web search, the same way an AI shopping assistant looks things up. Each report says exactly which AI was tested.",
+    q: "Does it work outside the UK?",
+    a: "Yes. Tell us where your customers are, and we'll search the way shoppers there would. Leave it blank and we'll work it out from your store.",
+  },
+  {
+    q: "What's in the full report?",
+    a: "Every search we tested and your position in each, your full competitive map, every category, all your quick wins and a step-by-step growth plan. Just press Enquire now on your results and we'll reply by email.",
   },
   {
     q: "Why might my score change between checks?",
@@ -49,12 +95,47 @@ const FAQS = [
 export default function HomeInfo() {
   return (
     <div className="info">
+      <section className="info-block" aria-labelledby="why">
+        <p className="eyebrow">Why now</p>
+        <h2 id="why">Why AI visibility matters now</h2>
+        <div className="grid3">
+          {STATS.map((s) => (
+            <div className="card" key={s.big}>
+              <div className="stat-big">{s.big}</div>
+              <p className="muted">{s.text}</p>
+              <p className="src">{s.src}</p>
+            </div>
+          ))}
+        </div>
+        <p className="muted more-link">
+          <a href="/news">Read the latest news on AI shopping →</a>
+        </p>
+      </section>
+
+      <section className="info-block" aria-labelledby="who">
+        <p className="eyebrow">Who it's for</p>
+        <h2 id="who">Built for growing stores</h2>
+        <div className="grid3">
+          {WHO.map((w) => (
+            <div className="card" key={w.title}>
+              <div className="icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {ICONS[w.icon]}
+                </svg>
+              </div>
+              <h3>{w.title}</h3>
+              <p className="muted">{w.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="info-block" aria-labelledby="how">
         <p className="eyebrow">How it works</p>
-        <h2 id="how">A free check in about a minute</h2>
-        <div className="steps">
+        <h2 id="how">Your check in 60 seconds</h2>
+        <div className="grid3">
           {STEPS.map((s) => (
-            <div className="card step" key={s.n}>
+            <div className="card" key={s.n}>
               <span className="step-n" aria-hidden="true">
                 {s.n}
               </span>
@@ -62,23 +143,6 @@ export default function HomeInfo() {
               <p className="muted">{s.text}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="info-block" aria-labelledby="why">
-        <p className="eyebrow">Why it matters</p>
-        <h2 id="why">Shoppers are asking AI what to buy</h2>
-        <div className="card why">
-          <p>
-            Instead of scrolling through search results, more people now ask AI assistants things like
-            "best soy candles under £30" and buy from whatever gets recommended.
-          </p>
-          <p>
-            AI assistants tend to recommend stores whose product information is clear, complete and easy
-            to understand. Many small stores are missing simple details, so AI overlooks them, even when
-            their products are great.
-          </p>
-          <p>The good news: most of the fixes are quick, and you don't need to be technical to make them.</p>
         </div>
       </section>
 
@@ -105,7 +169,7 @@ export default function HomeInfo() {
 
       <section className="card cta">
         <h3>Ready to find out?</h3>
-        <p className="muted">It's free and takes about a minute.</p>
+        <p className="muted">It's free and takes under 60 seconds.</p>
         <a className="button" href="#top">
           Check my store
         </a>

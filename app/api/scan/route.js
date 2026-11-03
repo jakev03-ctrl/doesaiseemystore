@@ -73,6 +73,7 @@ export async function POST(req) {
   const category = String(body.category || "").trim().slice(0, 80);
   if (category.length < 2) return fail("Please tell us what you sell (e.g. scented candles).");
   const extra = String(body.extra || "").trim().slice(0, 120);
+  const location = String(body.location || "").trim().slice(0, 60);
 
   if (!owner && !(await passesBotCheck(body.botToken, ip))) {
     return fail("Please complete the quick 'are you human?' check, then try again.", 403);
@@ -81,7 +82,7 @@ export async function POST(req) {
   try {
     // Work out the shop's address first, so we can reuse a recent result.
     const { domain } = normaliseUrl(url);
-    const cacheKey = `cache:${domain}:${slug(category)}:${slug(extra)}`;
+    const cacheKey = `cache:${domain}:${slug(category)}:${slug(location)}:${slug(extra)}`;
 
     // Reuse a result from the last day (free, and doesn't use up a scan). Owners always get a fresh scan.
     if (!owner) {
@@ -105,8 +106,8 @@ export async function POST(req) {
     }
 
     const shop = await readShop(url);
-    const audit = await auditShop(shop, category, extra);
-    const vis = await testVisibility(shop, audit.questions);
+    const audit = await auditShop(shop, category, extra, location);
+    const vis = await testVisibility(shop, audit.questions, audit.market);
 
     if (vis.checked === 0) {
       return fail("Our AI checks didn't complete this time. Please try again in a minute.", 503);
@@ -131,6 +132,11 @@ export async function POST(req) {
       shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
       category,
       extra,
+      location,
+      market: audit.market,
+      topPicks: vis.topPicks,
+      rank: vis.rank,
+      categories: vis.categories,
       overall,
       visibility,
       label: label(visibility),
@@ -153,7 +159,7 @@ export async function POST(req) {
 
     console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
     await countEvent(owner ? "ownerScans" : "scans");
-    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra, overall, visibility, owner, cached: false });
+    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false });
 
     return reply({ ...publicView(report, { full: owner }), remaining }, 200, deviceId, newDevice);
   } catch (e) {
