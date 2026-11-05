@@ -20,7 +20,14 @@ export default function ChatDemo() {
 
   // Hide once the visitor starts scrolling (it fades with the headline).
   useEffect(() => {
-    const onScroll = () => setHidden(window.scrollY > 60);
+    let last = null;
+    const onScroll = () => {
+      const h = window.scrollY > 60;
+      if (h !== last) {
+        last = h;
+        setHidden(h);
+      }
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

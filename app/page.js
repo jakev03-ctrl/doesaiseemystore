@@ -102,8 +102,15 @@ export default function Home() {
   }, []);
 
   // Scroll intro: big title shrinks to the top, form slides in.
+  // Runs at most once per frame, and only does work while the intro is changing.
   useEffect(() => {
+    let ticking = false;
+    let lastP = -1;
+    let lastW = 0;
+    let floatShown = false;
+
     function update() {
+      ticking = false;
       const hero = heroRef.current;
       const title = titleRef.current;
       const sub = subRef.current;
@@ -111,8 +118,18 @@ export default function Home() {
       const extras = extrasRef.current;
       if (!hero || !title || !sub || !form || !extras) return;
 
-      const small = window.innerWidth < 640;
+      const wantFloat = window.scrollY > window.innerHeight + 520;
+      if (wantFloat !== floatShown) {
+        floatShown = wantFloat;
+        setShowFloat(wantFloat);
+      }
+
       const p = Math.max(0, Math.min(1, window.scrollY / 280));
+      if (p === lastP && window.innerWidth === lastW) return;
+      lastP = p;
+      lastW = window.innerWidth;
+
+      const small = window.innerWidth < 640;
       const e = 1 - Math.pow(1 - p, 3);
       const lerp = (a, b) => a + (b - a) * e;
 
@@ -129,16 +146,23 @@ export default function Home() {
       extras.style.pointerEvents = p < 0.3 ? "auto" : "none";
       extras.style.maxHeight = lerp(220, 0) + "px";
       extras.style.marginTop = lerp(24, 0) + "px";
-
-      // Floating "Check my store" button once the form is well out of view.
-      setShowFloat(window.scrollY > window.innerHeight + 520);
     }
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    const onResize = () => {
+      lastW = 0;
+      onScroll();
+    };
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 

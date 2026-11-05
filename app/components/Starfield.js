@@ -23,7 +23,7 @@ export default function Starfield() {
       sky.width = w * dpr;
       sky.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.round((w * h) / 2600);
+      const count = Math.min(420, Math.round((w * h) / 3600));
       stars = Array.from({ length: count }, () => {
         const depth = Math.random();
         return {
@@ -39,7 +39,20 @@ export default function Starfield() {
       });
     }
 
+    // ~30 frames a second is plenty for slow-drifting stars, and halves the work.
+    let lastDraw = 0;
+    function loop(now) {
+      frame = requestAnimationFrame(loop);
+      if (document.hidden || now - lastDraw < 33) return;
+      lastDraw = now;
+      paint();
+    }
+
     function draw() {
+      paint();
+    }
+
+    function paint() {
       ctx.clearRect(0, 0, w, h);
       // Light theme: the same stars, turned down to soft blue-grey specks.
       const light = document.documentElement.dataset.theme === "light";
@@ -66,7 +79,6 @@ export default function Starfield() {
             : `rgba(255, 255, 255, ${a})`;
         ctx.fill();
       }
-      if (!still) frame = requestAnimationFrame(draw);
     }
 
     const onResize = () => {
@@ -79,6 +91,7 @@ export default function Starfield() {
 
     makeStars();
     draw();
+    if (!still) frame = requestAnimationFrame(loop);
     window.addEventListener("resize", onResize);
     if (still) window.addEventListener("scroll", onScroll, { passive: true });
 
