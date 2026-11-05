@@ -75,7 +75,7 @@ export default function HeroVideo() {
 
   useEffect(() => {
     const onScroll = () => {
-      const r = window.scrollY > 70;
+      const r = window.scrollY > 90;
       if (r !== revealedRef.current) {
         revealedRef.current = r;
         if (r) setInView(true);
@@ -122,6 +122,7 @@ export default function HeroVideo() {
             ref={vid}
             key={theme}
             poster={`/media/how-it-works-${theme}-start.jpg`}
+            autoPlay
             muted
             playsInline
             preload="auto"
