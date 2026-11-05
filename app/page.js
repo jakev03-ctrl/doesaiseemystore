@@ -6,6 +6,7 @@ import HomeInfo from "./components/HomeInfo";
 import Script from "next/script";
 import Report from "./components/Report";
 import ChatDemo from "./components/ChatDemo";
+import HeroVideo from "./components/HeroVideo";
 import { loadRecent, saveRecent } from "./components/recent";
 import { runScanJob, pendingJob, waitForJob } from "./components/scanClient";
 
@@ -77,10 +78,7 @@ export default function Home() {
   const titleRef = useRef(null);
   const subRef = useRef(null);
   const extrasRef = useRef(null);
-  const vidWrapRef = useRef(null);
-  const vidRef = useRef(null);
-  const [theme, setTheme] = useState("dark");
-  const [videoFailed, setVideoFailed] = useState(false);
+
 
   useEffect(() => {
     window.onBotToken = (t) => setBotToken(t);
@@ -94,10 +92,6 @@ export default function Home() {
       .catch(() => {});
     setRecent(loadRecent());
 
-    // Pick the video that matches the light/dark theme, and follow the switch.
-    const readTheme = () => setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
-    readTheme();
-    window.addEventListener("themechange", readTheme);
 
     // A check that was still running when they left: pick it up again.
     const job = pendingJob();
@@ -120,15 +114,13 @@ export default function Home() {
       if (q.get("recheck") === "1") setFresh(true);
       setTimeout(() => document.getElementById("check")?.scrollIntoView({ behavior: "smooth" }), 300);
     }
-    return () => window.removeEventListener("themechange", readTheme);
   }, []);
 
-  // Scroll intro: the big title shrinks to the top, the video rises in and plays,
-  // then fades away as the form comes up. Runs at most once per frame.
+  // Scroll intro: the big title shrinks to the top. Runs at most once per frame, and stops once it's done.
   useEffect(() => {
     let ticking = false;
     let floatShown = false;
-    let playing = false;
+    let lastP = -1;
 
     function update() {
       ticking = false;
@@ -136,11 +128,7 @@ export default function Home() {
       const title = titleRef.current;
       const sub = subRef.current;
       const extras = extrasRef.current;
-      const wrap = vidWrapRef.current;
-      const vid = vidRef.current;
-      if (!hero || !title || !sub || !extras || !wrap) return;
-      const y = window.scrollY;
-      const small = window.innerWidth < 640;
+      if (!hero || !title || !sub || !extras) return;
 
       const formTop = document.getElementById("check")?.getBoundingClientRect().top ?? 9999;
       const wantFloat = formTop < -420;
@@ -148,9 +136,11 @@ export default function Home() {
         floatShown = wantFloat;
         setShowFloat(wantFloat);
       }
-      if (y > window.innerHeight + 1400) return; // intro is off screen: nothing to do
 
-      const p = Math.max(0, Math.min(1, y / 320));
+      const p = Math.max(0, Math.min(1, window.scrollY / 320));
+      if (p === lastP) return;
+      lastP = p;
+      const small = window.innerWidth < 640;
       const e = 1 - Math.pow(1 - p, 3);
       const lerp = (a, b) => a + (b - a) * e;
       hero.style.marginTop = lerp(window.innerHeight * 0.2, 4) + "px";
@@ -161,27 +151,6 @@ export default function Home() {
       extras.style.pointerEvents = p < 0.3 ? "auto" : "none";
       extras.style.maxHeight = lerp(220, 0) + "px";
       extras.style.marginTop = lerp(24, 0) + "px";
-
-      // The video: in from 140px of scrolling, out from 1000px.
-      const vin = Math.max(0, Math.min(1, (y - 140) / 300));
-      const vout = Math.max(0, Math.min(1, (y - 1000) / 250));
-      const top = hero.getBoundingClientRect().bottom + 8;
-      wrap.style.top = top + "px";
-      wrap.style.opacity = String(vin * (1 - vout));
-      wrap.style.transform = `translateX(-50%) translateY(${(1 - vin) * 60 - vout * 80}px) scale(${0.9 + 0.1 * (1 - Math.pow(1 - vin, 3))})`;
-      wrap.style.pointerEvents = vin > 0.5 && vout < 0.5 ? "auto" : "none";
-      const show = vin > 0.6 && vout < 0.5;
-      if (vid && show && !playing) {
-        playing = true;
-        try {
-          vid.currentTime = 0;
-        } catch {}
-        const pr = vid.play();
-        if (pr && pr.catch) pr.catch(() => setVideoFailed(true));
-      } else if (vid && !show && playing) {
-        playing = false;
-        vid.pause();
-      }
     }
     const onScroll = () => {
       if (!ticking) {
@@ -189,12 +158,16 @@ export default function Home() {
         requestAnimationFrame(update);
       }
     };
+    const onResize = () => {
+      lastP = -1;
+      onScroll();
+    };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -312,25 +285,10 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="vidwrap" ref={vidWrapRef} onClick={toForm} role="button" tabIndex={-1} aria-label="See how it works. Click to go to the check form.">
-            {videoFailed ? (
-              <img src={`/media/how-it-works-${theme}.jpg`} alt="A DoesAISeeMyStore report: your AI score, who AI picks instead, key stats and what to fix" />
-            ) : (
-              <video
-                ref={vidRef}
-                key={theme}
-                src={`/media/how-it-works-${theme}.mp4`}
-                poster={`/media/how-it-works-${theme}-start.jpg`}
-                muted
-                playsInline
-                preload="metadata"
-                aria-label="A 10 second demo: enter your store, then see your AI score, who AI picks instead, key stats and what to fix"
-                onError={() => setVideoFailed(true)}
-              />
-            )}
-          </div>
         </div>
       </div>
+
+      <HeroVideo />
 
       <section id="check" className="formsec">
         <h2 className="formsec-title">Check your store</h2>

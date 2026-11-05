@@ -816,3 +816,26 @@ html[data-theme="light"] .sparks { opacity: 1; }
 @media (max-width: 720px) { .funnel { grid-template-columns: 1fr 1fr; } }
 .funnel-step { background: var(--panel); border: 1px solid var(--glass-line); border-radius: 14px; padding: 12px; display: grid; gap: 4px; }
 .funnel-rate { font-size: 12px; color: var(--accent-2); font-weight: 700; }
+
+/* ---------- v17: lighter homepage video (no masks on the video itself) ---------- */
+.track { height: calc(100vh + 320px); }
+.vidsec { position: relative; z-index: 1; display: flex; justify-content: center; padding: 0 16px; opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.vidsec.in { opacity: 1; transform: none; }
+.vidbox { position: relative; width: min(80vw, 1180px); aspect-ratio: 16 / 9; }
+.vidbox video, .vidbox img { width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; background: var(--space); }
+.vid-edge { position: absolute; inset: -1px; pointer-events: none; box-shadow: inset 0 0 70px 45px var(--space); }
+.vid-play {
+  position: absolute; left: 50%; bottom: 10%; transform: translateX(-50%); z-index: 2;
+  padding: 10px 22px; border-radius: 99px; font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, rgba(110, 155, 255, 0.95), rgba(124, 92, 255, 0.95)); box-shadow: 0 10px 30px rgba(110, 155, 255, 0.4);
+}
+.vid-play:hover:not(:disabled) { transform: translateX(-50%) translateY(-1px); }
+@media (max-width: 640px) { .vidbox { width: 100%; } .vid-edge { box-shadow: inset 0 0 28px 16px var(--space); } }
+@media (prefers-reduced-motion: reduce) { .vidsec { transition: none; opacity: 1; transform: none; } }
+/* Soft edges: one simple fade on the box around the video (not the video itself), so it melts into the page. */
+.vid-edge { display: none; }
+.vidbox {
+  -webkit-mask-image: radial-gradient(ellipse 70% 68% at 50% 50%, #000 66%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 68% at 50% 50%, #000 66%, transparent 100%);
+  transform: translateZ(0);
+}
