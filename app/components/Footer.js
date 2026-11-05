@@ -7,6 +7,7 @@ export default function Footer() {
     <footer className="site-footer">
       <span>© {new Date().getFullYear()} DoesAISeeMyStore</span>
       <nav aria-label="Footer">
+        <a href="/how-we-test">How we test</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/contact">Contact</a>

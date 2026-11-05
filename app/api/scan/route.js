@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
 import { auditShop, testVisibility, label, newCost } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
-import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan } from "../../../lib/limits";
+import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan, hash } from "../../../lib/limits";
+import { alertOnFailures } from "../../../lib/alerts";
 
 export const runtime = "nodejs";
 export const maxDuration = 180; // seconds (free Vercel plan allows up to 300)
@@ -68,8 +69,24 @@ function summariseChecks(c) {
   };
 }
 
+// Is a background check finished yet? (The browser asks every couple of seconds.)
+async function jobStatus(req, jobId) {
+  const job = await getJSON(`job:${jobId}`).catch(() => null);
+  if (!job) return NextResponse.json({ status: "missing", error: "We couldn't find that check. Please run it again." }, { status: 404 });
+  if (job.status === "done") {
+    const report = await getJSON(`report:${job.reportId}`);
+    if (!report) return NextResponse.json({ status: "error", error: "Your report has expired. Please run the check again." }, { status: 404 });
+    const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
+    return NextResponse.json({ status: "done", report: { ...publicView(report, { full: owner }), remaining: job.remaining } });
+  }
+  if (job.status === "error") return NextResponse.json({ status: "error", error: job.error });
+  return NextResponse.json({ status: "running", elapsed: Date.now() - job.startedAt });
+}
+
 // How many free checks this visitor has left today (shown under the form).
 export async function GET(req) {
+  const jobId = new URL(req.url).searchParams.get("job");
+  if (jobId) return jobStatus(req, jobId.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 20));
   const existingDevice = req.cookies.get(DEVICE_COOKIE)?.value;
   const deviceId = existingDevice && existingDevice.length < 80 ? existingDevice : randomUUID();
   const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
@@ -138,70 +155,123 @@ export async function POST(req) {
       );
     }
 
-    const cost = newCost();
-    const shop = await readShop(url);
-    const audit = await auditShop(shop, category, extra, location, cost);
-    const vis = await testVisibility(shop, audit.questions, audit.market, cost);
-    const costUsd = Math.round(cost.usd * 1000) / 1000;
+    // A check can take a while, so it runs in the background: the visitor can leave and come back.
+    const lockKey = `running:${hash(deviceId)}`;
+    if (!owner) {
+      const running = await getJSON(lockKey);
+      if (running) return fail("A check is already running for you. It'll be ready in a moment.", 429);
+    }
+    await setJSON(lockKey, { at: Date.now() }, 240);
 
-    if (vis.checked === 0) {
-      await countEvent("errors");
-      await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true, cost: costUsd });
-      return fail("Our AI checks didn't complete this time. Please try again in a minute.", 503);
+    const jobId = randomBytes(9).toString("base64url");
+    await setJSON(`job:${jobId}`, { status: "running", startedAt: Date.now() }, 60 * 60);
+
+    async function work() {
+  const cost = newCost();
+  const shop = await readShop(url);
+  const audit = await auditShop(shop, category, extra, location, cost);
+  const vis = await testVisibility(shop, audit.questions, audit.market, cost);
+  const costUsd = Math.round(cost.usd * 1000) / 1000;
+
+  if (vis.checked === 0) {
+    await countEvent("errors");
+    await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true, cost: costUsd });
+    const err = new Error("Our AI checks didn't complete this time. Please try again in a minute.");
+    err.logged = true;
+    throw err;
+  }
+
+  const visibility = Math.round((vis.found / vis.checked) * 100);
+  const overall = Math.round(visibility * 0.6 + audit.dataScore * 0.4);
+  const id = randomBytes(6).toString("base64url");
+
+  // Before and after: compare with the last check of this store for the same category.
+  const latestKey = `latest:${shop.domain}:${slug(category)}`;
+  let previous = null;
+  try {
+    const prevId = await getJSON(latestKey);
+    const prev = prevId ? await getJSON(`report:${prevId}`) : null;
+    if (prev) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+  } catch {}
+
+  // Score history for this store (last 12 checks), for the "score over time" chart.
+  const historyKey = `history:${shop.domain}:${slug(category)}`;
+  let history = [];
+  try {
+    history = (await getJSON(historyKey)) || [];
+  } catch {}
+
+  const report = {
+    id,
+    createdAt: new Date().toISOString(),
+    shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
+    category,
+    extra,
+    location,
+    market: audit.market,
+    topPicks: vis.topPicks,
+    rank: vis.rank,
+    categories: vis.categories,
+    overall,
+    visibility,
+    label: label(visibility),
+    found: vis.found,
+    checked: vis.checked,
+    ais: vis.ais,
+    questions: vis.questions,
+    competitors: vis.competitors,
+    dataScore: audit.dataScore,
+    summary: audit.summary,
+    highlights: audit.highlights || [],
+    good: audit.good,
+    bad: audit.bad,
+    snippets: audit.snippets,
+    shopsSeen: vis.shopsSeen,
+    fixes: audit.fixes,
+    plan: audit.plan,
+    checks: shop.checks ? summariseChecks(shop.checks) : null,
+    costUsd,
+    previous,
+    history: [...history, { at: new Date().toISOString(), overall: null }].slice(-12),
+  };
+  report.history[report.history.length - 1].overall = overall;
+
+  await setJSON(`report:${id}`, report, REPORT_DAYS * 24 * 60 * 60);
+  await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
+  await setJSON(latestKey, id, REPORT_DAYS * 24 * 60 * 60);
+  await setJSON(historyKey, report.history, 365 * 24 * 60 * 60).catch(() => {});
+  const remaining = await recordScan({ deviceId, ip, owner });
+
+  console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
+  await countEvent(owner ? "ownerScans" : "scans");
+  await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false, ms: Date.now() - started, cost: costUsd });
+
+  return { report, remaining };
     }
 
-    const visibility = Math.round((vis.found / vis.checked) * 100);
-    const overall = Math.round(visibility * 0.6 + audit.dataScore * 0.4);
-    const id = randomBytes(6).toString("base64url");
+    after(async () => {
+      try {
+        const { report, remaining } = await work();
+        await setJSON(`job:${jobId}`, { status: "done", reportId: report.id, remaining }, 60 * 60);
+      } catch (e) {
+        console.error("Scan failed:", e);
+        const kind = errorType(e?.message);
+        if (!e?.logged) {
+          await countEvent("errors");
+          await logScan({ domain: url.slice(0, 80), category, extra, owner, ms: Date.now() - started, error: String(e?.message || "error").slice(0, 160), errorType: kind.type, system: kind.system });
+        }
+        if (kind.system) await alertOnFailures(e?.message).catch(() => {});
+        const msg =
+          e?.message && !/api|key|anthropic|openai|json|redis|upstash|credit|rate/i.test(e.message)
+            ? e.message
+            : "Something went wrong while scanning. Please try again in a minute.";
+        await setJSON(`job:${jobId}`, { status: "error", error: msg }, 60 * 60);
+      } finally {
+        await setJSON(lockKey, 0, 1).catch(() => {});
+      }
+    });
 
-    // Before and after: compare with the last check of this store for the same category.
-    const latestKey = `latest:${shop.domain}:${slug(category)}`;
-    let previous = null;
-    try {
-      const prevId = await getJSON(latestKey);
-      const prev = prevId ? await getJSON(`report:${prevId}`) : null;
-      if (prev) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
-    } catch {}
-
-    const report = {
-      id,
-      createdAt: new Date().toISOString(),
-      shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
-      category,
-      extra,
-      location,
-      market: audit.market,
-      topPicks: vis.topPicks,
-      rank: vis.rank,
-      categories: vis.categories,
-      overall,
-      visibility,
-      label: label(visibility),
-      found: vis.found,
-      checked: vis.checked,
-      ais: vis.ais,
-      questions: vis.questions,
-      competitors: vis.competitors,
-      dataScore: audit.dataScore,
-      summary: audit.summary,
-      highlights: audit.highlights,
-      fixes: audit.fixes,
-      plan: audit.plan,
-      checks: shop.checks ? summariseChecks(shop.checks) : null,
-      costUsd,
-      previous,
-    };
-
-    await setJSON(`report:${id}`, report, REPORT_DAYS * 24 * 60 * 60);
-    await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
-    await setJSON(latestKey, id, REPORT_DAYS * 24 * 60 * 60);
-    const remaining = await recordScan({ deviceId, ip, owner });
-
-    console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
-    await countEvent(owner ? "ownerScans" : "scans");
-    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false, ms: Date.now() - started, cost: costUsd });
-
-    return reply({ ...publicView(report, { full: owner }), remaining }, 200, deviceId, newDevice);
+    return reply({ job: jobId, status: "running" }, 202, deviceId, newDevice);
   } catch (e) {
     console.error("Scan failed:", e);
     await countEvent("errors");

@@ -57,6 +57,11 @@ const FAQS = [
     a: "Every search we tested and your position in each, your full competitive map, every category, all your quick wins and a step-by-step growth plan. For a limited time it's free: just press “Get my full report free” on your results and we'll send it by email.",
   },
   {
+    q: "How do you test my store?",
+    a: "We read your public product pages, check the technical basics directly, then ask an AI assistant with live web search the questions your customers would ask, and count who gets recommended.",
+    link: { href: "/how-we-test", label: "See exactly how we test" },
+  },
+  {
     q: "Why might my score change between checks?",
     a: "AI answers vary from search to search, a bit like search results do. Your report is a snapshot, not a guarantee. Checking again after making changes is the best way to see the trend.",
   },
@@ -142,7 +147,7 @@ export default function HomeInfo() {
       <section className="card cta">
         <h3>Ready to find out?</h3>
         <p className="muted">It's free and takes under 60 seconds.</p>
-        <a className="button" href="#top">
+        <a className="button" href="#check">
           Check my store
         </a>
       </section>

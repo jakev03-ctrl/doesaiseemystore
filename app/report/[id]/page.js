@@ -31,10 +31,15 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function ReportPage({ params }) {
+export default async function ReportPage({ params, searchParams }) {
   const { id } = await params;
+  const sp = (await searchParams) || {};
   const jar = await cookies();
-  const report = await load(id, isOwner(jar.get(OWNER_COOKIE)?.value));
+  const owner = isOwner(jar.get(OWNER_COOKIE)?.value);
+  // A private link we send a client (…?access=…) shows their report in full.
+  const access = String(sp.access || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+  const client = !owner && access ? (await getJSON(`share:${access}`).catch(() => null)) === id : false;
+  const report = await load(id, owner || client);
   if (!report) notFound();
 
   return (
@@ -48,7 +53,7 @@ export default async function ReportPage({ params }) {
         </nav>
       </header>
 
-      <Report report={report} shared />
+      <Report report={report} shared clientView={client} />
 
       <div className="card cta">
         <h3>Does AI see your store?</h3>

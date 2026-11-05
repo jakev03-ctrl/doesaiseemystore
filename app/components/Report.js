@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
+import CompareBox from "./CompareBox";
 
 // While full reports are free (to collect reviews). Set NEXT_PUBLIC_FREE_REPORTS=0 in Vercel to switch off.
 const FREE_REPORTS = process.env.NEXT_PUBLIC_FREE_REPORTS !== "0";
@@ -44,14 +45,7 @@ function Tip({ text }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="tip">
-      <button
-        type="button"
-        className="tip-btn"
-        aria-label="What does this mean?"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        onBlur={() => setOpen(false)}
-      >
+      <button type="button" className="tip-btn" aria-label="What does this mean?" aria-expanded={open} onClick={() => setOpen((o) => !o)} onBlur={() => setOpen(false)}>
         i
       </button>
       {open && (
@@ -65,14 +59,11 @@ function Tip({ text }) {
 
 const TIPS = {
   score: "Your overall score out of 100. It combines how often AI recommended you with how easy your product info is for AI to read.",
-  visibility: "The share of realistic shopper searches where AI mentioned your store.",
-  topPick: "Searches where you were the very first shop AI recommended. Shoppers often go with the first suggestion.",
-  rank: "Where you place among all the shops AI recommended, based on how often each one was mentioned.",
-  market: "The country or area we searched from, so the results match what shoppers there would see.",
+  stats: "Worked out from the real searches we ran for your store, not estimated.",
   map: "How many of our searches each shop was recommended in. More mentions means AI trusts that shop more for what you sell.",
   categories: "How often you were recommended for each type of search, like price, quality or gift searches.",
-  product: "How clear and complete your product details are for AI: descriptions, sizes, materials, prices, delivery and returns.",
   checks: "Things we checked directly on your website, so you know exactly what's already in place.",
+  snippets: "Ready-written text you can paste straight onto your store. Fill in anything in [square brackets] first.",
 };
 
 const CHECK_ROWS = [
@@ -88,17 +79,12 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function encouragement(report) {
-  if (report.topPicks > 0) return "AI is already putting you first for some searches. Let's build on that.";
-  if (report.visibility >= 40) return "You're already being recommended, and there's room to grow.";
-  if (report.visibility > 0) return "AI has started to notice you. A few changes could make a real difference.";
-  return "AI isn't recommending you yet, which means there's a whole channel still to open up.";
-}
+const longDate = (d) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-// Placeholder content shown blurred. It's filler on purpose: the real hidden
-// details are never sent to the browser for locked reports.
-function BlurredItems({ count, render }) {
-  return Array.from({ length: Math.min(count, 4) }, (_, i) => render(i));
+function scoreLine(r) {
+  if (!r.checked) return "";
+  if (!r.found) return `AI didn't recommend you in any of the ${r.checked} shopper searches we ran.`;
+  return `AI recommends you in ${r.found} out of ${r.checked} shopper searches.`;
 }
 
 function Bar({ label, value, max, you }) {
@@ -119,31 +105,100 @@ function strength(pct) {
   return { word: "Weak", cls: "bad" };
 }
 
+// Placeholder rows shown blurred. The real hidden details are never sent to the browser.
+const filler = (n, make) => Array.from({ length: Math.min(n || 0, 4) }, (_, i) => make(i));
+
+// Score over time (needs at least 2 checks).
+function History({ history }) {
+  if (!history || history.length < 2) return null;
+  const w = 320;
+  const h = 70;
+  const pts = history.map((p, i) => [12 + (i * (w - 24)) / (history.length - 1), h - 10 - (p.overall / 100) * (h - 24)]);
+  return (
+    <div className="history">
+      <span className="history-label">Your score over time</span>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img" aria-label={`Scores: ${history.map((p) => p.overall).join(", ")}`}>
+        <polyline points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {pts.map(([x, y], i) => (
+          <g key={i}>
+            <circle cx={x} cy={y} r="4" fill="var(--accent)" />
+            <text x={x} y={y - 9} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--soft)">
+              {history[i].overall}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function PointList({ items, hidden, locked, kind }) {
+  return (
+    <ul className={`pts ${kind}`}>
+      {items.map((t, i) => (
+        <li key={i}>
+          <span className={`pt-ic ${kind}`} aria-hidden="true">
+            {kind === "good" ? "✓" : "!"}
+          </span>
+          <span>{t}</span>
+        </li>
+      ))}
+      {locked &&
+        filler(hidden, (i) => (
+          <li key={`h${i}`} className="blurred" aria-hidden="true">
+            <span className={`pt-ic ${kind}`}>{kind === "good" ? "✓" : "!"}</span>
+            <span>A hidden point, short and to the point, about your store.</span>
+          </li>
+        ))}
+    </ul>
+  );
+}
+
+function Snippet({ s }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="snippet">
+      <div className="snippet-top">
+        <b>{s.title}</b>
+        <button
+          type="button"
+          className="secondary small-btn no-print"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(s.text);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            } catch {}
+          }}
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+      <p>{s.text}</p>
+    </div>
+  );
+}
+
 function LockedBottom({ report }) {
   const requestHref = `/request?website=${encodeURIComponent(report.shop.domain)}${report.id ? `&report=${report.id}` : ""}`;
   return (
     <div className="fadewrap">
       <div className="fade" aria-hidden="true">
         <div className="card">
+          <h3>Who AI recommends instead</h3>
+          <div className="bars-h">
+            {["Hidden competitor", "Hidden competitor", "You", "Hidden competitor"].map((l, i) => (
+              <Bar key={i} label={l} value={[7, 5, 3, 2][i]} max={7} you={l === "You"} />
+            ))}
+          </div>
+        </div>
+        <div className="card">
           <h3>Your step-by-step growth plan</h3>
           <ol className="fixes">
             <li>Week one: placeholder text for the first stage of your plan.</li>
-            <li>Week two: placeholder text for the second stage of your plan.</li>
-            <li>Week three: placeholder text for the third stage of your plan.</li>
+            <li>Weeks two and three: placeholder text for the next stage.</li>
+            <li>Month two: placeholder text for the last stage.</li>
           </ol>
-        </div>
-        <div className="card">
-          <h3>Every search, with your position</h3>
-          <div className="table" style={{ "--cols": 1 }}>
-            {["Placeholder search question number four", "Placeholder search question number five", "Placeholder search question number six"].map((q) => (
-              <div className="row" key={q}>
-                <span>“{q}”</span>
-                <span className="col">
-                  <span className="mark skip">?</span>
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -158,16 +213,14 @@ function LockedBottom({ report }) {
           <p className="eyebrow">{FREE_REPORTS ? "Free for a limited time" : "Full report"}</p>
           <h3>{FREE_REPORTS ? "Get your full report free" : "Unlock your full report"}</h3>
           <p className="muted lock-sub">
-            Every search we tested and your position in each, your full competitive map, every category, all your
-            quick wins and a step-by-step growth plan.
+            Every point, every stat, every search we tested, who AI recommends instead, all your fixes with ready-to-paste text, and a
+            step-by-step growth plan.
           </p>
           <a className="button" href={requestHref}>
             {FREE_REPORTS ? "Get my full report free" : "Enquire now"}
           </a>
           <p className="muted small">
-            {FREE_REPORTS
-              ? "No payment and no account. In return, we'd love your honest feedback."
-              : "No account needed. We'll reply by email with the details."}
+            {FREE_REPORTS ? "No payment and no account. In return, we'd love your honest feedback." : "No account needed. We'll reply by email with the details."}
           </p>
         </div>
       </div>
@@ -182,20 +235,16 @@ function recheckLink(report) {
   return `/?${q.toString()}`;
 }
 
-export default function Report({ report, onRecheck }) {
+export default function Report({ report, onRecheck, clientView = false }) {
   const [copied, setCopied] = useState(false);
   // On a report link, only show "Check again" to the person who ran the check (saved on their device), or the owner.
   const [mine, setMine] = useState(false);
   useEffect(() => setMine(isRecent(report.id) || !report.locked), [report.id, report.locked]);
   const canRecheck = Boolean(onRecheck) || mine;
-  const examples = report.examples || [];
-  const wins = examples.filter((q) => q.found);
-  const missed = examples.filter((q) => !q.found);
-  const competitors = report.competitors || [];
-  const categories = report.categories || [];
-  const fixes = report.fixes || [];
-  const highlights = report.highlights || [];
+  const locked = report.locked;
   const hidden = report.hidden || {};
+  const fixes = report.fixes || [];
+  const stats = report.stats || [];
   const link = typeof window !== "undefined" ? `${window.location.origin}/report/${report.id}` : `/report/${report.id}`;
 
   async function copy() {
@@ -206,83 +255,51 @@ export default function Report({ report, onRecheck }) {
     } catch {}
   }
 
-  const change = report.previous
-    ? {
-        diff: report.overall - report.previous.overall,
-        date: new Date(report.previous.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" }),
-      }
-    : null;
+  const change = report.previous ? { diff: report.overall - report.previous.overall, date: new Date(report.previous.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" }) } : null;
 
+  const competitors = report.competitors || [];
   const mapMax = Math.max(report.youMentions || 0, ...competitors.map((c) => c.count), 1);
-  const mapRows = [
-    ...competitors.map((c) => ({ label: c.name, value: c.count, you: false })),
-    { label: "You", value: report.youMentions || 0, you: true },
-  ].sort((a, b) => b.value - a.value || (a.you ? 1 : -1));
+  const mapRows = [...competitors.map((c) => ({ label: c.name, value: c.count, you: false })), { label: "You", value: report.youMentions || 0, you: true }].sort(
+    (a, b) => b.value - a.value || (a.you ? 1 : -1)
+  );
 
   return (
     <section id="results" className="results">
-      <p className="print-only print-brand">DoesAISeeMyStore · AI visibility report for {report.shop.domain}</p>
+      <p className="print-only print-brand">DoesAISeeMyStore · AI visibility report</p>
 
-      {/* 1. Overall performance */}
+      {/* 1. Company */}
+      <header className="company">
+        {!locked && <p className="eyebrow">AI visibility report</p>}
+        <h2 className="company-name">{report.shop.name}</h2>
+        <p className="company-meta">
+          {report.shop.domain} · {locked ? "Checked " : ""}
+          {longDate(report.createdAt)}
+          {report.market ? ` · ${report.market}` : ""}
+          {!locked ? " · Prepared by DoesAISeeMyStore" : ""}
+        </p>
+      </header>
+
+      {/* 2. Score */}
       <div className="card score">
         <Ring value={report.overall} />
         <div className="score-text">
-          <p className="eyebrow">{report.shop.name}</p>
           <h2>
             {report.label} <Tip text={TIPS.score} />
           </h2>
-          <p>{encouragement(report)}</p>
+          <p>{scoreLine(report)}</p>
           {change && (
             <p className={`change ${change.diff > 0 ? "up" : change.diff < 0 ? "down" : "same"}`}>
               <span className="before-after">
                 Before <b>{report.previous.overall}</b> → Now <b>{report.overall}</b>
               </span>{" "}
-              {change.diff > 0 ? `▲ Up ${change.diff} points` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)} points` : "No change"}{" "}
-              since your last check on {change.date}
+              {change.diff > 0 ? `▲ Up ${change.diff} points` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)} points` : "No change"} since your last check on {change.date}
             </p>
           )}
         </div>
-        <div className="kpis">
-          <div className="kpi">
-            <b>{report.visibility}%</b>
-            <span>
-              Searches you appeared in <Tip text={TIPS.visibility} />
-            </span>
-          </div>
-          {report.topPicks !== null && (
-            <div className="kpi">
-              <b>{report.topPicks}</b>
-              <span>
-                {report.topPicks === 1 ? "Top pick" : "Top picks"} <Tip text={TIPS.topPick} />
-              </span>
-            </div>
-          )}
-          {report.rank ? (
-            <div className="kpi">
-              <b>
-                {report.rank.joint ? "Joint " : ""}
-                {ordinal(report.rank.position)}
-              </b>
-              <span>
-                Of {report.rank.of} shops recommended <Tip text={TIPS.rank} />
-              </span>
-            </div>
-          ) : (
-            report.market && (
-              <div className="kpi">
-                <b className="kpi-text">{report.market}</b>
-                <span>
-                  Market tested <Tip text={TIPS.market} />
-                </span>
-              </div>
-            )
-          )}
-        </div>
+        <History history={report.history} />
         {canRecheck && (
           <div className="recheck no-print">
-            <p className="muted small">
-              {change ? "Keep improving and check again to track your progress." : "Made changes to your store? Check again to see your before and after."}
-            </p>
+            <p className="muted small">{change ? "Keep improving and check again to track your progress." : "Made changes to your store? Check again to see your before and after."}</p>
             {onRecheck ? (
               <button type="button" className="secondary" onClick={onRecheck}>
                 ↻ Check again
@@ -296,8 +313,23 @@ export default function Report({ report, onRecheck }) {
         )}
       </div>
 
+      {/* Client's private full report: just the PDF button */}
+      {!locked && clientView && (
+        <div className="card share no-print">
+          <div>
+            <b>Your full report</b>
+            <p className="muted">Keep this link private. You can save the report as a PDF.</p>
+          </div>
+          <div className="share-actions">
+            <button type="button" className="secondary" onClick={() => window.print()}>
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Owner-only tools */}
-      {!report.locked && report.id && (
+      {!locked && !clientView && report.id && (
         <div className="card share no-print">
           <div>
             <b>Full report (owner view)</b>
@@ -314,77 +346,101 @@ export default function Report({ report, onRecheck }) {
         </div>
       )}
 
-      {/* 2. Wins */}
-      {wins.length > 0 && (
-        <div className="card wins">
-          <h3>Where you're winning</h3>
-          <div className="table" style={{ "--cols": 1 }}>
-            {wins.map((q, i) => (
-              <div className="row" key={i}>
-                <span>“{q.question}”</span>
-                <span className="col">{q.topPick ? <span className="badge gold">★ Top pick</span> : <span className="badge green">✓ Recommended</span>}</span>
-              </div>
-            ))}
-          </div>
-          {wins.some((q) => q.topPick) && (
-            <p className="note-sm">A top pick means you were the first shop AI recommended. Shoppers often go with the first suggestion.</p>
+      {/* Full: summary */}
+      {!locked && (
+        <div className="card summary">
+          <h3>Summary</h3>
+          <p>
+            <b>Where you stand:</b> {scoreLine(report)}
+          </p>
+          {report.wrong?.[0] && (
+            <p>
+              <b>Biggest problem:</b> {report.wrong[0]}
+            </p>
+          )}
+          {fixes[0] && (
+            <p>
+              <b>Biggest opportunity:</b> {fixes[0]}
+            </p>
           )}
         </div>
       )}
 
-      {/* 3. Missed */}
-      {missed.length > 0 && (
-        <div className="card">
-          <h3>{wins.length ? "Searches you missed" : "The searches we tested"}</h3>
-          {!wins.length && (
-            <p className="muted examples-intro">We tested your store against a wide range of realistic shopper searches. Here are a few examples:</p>
-          )}
-          <div className="table" style={{ "--cols": 1 }}>
-            {missed.map((q, i) => (
-              <div className="row" key={i}>
-                <span>“{q.question}”</span>
-                <span className="col">
-                  <span className="badge red">Not mentioned</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Competitive map */}
-      {competitors.length > 0 && (
+      {/* 3. Doing well */}
+      {(report.well?.length > 0 || locked) && (
         <div className="card">
           <h3>
-            How often AI recommends you vs competitors <Tip text={TIPS.map} />
+            <span className="h-ic good" aria-hidden="true">
+              ✓
+            </span>
+            What you're doing well
+          </h3>
+          {report.well?.length ? <PointList items={report.well} hidden={hidden.well} locked={locked} kind="good" /> : <p className="muted">Nothing stood out yet, so there's plenty of room to grow.</p>}
+        </div>
+      )}
+
+      {/* 4. Doing wrong */}
+      {(report.wrong?.length > 0 || locked) && (
+        <div className="card">
+          <h3>
+            <span className="h-ic bad" aria-hidden="true">
+              !
+            </span>
+            What you're doing wrong
+          </h3>
+          <PointList items={report.wrong || []} hidden={hidden.wrong} locked={locked} kind="bad" />
+        </div>
+      )}
+
+      {/* 5. Stats and data */}
+      {stats.length > 0 && (
+        <div className="card">
+          <h3>
+            <span className="h-ic num" aria-hidden="true">
+              #
+            </span>
+            Stats and data <Tip text={TIPS.stats} />
+          </h3>
+          <div className="statboxes">
+            {stats.map((s, i) => (
+              <div className={`statbox${s.hot ? " hot" : ""}`} key={i}>
+                <b>{s.big}</b>
+                <span>{s.text}</span>
+              </div>
+            ))}
+            {locked &&
+              filler(Math.min(2, hidden.stats || 2), (i) => (
+                <div className="statbox blurred" aria-hidden="true" key={`hs${i}`}>
+                  <b>00</b>
+                  <span>A hidden stat about you and your competitors.</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Full: competitors, categories, every search, checks */}
+      {!locked && competitors.length > 0 && (
+        <div className="card">
+          <h3>
+            Who AI recommends instead <Tip text={TIPS.map} />
           </h3>
           <div className="bars-h">
             {mapRows.map((r, i) => (
               <Bar key={i} label={r.label} value={r.value} max={mapMax} you={r.you} />
             ))}
-            {report.locked && (
-              <BlurredItems
-                count={hidden.competitors || 0}
-                render={(i) => (
-                  <div className="blurred" aria-hidden="true" key={`hc${i}`}>
-                    <Bar label="Hidden competitor" value={1} max={mapMax} />
-                  </div>
-                )}
-              />
-            )}
           </div>
-          <p className="note-sm">Mentions across the searches we tested{report.locked ? ". Full map in the in-depth report." : "."}</p>
+          <p className="note-sm">Mentions across the searches we tested.</p>
         </div>
       )}
 
-      {/* 5. Categories */}
-      {categories.length > 0 && (
+      {!locked && report.categories?.length > 0 && (
         <div className="card">
           <h3>
             Performance by category <Tip text={TIPS.categories} />
           </h3>
           <div className="cats">
-            {categories.map((c, i) => {
+            {report.categories.map((c, i) => {
               const s = strength(c.pct);
               return (
                 <div className="cat" key={i}>
@@ -398,124 +454,13 @@ export default function Report({ report, onRecheck }) {
                 </div>
               );
             })}
-            {report.locked && (
-              <BlurredItems
-                count={hidden.categories || 0}
-                render={(i) => (
-                  <div className="cat blurred" aria-hidden="true" key={`hcat${i}`}>
-                    <div className="cat-top">
-                      <span>Hidden category</span>
-                      <span>Hidden</span>
-                    </div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: "30%" }} />
-                    </div>
-                  </div>
-                )}
-              />
-            )}
           </div>
         </div>
       )}
 
-      {/* 6. Product info */}
-      <div className="card">
-        <h3>
-          Product info score <span className="pill">{report.dataScore}/100</span> <Tip text={TIPS.product} />
-        </h3>
-        {highlights.length ? (
-          <ul className="points">
-            {highlights.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-            {report.locked && (
-              <BlurredItems
-                count={hidden.highlights || 0}
-                render={(i) => (
-                  <li key={`hh${i}`} className="blurred" aria-hidden="true">
-                    A hidden point about your product information.
-                  </li>
-                )}
-              />
-            )}
-          </ul>
-        ) : (
-          <>
-            <p className="muted">{report.summary}</p>
-            {report.locked && (
-              <p className="muted blurred" aria-hidden="true">
-                More detail about your product information is included in the full report.
-              </p>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* 6b. What we checked */}
-      {report.checks && (
+      {!locked && report.allSearches?.length > 0 && (
         <div className="card">
-          <h3>
-            What we checked on your store <Tip text={TIPS.checks} />
-          </h3>
-          <div className="checks">
-            {CHECK_ROWS.filter(([k]) => report.checks[k]).map(([k, name]) => (
-              <div className="check-row" key={k}>
-                <span className={`check-dot ${report.checks[k].ok ? "ok" : "no"}`} aria-hidden="true">
-                  {report.checks[k].ok ? "✓" : "!"}
-                </span>
-                <span className="check-name">{name}</span>
-                <span className="check-text">{report.checks[k].text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 7. Quick wins */}
-      {fixes.length > 0 && (
-        <div className="card">
-          <h3>{report.locked ? "Your quickest win" : "Your quick wins"}</h3>
-          <ol className="fixes">
-            {fixes.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-            {report.locked && (
-              <BlurredItems
-                count={hidden.fixes || 0}
-                render={(i) => (
-                  <li key={`hf${i}`} className="blurred" aria-hidden="true">
-                    Another quick win, explained in plain English with what to change.
-                  </li>
-                )}
-              />
-            )}
-          </ol>
-        </div>
-      )}
-
-      {/* Full view: growth plan */}
-      {!report.locked && report.plan?.length > 0 && (
-        <div className="card">
-          <h3>Your step-by-step growth plan</h3>
-          <div className="plan">
-            {report.plan.map((st, i) => (
-              <div className="plan-stage" key={i}>
-                <span className="plan-when">{st.stage}</span>
-                <ul className="points">
-                  {st.actions.map((a, j) => (
-                    <li key={j}>{a}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Owner: every search */}
-      {!report.locked && report.allSearches?.length > 0 && (
-        <div className="card">
-          <h3>Every search, with your position</h3>
+          <h3>Every search we tested</h3>
           <div className="table" style={{ "--cols": 1 }}>
             {report.allSearches.map((q, i) => (
               <div className="row" key={i}>
@@ -539,14 +484,98 @@ export default function Report({ report, onRecheck }) {
         </div>
       )}
 
-      {/* 8. Locked bottom */}
-      {report.locked ? (
+      {!locked && report.checks && (
+        <div className="card">
+          <h3>
+            What we checked on your store <Tip text={TIPS.checks} />
+          </h3>
+          <div className="checks">
+            {CHECK_ROWS.filter(([k]) => report.checks[k]).map(([k, name]) => (
+              <div className="check-row" key={k}>
+                <span className={`check-dot ${report.checks[k].ok ? "ok" : "no"}`} aria-hidden="true">
+                  {report.checks[k].ok ? "✓" : "!"}
+                </span>
+                <span className="check-name">{name}</span>
+                <span className="check-text">{report.checks[k].text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 6. Ways to change */}
+      {fixes.length > 0 && (
+        <div className="card">
+          <h3>
+            <span className="h-ic fix" aria-hidden="true">
+              →
+            </span>
+            Ways to change
+          </h3>
+          <ol className="fixes">
+            {fixes.map((f, i) => (
+              <li key={i}>{f}</li>
+            ))}
+            {locked &&
+              filler(hidden.fixes, (i) => (
+                <li key={`hf${i}`} className="blurred" aria-hidden="true">
+                  Another quick win, short and to the point.
+                </li>
+              ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Full: ready-to-paste text */}
+      {!locked && report.snippets?.length > 0 && (
+        <div className="card">
+          <h3>
+            Ready-to-paste text <Tip text={TIPS.snippets} />
+          </h3>
+          <div className="snippets">
+            {report.snippets.map((s, i) => (
+              <Snippet s={s} key={i} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Full: growth plan */}
+      {!locked && report.plan?.length > 0 && (
+        <div className="card">
+          <h3>Your step-by-step growth plan</h3>
+          <div className="plan">
+            {report.plan.map((st, i) => (
+              <div className="plan-stage" key={i}>
+                <span className="plan-when">{st.stage}</span>
+                <ul className="points">
+                  {st.actions.map((a, j) => (
+                    <li key={j}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 7. Unlock (free) / footer (full) */}
+      {locked ? (
         <>
           <LockedBottom report={report} />
+          <CompareBox report={report} />
           <EmailReport reportId={report.id} />
         </>
       ) : (
-        <p className="note">AI answers change from search to search, so this is a snapshot, not a guarantee.</p>
+        <>
+          <CompareBox report={report} />
+          <p className="note report-foot">
+            This is a snapshot, not a guarantee. AI answers change over time.
+            <br />
+            DoesAISeeMyStore · run by {process.env.NEXT_PUBLIC_OWNER_NAME || "Jake"} · {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com"} · Tell us how we did:
+            doesaiseemystore.com/feedback
+          </p>
+        </>
       )}
     </section>
   );

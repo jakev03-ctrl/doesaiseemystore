@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { OWNER_COOKIE, isOwner } from "../../lib/limits";
 import { loadStats, loadLog, errorType } from "../../lib/stats";
-import { hasDatabase, databaseInfo, getList, getCount } from "../../lib/store";
+import { hasDatabase, databaseInfo, getList, getCount, getJSON, listLength } from "../../lib/store";
+import { createHash } from "crypto";
+import EnquiryActions from "../components/EnquiryActions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Stats | DoesAISeeMyStore", robots: { index: false, follow: false } };
@@ -56,7 +58,7 @@ export default async function Admin({ searchParams }) {
   const page = Math.max(1, Number(sp.page) || 1);
   const params = { view, mine: showMine ? "1" : "", page };
 
-  const [chart, days, months, years, log, recent, inbox, messageTotal, feedback, subscribers] = await Promise.all([
+  const [chart, days, months, years, log, recent, inbox, messageTotal, feedback, subscribers, statuses, feedbackTotal] = await Promise.all([
     loadStats(view),
     loadStats("day"),
     loadStats("month"),
@@ -67,7 +69,18 @@ export default async function Admin({ searchParams }) {
     getCount("stats:messages:all"),
     getList("feedback", 0, 49),
     getList("subscribers", 0, 499),
+    getJSON("enquiry:statuses").then((x) => x || {}).catch(() => ({})),
+    listLength("feedback").catch(() => 0),
   ]);
+  const enquiryKey = (m) => createHash("sha256").update(`${m.at}|${m.email}`).digest("hex").slice(0, 24);
+  const sentCount = Object.values(statuses).filter((v) => v && v.status !== "new").length;
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "–");
+  const funnel = [
+    { label: "Free checks run", value: chart.totals.scans },
+    { label: "Asked for the full report", value: chart.totals.requests, rate: pct(chart.totals.requests, chart.totals.scans) },
+    { label: "Full reports sent", value: sentCount, rate: pct(sentCount, chart.totals.requests) },
+    { label: "Feedback received", value: feedbackTotal, rate: pct(feedbackTotal, sentCount) },
+  ];
 
   const withMine = (m, i) => m.scans[i] + (showMine ? m.ownerScans[i] : 0);
   const bars = chart.periods.map((_, i) => withMine(chart.series, i));
@@ -203,6 +216,19 @@ export default async function Admin({ searchParams }) {
         </p>
       </div>
 
+      <div className="card" id="funnel">
+        <h3>Your funnel (all time)</h3>
+        <div className="funnel">
+          {funnel.map((f, i) => (
+            <div className="funnel-step" key={f.label}>
+              <span className="tile-num">{f.value}</span>
+              <span className="muted">{f.label}</span>
+              {f.rate && <span className="funnel-rate">{f.rate} of the step before</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="card" id="inbox">
         <h3>
           Inbox <span className="pill">{inbox.length}</span>
@@ -219,6 +245,7 @@ export default async function Admin({ searchParams }) {
                   </a>
                   <span className="muted small">{when(m.at)}</span>
                 </div>
+                {m.type === "report" && <EnquiryActions enquiry={{ ...m, key: enquiryKey(m) }} initial={statuses[enquiryKey(m)]} />}
                 {m.type === "report" && (
                   <p className="msg-meta small">
                     Website: <b>{m.website}</b>

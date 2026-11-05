@@ -3,6 +3,12 @@
 import { useEffect, useRef } from "react";
 
 // Slowly drifting, twinkling stars behind every page.
+const SPARKS = [
+  [6, 18, 18, 0.28], [11, 26, 10, 0.22], [17, 22, 12, 0.2], [21, 31, 16, 0.25],
+  [88, 12, 14, 0.25], [93, 30, 9, 0.2], [80, 70, 20, 0.26], [86, 64, 10, 0.2],
+  [91, 72, 12, 0.22], [95, 66, 8, 0.18], [48, 6, 9, 0.18], [4, 78, 14, 0.22],
+  [30, 88, 10, 0.18], [64, 92, 12, 0.2], [70, 40, 8, 0.14], [36, 52, 7, 0.12],
+];
 export default function Starfield() {
   const ref = useRef(null);
 
@@ -107,6 +113,18 @@ export default function Starfield() {
     <>
       <canvas ref={ref} className="sky" aria-hidden="true" />
       <div className="glow" aria-hidden="true" />
+      {/* Light mode: soft blue four-point sparkles and a faint constellation (hidden in dark mode). */}
+      <div className="sparks" aria-hidden="true">
+        <svg width="100%" height="100%" style={{ inset: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline className="c" fill="none" vectorEffect="non-scaling-stroke" points="6.5,19 11.4,26.6 17.5,22.7 21.6,32" />
+          <polyline className="c" fill="none" vectorEffect="non-scaling-stroke" points="80.8,71.4 86.4,64.8 91.5,72.8 95.3,66.6" />
+        </svg>
+        {SPARKS.map(([x, y, size, o], i) => (
+          <svg key={i} style={{ left: `${x}%`, top: `${y}%`, opacity: o }} width={size} height={size} viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z" />
+          </svg>
+        ))}
+      </div>
     </>
   );
 }

@@ -35,3 +35,5 @@ Remember to redeploy after changing settings.
 - `NEXT_PUBLIC_OWNER_NAME`: name shown in the footer (default "Jake").
 - `NEXT_PUBLIC_BUSINESS_ADDRESS`: your business address, shown in the footer, Terms and Privacy when set.
 - `INBOX_DAYS`: how long enquiries are kept (default 365). Reports are kept `REPORT_DAYS` (default 90).
+- Homepage videos live in `public/media/` (how-it-works-dark/light .mp4 + still .jpg pictures).
+- Client full-report links are made from the admin inbox ("Send report") and last 90 days.
