@@ -92,7 +92,7 @@ const CHK=[["ok","AI access","Open"],["ok","Sitemap","Found"],["no","Product dat
 const URL="yourstore.com";
 let DARK=true;function demoTheme(th){DARK=th!=='light';document.documentElement.classList.toggle('dark',DARK);}
 window.draw=function(T0){
-  const t=T0*9/10.5;
+  const t=T0*9/12.5;
 
   const intro=t<T[0];let k=0;for(let i=0;i<5;i++)if(t>=T[i])k=i;
   const cap=document.getElementById('cap');
@@ -133,7 +133,7 @@ window.draw=function(T0){
 // ---- Player: the page tells it when to play, pause or switch theme ----
 function fit(){document.getElementById('stage').style.transform='scale('+(innerWidth/1280)+')';}
 addEventListener('resize',fit);fit();
-const LEN=10.5;let playing=false,start=0,at=0;
+const LEN=12.5;let playing=false,start=0,at=0;
 function frame(now){if(!playing)return;at=(now-start)/1000;if(at>=LEN){at=LEN;draw(LEN-0.001);playing=false;try{parent.postMessage({demo:'ended'},'*')}catch(e){}return;}draw(at);requestAnimationFrame(frame);}
 window.demoPlay=function(fromStart){if(fromStart||at>=LEN)at=0;start=performance.now()-at*1000;if(!playing){playing=true;requestAnimationFrame(frame);}try{parent.postMessage({demo:'playing'},'*')}catch(e){}};
 window.demoPause=function(){playing=false;try{parent.postMessage({demo:'paused'},'*')}catch(e){}};
