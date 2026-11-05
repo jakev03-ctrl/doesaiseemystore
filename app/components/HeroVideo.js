@@ -10,7 +10,7 @@ export default function HeroVideo() {
   const vid = useRef(null);
   const [theme, setTheme] = useState("dark");
   const [inView, setInView] = useState(false);
-  const [state, setState] = useState("idle"); // idle | playing | paused | ended
+  const [state, setState] = useState("idle"); // idle | starting | playing | paused | ended
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -20,11 +20,17 @@ export default function HeroVideo() {
     return () => window.removeEventListener("themechange", read);
   }, []);
 
-  function play(fromStart) {
+  // Start the video. Safari sometimes refuses while it's still fading in, so keep trying quietly
+  // for a couple of seconds before showing a Play button.
+  const retry = useRef(null);
+  function play(fromStart, attempt = 0) {
     const v = vid.current;
     if (!v) return;
+    clearTimeout(retry.current);
     v.muted = true; // Safari only allows silent videos to start by themselves
+    v.defaultMuted = true;
     v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
     v.playsInline = true;
     if (fromStart) {
       try {
@@ -32,7 +38,16 @@ export default function HeroVideo() {
       } catch {}
     }
     const p = v.play();
-    if (p && p.catch) p.catch(() => setState("paused"));
+    if (p && p.catch) {
+      p.catch(() => {
+        if (attempt < 6) {
+          setState("starting");
+          retry.current = setTimeout(() => {
+            if (wantRef.current) play(false, attempt + 1);
+          }, [250, 500, 800, 1200, 1800, 2500][attempt]);
+        } else setState("paused");
+      });
+    }
   }
 
   // It sits right under the title. It appears (and starts from the beginning) after the first
@@ -41,10 +56,12 @@ export default function HeroVideo() {
   const revealedRef = useRef(false);
   const playingRef = useRef(false);
   const seenRef = useRef(false);
+  const wantRef = useRef(false);
 
   function sync() {
     const v = vid.current;
     const want = revealedRef.current && ratio.current >= 0.5;
+    wantRef.current = want;
     if (!v) return;
     if (want && !playingRef.current) {
       playingRef.current = true;
@@ -81,6 +98,7 @@ export default function HeroVideo() {
     } else ratio.current = 1;
     playingRef.current = false;
     return () => {
+      clearTimeout(retry.current);
       window.removeEventListener("scroll", onScroll);
       io && io.disconnect();
     };
@@ -118,7 +136,7 @@ export default function HeroVideo() {
           </video>
         )}
         <div className="vid-edge" aria-hidden="true" />
-        {!failed && state !== "playing" && (
+        {!failed && (state === "paused" || state === "ended") && (
           <button type="button" className="vid-play" onClick={tap} aria-label={state === "ended" ? "Watch again" : "Play the video"}>
             {state === "ended" ? "↻ Watch again" : "▶ Play"}
           </button>

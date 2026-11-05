@@ -847,3 +847,6 @@ html[data-theme="light"] .sparks { opacity: 1; }
 @media (max-width: 640px) { .vidsec { margin-top: calc(-100vh + 215px); } }
 .formsec { padding-top: 28px; }
 .track { height: calc(100vh + 260px); }
+/* Start the video very slightly visible, so Safari counts it as on screen and lets it play by itself. */
+.vidsec { opacity: 0.01; }
+.vidsec.in { opacity: 1; }
