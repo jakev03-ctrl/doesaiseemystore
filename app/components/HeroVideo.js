@@ -35,34 +35,55 @@ export default function HeroVideo() {
     if (p && p.catch) p.catch(() => setState("paused"));
   }
 
-  // Fade in as it arrives; play when at least half of it is on screen, pause when it leaves.
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el || !("IntersectionObserver" in window)) {
-      setInView(true);
-      return;
+  // It sits right under the title. It appears (and starts from the beginning) after the first
+  // bit of scrolling, plays while at least half of it is on screen, and pauses when it leaves.
+  const ratio = useRef(0);
+  const revealedRef = useRef(false);
+  const playingRef = useRef(false);
+  const seenRef = useRef(false);
+
+  function sync() {
+    const v = vid.current;
+    const want = revealedRef.current && ratio.current >= 0.5;
+    if (!v) return;
+    if (want && !playingRef.current) {
+      playingRef.current = true;
+      play(!seenRef.current || v.ended);
+      seenRef.current = true;
+    } else if (!want && playingRef.current) {
+      playingRef.current = false;
+      v.pause();
     }
-    let seen = false;
-    let playingNow = false;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.intersectionRatio > 0.12) setInView(true);
-        const v = vid.current;
-        if (!v) return;
-        const want = e.intersectionRatio >= 0.5;
-        if (want && !playingNow) {
-          playingNow = true;
-          play(!seen || v.ended);
-          seen = true;
-        } else if (!want && playingNow) {
-          playingNow = false;
-          v.pause();
-        }
-      },
-      { threshold: [0, 0.12, 0.5, 0.75] }
-    );
-    io.observe(el);
-    return () => io.disconnect();
+  }
+
+  useEffect(() => {
+    const onScroll = () => {
+      const r = window.scrollY > 70;
+      if (r !== revealedRef.current) {
+        revealedRef.current = r;
+        if (r) setInView(true);
+        sync();
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const el = wrap.current;
+    let io;
+    if (el && "IntersectionObserver" in window) {
+      io = new IntersectionObserver(
+        ([e]) => {
+          ratio.current = e.intersectionRatio;
+          sync();
+        },
+        { threshold: [0, 0.25, 0.5, 0.75, 1] }
+      );
+      io.observe(el);
+    } else ratio.current = 1;
+    playingRef.current = false;
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      io && io.disconnect();
+    };
   }, [theme]);
 
   function tap() {

@@ -839,3 +839,11 @@ html[data-theme="light"] .sparks { opacity: 1; }
   mask-image: radial-gradient(ellipse 70% 68% at 50% 50%, #000 66%, transparent 100%);
   transform: translateZ(0);
 }
+
+/* ---------- v18: video one scroll away, form one more ---------- */
+.track { height: calc(100vh + 160px); }
+.vidsec { margin-top: calc(-100vh + 230px); pointer-events: none; }
+.vidsec.in { pointer-events: auto; }
+@media (max-width: 640px) { .vidsec { margin-top: calc(-100vh + 215px); } }
+.formsec { padding-top: 28px; }
+.track { height: calc(100vh + 260px); }

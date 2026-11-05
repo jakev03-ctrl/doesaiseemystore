@@ -137,7 +137,7 @@ export default function Home() {
         setShowFloat(wantFloat);
       }
 
-      const p = Math.max(0, Math.min(1, window.scrollY / 320));
+      const p = Math.max(0, Math.min(1, window.scrollY / 160));
       if (p === lastP) return;
       lastP = p;
       const small = window.innerWidth < 640;
