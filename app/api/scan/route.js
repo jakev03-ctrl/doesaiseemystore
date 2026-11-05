@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
-import { auditShop, testVisibility, label } from "../../../lib/analyse";
+import { auditShop, testVisibility, label, newCost } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
@@ -49,6 +49,23 @@ async function passesBotCheck(token, ip) {
   } catch {
     return false;
   }
+}
+
+// The simple "What we checked" facts shown on the report.
+function summariseChecks(c) {
+  const f = c.productSchema && typeof c.productSchema === "object" ? c.productSchema : null;
+  const label = { reviews: "reviews", image: "images", description: "descriptions", price: "prices", availability: "stock", brand: "brand", identifier: "product codes", shipping: "delivery info", returns: "returns info" };
+  const missing = f ? Object.keys(label).filter((k) => f[k] === false).map((k) => label[k]) : [];
+  return {
+    aiAccess: c.blockedBots.length ? { ok: false, text: `Blocked for ${c.blockedBots.join(", ")}` } : c.blockedProducts.length ? { ok: false, text: `Product pages blocked for ${c.blockedProducts.join(", ")}` } : { ok: true, text: "Open to AI assistants" },
+    sitemap: c.sitemap.found ? { ok: true, text: c.sitemap.products ? "Found, lists your products" : "Found" } : { ok: false, text: "Not found" },
+    productData:
+      c.productSchema === "none" ? { ok: false, text: "Not found on product pages" }
+      : c.productSchema === "microdata" ? { ok: true, text: "Found" }
+      : f ? { ok: missing.length <= 2, text: missing.length ? `Found, missing ${missing.slice(0, 3).join(", ")}` : "Found, complete" }
+      : null,
+    policies: { ok: c.policies.returns && c.policies.delivery, text: c.policies.returns && c.policies.delivery ? "Delivery and returns linked" : !c.policies.returns && !c.policies.delivery ? "Delivery and returns not linked from homepage" : !c.policies.returns ? "Returns not linked from homepage" : "Delivery not linked from homepage" },
+  };
 }
 
 // How many free checks this visitor has left today (shown under the form).
@@ -121,13 +138,15 @@ export async function POST(req) {
       );
     }
 
+    const cost = newCost();
     const shop = await readShop(url);
-    const audit = await auditShop(shop, category, extra, location);
-    const vis = await testVisibility(shop, audit.questions, audit.market);
+    const audit = await auditShop(shop, category, extra, location, cost);
+    const vis = await testVisibility(shop, audit.questions, audit.market, cost);
+    const costUsd = Math.round(cost.usd * 1000) / 1000;
 
     if (vis.checked === 0) {
       await countEvent("errors");
-      await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true });
+      await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true, cost: costUsd });
       return fail("Our AI checks didn't complete this time. Please try again in a minute.", 503);
     }
 
@@ -167,6 +186,9 @@ export async function POST(req) {
       summary: audit.summary,
       highlights: audit.highlights,
       fixes: audit.fixes,
+      plan: audit.plan,
+      checks: shop.checks ? summariseChecks(shop.checks) : null,
+      costUsd,
       previous,
     };
 
@@ -177,7 +199,7 @@ export async function POST(req) {
 
     console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));
     await countEvent(owner ? "ownerScans" : "scans");
-    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false, ms: Date.now() - started });
+    await logScan({ id, domain: shop.domain, name: shop.shopName, platform: shop.platform, category, extra: [location, extra].filter(Boolean).join(" · "), overall, visibility, owner, cached: false, ms: Date.now() - started, cost: costUsd });
 
     return reply({ ...publicView(report, { full: owner }), remaining }, 200, deviceId, newDevice);
   } catch (e) {

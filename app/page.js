@@ -234,8 +234,8 @@ export default function Home() {
               Does AI <span className="see">see</span> your store?
             </h1>
             <p className="sub" ref={subRef}>
-              AI is becoming a new way for customers to find stores. Find out where you stand, and
-              how you could open up a whole new stream of customers.
+              When shoppers ask AI assistants what to buy, we check if your shop comes up, show you who
+              gets picked instead, and tell you exactly what to fix.
             </p>
           </div>
 

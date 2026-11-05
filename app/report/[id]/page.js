@@ -25,7 +25,9 @@ export async function generateMetadata({ params }) {
       title: `${report.shop.name} scored ${report.overall}/100 for AI visibility`,
       description: "Does AI see your store? Check yours free in under 60 seconds.",
       type: "article",
+      images: [{ url: "/og.png", width: 1200, height: 630 }],
     },
+    twitter: { card: "summary_large_image", images: ["/og.png"] },
   };
 }
 

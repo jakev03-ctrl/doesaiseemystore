@@ -56,7 +56,7 @@ export default async function Admin({ searchParams }) {
   const page = Math.max(1, Number(sp.page) || 1);
   const params = { view, mine: showMine ? "1" : "", page };
 
-  const [chart, days, months, years, log, recent, inbox, messageTotal] = await Promise.all([
+  const [chart, days, months, years, log, recent, inbox, messageTotal, feedback, subscribers] = await Promise.all([
     loadStats(view),
     loadStats("day"),
     loadStats("month"),
@@ -65,6 +65,8 @@ export default async function Admin({ searchParams }) {
     getList("stats:log", 0, 499),
     getList("inbox", 0, 49),
     getCount("stats:messages:all"),
+    getList("feedback", 0, 49),
+    getList("subscribers", 0, 499),
   ]);
 
   const withMine = (m, i) => m.scans[i] + (showMine ? m.ownerScans[i] : 0);
@@ -118,6 +120,12 @@ export default async function Admin({ searchParams }) {
     : failRate >= 20 || (avgSecs && avgSecs > 90) ? { cls: "bad", text: "Needs attention" }
     : failRate >= 8 || (avgSecs && avgSecs > 60) ? { cls: "mid", text: "Mostly fine, keep an eye on it" }
     : { cls: "good", text: "All running smoothly" };
+  const GBP = Number(process.env.USD_TO_GBP || 0.79);
+  const costed = week.filter((e) => typeof e.cost === "number");
+  const weekCost = costed.reduce((a, e) => a + e.cost, 0) * GBP;
+  const okCosted = costed.filter((e) => !e.error);
+  const avgCost = okCosted.length ? (okCosted.reduce((a, e) => a + e.cost, 0) / okCosted.length) * GBP : null;
+  const money = (v) => (v === null ? "–" : v < 1 ? `${Math.round(v * 100)}p` : `£${v.toFixed(2)}`);
   const healthTiles = [
     { label: "Average scan time", value: avgSecs !== null ? `${avgSecs}s` : "–" },
     { label: "Scans under 60 seconds", value: under60 !== null ? `${under60}%` : "–" },
@@ -125,6 +133,8 @@ export default async function Admin({ searchParams }) {
     { label: "Failed scans (system)", value: `${systemFails.length}${attempts ? ` · ${failRate}%` : ""}` },
     { label: "AI / API errors", value: apiErrors },
     { label: "Visitor typos & closed sites", value: failures.length - systemFails.length },
+    { label: "Average AI cost per check", value: money(avgCost) },
+    { label: "AI cost this week (approx.)", value: costed.length ? money(weekCost) : "–" },
   ];
 
   const viewLabel = view === "year" ? "per year (last 5 years)" : view === "month" ? "per month (last 12 months)" : "per day (last 30 days)";
@@ -189,7 +199,7 @@ export default async function Admin({ searchParams }) {
           </p>
         )}
         <p className="muted small health-sub">
-          Scan times only count scans made after this update. "Out of API credit" means it's time to top up at console.anthropic.com.
+          Scan times and costs only count scans made after these updates. Costs are estimates; your exact bill is at console.anthropic.com. "Out of API credit" means it's time to top up at console.anthropic.com.
         </p>
       </div>
 
@@ -226,6 +236,49 @@ export default async function Admin({ searchParams }) {
           </div>
         ) : (
           <p className="muted">No messages yet. Contact messages and in-depth report requests will appear here.</p>
+        )}
+      </div>
+
+      <div className="card" id="feedback">
+        <h3>
+          Feedback <span className="pill">{feedback.length}</span>
+        </h3>
+        {feedback.length ? (
+          <div className="inbox">
+            {feedback.map((f, i) => (
+              <div className="msg" key={i}>
+                <div className="msg-head">
+                  <span className="badge">{"★".repeat(f.stars || 0)}{"☆".repeat(5 - (f.stars || 0))}</span>
+                  <b>{f.name || "Anonymous"}</b>
+                  {f.business && <span>{f.business}</span>}
+                  <span className="muted small">{when(f.at)}</span>
+                  {f.canShare ? <span className="badge green-badge">OK to show publicly</span> : <span className="badge muted-badge">Private</span>}
+                </div>
+                <p className="msg-body">{f.message}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No feedback yet. Send people your feedback link: www.doesaiseemystore.com/feedback</p>
+        )}
+      </div>
+
+      <div className="card" id="subscribers">
+        <h3>
+          Tips list <span className="pill">{subscribers.length}</span>
+        </h3>
+        <p className="muted small">People who ticked "send me occasional tips". Only email these people about tips, and remove anyone who asks.</p>
+        {subscribers.length > 0 && (
+          <ul className="comp">
+            {subscribers.slice(0, 100).map((s, i) => (
+              <li key={i}>
+                <span>
+                  {s.email} <span className="muted small">· {s.domain}</span>
+                </span>
+                <span className="count">{when(s.at)}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

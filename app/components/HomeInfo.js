@@ -50,11 +50,11 @@ const FAQS = [
   },
   {
     q: "Does it work outside the UK?",
-    a: "Yes. Tell us where your customers are, and we'll search the way shoppers there would. Leave it blank and we'll work it out from your store.",
+    a: "Yes. Tell us where your customers are, and we'll search the way shoppers there would. Leave it blank and we'll work it out from your store, and search in the local language too.",
   },
   {
     q: "What's in the full report?",
-    a: "Every search we tested and your position in each, your full competitive map, every category, all your quick wins and a step-by-step growth plan. Just press Enquire now on your results and we'll reply by email.",
+    a: "Every search we tested and your position in each, your full competitive map, every category, all your quick wins and a step-by-step growth plan. For a limited time it's free: just press “Get my full report free” on your results and we'll send it by email.",
   },
   {
     q: "Why might my score change between checks?",
@@ -63,6 +63,11 @@ const FAQS = [
   {
     q: "Which stores does it work with?",
     a: "It works best with Shopify stores. WooCommerce stores are supported too, and for other platforms like Wix or Squarespace we read the product pages we can find.",
+  },
+  {
+    q: "Who's behind DoesAISeeMyStore?",
+    a: "It's run by Jake, here in the UK. It started from a simple question: when shoppers ask AI what to buy, do small shops even get a look in? Got a question? Get in touch any time.",
+    link: { href: "/contact", label: "Contact" },
   },
   {
     q: "Do you change anything on my store?",

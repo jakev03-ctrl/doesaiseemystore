@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { isRecent } from "./recent";
+import EmailReport from "./EmailReport";
+
+// While full reports are free (to collect reviews). Set NEXT_PUBLIC_FREE_REPORTS=0 in Vercel to switch off.
+const FREE_REPORTS = process.env.NEXT_PUBLIC_FREE_REPORTS !== "0";
 
 // The score ring fills and the number counts up from 0.
 function Ring({ value }) {
@@ -68,7 +72,15 @@ const TIPS = {
   map: "How many of our searches each shop was recommended in. More mentions means AI trusts that shop more for what you sell.",
   categories: "How often you were recommended for each type of search, like price, quality or gift searches.",
   product: "How clear and complete your product details are for AI: descriptions, sizes, materials, prices, delivery and returns.",
+  checks: "Things we checked directly on your website, so you know exactly what's already in place.",
 };
+
+const CHECK_ROWS = [
+  ["aiAccess", "AI access"],
+  ["sitemap", "Sitemap"],
+  ["productData", "Product data for AI"],
+  ["policies", "Delivery & returns"],
+];
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -143,16 +155,20 @@ function LockedBottom({ report }) {
               <path d="M8 11V7a4 4 0 0 1 8 0v4" />
             </svg>
           </div>
-          <p className="eyebrow">Full report</p>
-          <h3>Unlock your full report</h3>
+          <p className="eyebrow">{FREE_REPORTS ? "Free for a limited time" : "Full report"}</p>
+          <h3>{FREE_REPORTS ? "Get your full report free" : "Unlock your full report"}</h3>
           <p className="muted lock-sub">
             Every search we tested and your position in each, your full competitive map, every category, all your
             quick wins and a step-by-step growth plan.
           </p>
           <a className="button" href={requestHref}>
-            Enquire now
+            {FREE_REPORTS ? "Get my full report free" : "Enquire now"}
           </a>
-          <p className="muted small">No account needed. We'll reply by email with the details.</p>
+          <p className="muted small">
+            {FREE_REPORTS
+              ? "No payment and no account. In return, we'd love your honest feedback."
+              : "No account needed. We'll reply by email with the details."}
+          </p>
         </div>
       </div>
     </div>
@@ -243,7 +259,10 @@ export default function Report({ report, onRecheck }) {
           )}
           {report.rank ? (
             <div className="kpi">
-              <b>{ordinal(report.rank.position)}</b>
+              <b>
+                {report.rank.joint ? "Joint " : ""}
+                {ordinal(report.rank.position)}
+              </b>
               <span>
                 Of {report.rank.of} shops recommended <Tip text={TIPS.rank} />
               </span>
@@ -289,7 +308,7 @@ export default function Report({ report, onRecheck }) {
               {copied ? "Copied!" : "Copy link"}
             </button>
             <button type="button" className="secondary" onClick={() => window.print()}>
-              Save as PDF
+              Download PDF
             </button>
           </div>
         </div>
@@ -432,6 +451,26 @@ export default function Report({ report, onRecheck }) {
         )}
       </div>
 
+      {/* 6b. What we checked */}
+      {report.checks && (
+        <div className="card">
+          <h3>
+            What we checked on your store <Tip text={TIPS.checks} />
+          </h3>
+          <div className="checks">
+            {CHECK_ROWS.filter(([k]) => report.checks[k]).map(([k, name]) => (
+              <div className="check-row" key={k}>
+                <span className={`check-dot ${report.checks[k].ok ? "ok" : "no"}`} aria-hidden="true">
+                  {report.checks[k].ok ? "✓" : "!"}
+                </span>
+                <span className="check-name">{name}</span>
+                <span className="check-text">{report.checks[k].text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 7. Quick wins */}
       {fixes.length > 0 && (
         <div className="card">
@@ -451,6 +490,25 @@ export default function Report({ report, onRecheck }) {
               />
             )}
           </ol>
+        </div>
+      )}
+
+      {/* Full view: growth plan */}
+      {!report.locked && report.plan?.length > 0 && (
+        <div className="card">
+          <h3>Your step-by-step growth plan</h3>
+          <div className="plan">
+            {report.plan.map((st, i) => (
+              <div className="plan-stage" key={i}>
+                <span className="plan-when">{st.stage}</span>
+                <ul className="points">
+                  {st.actions.map((a, j) => (
+                    <li key={j}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -483,7 +541,10 @@ export default function Report({ report, onRecheck }) {
 
       {/* 8. Locked bottom */}
       {report.locked ? (
-        <LockedBottom report={report} />
+        <>
+          <LockedBottom report={report} />
+          <EmailReport reportId={report.id} />
+        </>
       ) : (
         <p className="note">AI answers change from search to search, so this is a snapshot, not a guarantee.</p>
       )}

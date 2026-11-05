@@ -75,7 +75,7 @@ export default function RequestForm({ website = "", reportId = "" }) {
         <input type="text" tabIndex={-1} autoComplete="off" value={form.company_site} onChange={set("company_site")} />
       </label>
       <button type="submit" disabled={status === "sending"}>
-        {status === "sending" ? "Sending…" : "Request my in-depth report"}
+        {status === "sending" ? "Sending…" : process.env.NEXT_PUBLIC_FREE_REPORTS !== "0" ? "Request my free full report" : "Request my in-depth report"}
       </button>
       {error && <p className="error">{error}</p>}
     </form>

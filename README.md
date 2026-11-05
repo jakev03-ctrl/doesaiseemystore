@@ -27,3 +27,11 @@ Optional:
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`: Cloudflare "are you human?" check
 
 Remember to redeploy after changing settings.
+
+## Optional settings (Vercel → Settings → Environment Variables)
+- `NEXT_PUBLIC_FREE_REPORTS`: full reports are free by default. Set to `0` to switch back to "Enquire now".
+- `NEXT_PUBLIC_EMAIL_REPORTS`: set to `1` once your domain is verified in Resend, to show "Email me my report".
+- `NOTIFY_FROM`: the sender for emails, e.g. `DoesAISeeMyStore <hello@doesaiseemystore.com>` (needs your domain verified in Resend).
+- `NEXT_PUBLIC_OWNER_NAME`: name shown in the footer (default "Jake").
+- `NEXT_PUBLIC_BUSINESS_ADDRESS`: your business address, shown in the footer, Terms and Privacy when set.
+- `INBOX_DAYS`: how long enquiries are kept (default 365). Reports are kept `REPORT_DAYS` (default 90).

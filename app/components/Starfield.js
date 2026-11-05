@@ -41,6 +41,8 @@ export default function Starfield() {
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      // Light theme: the same stars, turned down to soft blue-grey specks.
+      const light = document.documentElement.dataset.theme === "light";
       const lift = window.scrollY * 0.05;
       for (const s of stars) {
         if (!still) {
@@ -51,11 +53,17 @@ export default function Starfield() {
             s.y = Math.random() * h;
           }
         }
-        const a = s.base * (0.65 + 0.35 * Math.sin(s.tw));
+        const a = s.base * (0.65 + 0.35 * Math.sin(s.tw)) * (light ? 0.45 : 1);
         const y = (((s.y - lift * (0.3 + s.speed * 4)) % h) + h) % h;
         ctx.beginPath();
         ctx.arc(s.x, y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = s.blue ? `rgba(170, 195, 255, ${a})` : `rgba(255, 255, 255, ${a})`;
+        ctx.fillStyle = light
+          ? s.blue
+            ? `rgba(90, 120, 220, ${a})`
+            : `rgba(110, 125, 170, ${a})`
+          : s.blue
+            ? `rgba(170, 195, 255, ${a})`
+            : `rgba(255, 255, 255, ${a})`;
         ctx.fill();
       }
       if (!still) frame = requestAnimationFrame(draw);
@@ -66,6 +74,8 @@ export default function Starfield() {
       if (still) draw();
     };
     const onScroll = () => draw();
+    const onTheme = () => still && draw();
+    window.addEventListener("themechange", onTheme);
 
     makeStars();
     draw();
@@ -76,6 +86,7 @@ export default function Starfield() {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("themechange", onTheme);
     };
   }, []);
 

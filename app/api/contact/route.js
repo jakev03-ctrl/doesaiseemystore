@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { increment, pushToList } from "../../../lib/store";
+import { increment, pushToList, trimOlderThan } from "../../../lib/store";
 import { countEvent } from "../../../lib/stats";
 import { notifyOwner } from "../../../lib/notify";
 
@@ -64,6 +64,8 @@ export async function POST(req) {
     if (isReport) await countEvent("requests");
     else await increment("stats:messages:all", 3650 * 24 * 60 * 60);
     await notifyOwner(entry);
+    // Privacy: enquiries are kept for 12 months, then deleted automatically.
+    await trimOlderThan("inbox", Number(process.env.INBOX_DAYS || 365)).catch(() => {});
     return Response.json({ ok: true });
   } catch (e) {
     console.error("Contact failed:", e);

@@ -4,6 +4,8 @@ export const metadata = { title: "Terms | DoesAISeeMyStore" };
 
 export default function Terms() {
   const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+  const owner = process.env.NEXT_PUBLIC_OWNER_NAME || "Jake";
+  const address = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS || "";
   return (
     <main className="wrap">
       <header className="top">
@@ -26,9 +28,10 @@ export default function Terms() {
 
         <h3>1. Who we are</h3>
         <p>
-          DoesAISeeMyStore is an online service based in the United Kingdom that checks how AI shopping
-          assistants respond to questions about online stores. You can contact us at{" "}
-          <a href={`mailto:${email}`}>{email}</a>.
+          DoesAISeeMyStore is an online service run by {owner}, based in the United Kingdom, that checks how AI
+          shopping assistants respond to questions about online stores. You can contact us at{" "}
+          <a href={`mailto:${email}`}>{email}</a>
+          {address ? `, or write to ${address}` : ""}.
         </p>
 
         <h3>2. The free check</h3>
@@ -50,10 +53,16 @@ export default function Terms() {
           or sales.
         </p>
 
-        <h3>4. In-depth reports and paid services</h3>
+        <h3>4. Full reports and paid services</h3>
         <ul>
           <li>
-            Enquiring about an in-depth report is free and doesn't commit you to anything. We'll reply by
+            For a limited time, full reports are free. There's nothing to pay and no obligation. We may ask for
+            your honest feedback afterwards, but giving it is optional, and you're free to say whatever you
+            genuinely think. We may end the free offer at any time, but we'll still send any free report we've
+            already agreed to send.
+          </li>
+          <li>
+            When we start charging, enquiring about a report will still be free and doesn't commit you to anything. We'll reply by
             email with what's included, the price and the expected delivery time before you decide.
           </li>
           <li>A paid service only begins once you've agreed to the details and paid.</li>
@@ -77,31 +86,39 @@ export default function Terms() {
 
         <h3>6. Reports and sharing</h3>
         <p>
-          Anyone with a report's link can view it. Reports are kept for up to 90 days. If you'd like one
-          removed sooner, contact us.
+          Anyone with a report's link can view it. Reports are kept for up to 90 days, then deleted
+          automatically. If you'd like one removed sooner, contact us.
         </p>
 
-        <h3>7. Our content</h3>
+        <h3>7. Reviews</h3>
+        <p>
+          Any reviews we show are from real customers, shown with their permission. Reviews from people who
+          received a free full report are labelled as such. We don't edit reviews to change their meaning, and
+          we don't hide negative ones.
+        </p>
+
+        <h3>8. Our content</h3>
         <p>
           The site, its design and our reports belong to DoesAISeeMyStore. You're welcome to use your own
           report for your business, but please don't copy or resell our reports or the site itself. News
           articles we link to belong to their publishers.
         </p>
 
-        <h3>8. Liability</h3>
+        <h3>9. Liability</h3>
         <p>
           Nothing in these terms limits our liability where it would be unlawful to do so, including for death
           or personal injury caused by negligence or for fraud. Otherwise, we aren't liable for any indirect
           losses, or for any loss of profit, revenue, sales or business. For paid services, our total
-          liability is limited to the amount you paid us for that service.
+          liability is limited to the amount you paid us for that service. Free checks and free reports are
+          provided as they are, without any promise of results.
         </p>
 
-        <h3>9. Privacy</h3>
+        <h3>10. Privacy</h3>
         <p>
           How we handle your information is explained in our <a href="/privacy">privacy notice</a>.
         </p>
 
-        <h3>10. Changes and law</h3>
+        <h3>11. Changes and law</h3>
         <p>
           We may update these terms from time to time, and the latest version will always be on this page.
           These terms are governed by the laws of England and Wales.
