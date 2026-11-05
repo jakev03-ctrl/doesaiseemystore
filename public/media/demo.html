@@ -1,0 +1,143 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box}html,body{margin:0;overflow:hidden;font-family:-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif;background:#eef3fd;color:#0a1b33}
+#bg{position:absolute;inset:0;background:radial-gradient(640px 440px at 88% 18%,rgba(63,111,232,.16),transparent 65%),radial-gradient(520px 380px at 6% 92%,rgba(124,92,255,.12),transparent 65%)}
+.brand{position:absolute;top:34px;left:56px;font-weight:800;font-size:22px;letter-spacing:-.02em}.brand b{color:#3f6fe8}
+.cap{position:absolute;left:56px;top:0;bottom:0;width:470px;display:flex;flex-direction:column;justify-content:center}
+.kick{font-size:18px;font-weight:800;color:#3f6fe8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+.big{font-size:66px;font-weight:800;line-height:1.03;letter-spacing:-.035em}
+.big span{color:#3f6fe8}
+.dots{position:absolute;left:56px;bottom:52px;display:flex;gap:8px}.dots i{width:28px;height:6px;border-radius:99px;background:#d5def0}.dots i.on{background:#3f6fe8}
+.win{position:absolute;left:560px;top:70px;width:660px;height:580px;border-radius:24px;background:#fff;box-shadow:0 40px 90px rgba(10,27,51,.16);border:1px solid rgba(63,111,232,.12);overflow:hidden}
+.bar-top{height:44px;background:#f0f4fc;display:flex;align-items:center;gap:8px;padding:0 18px;border-bottom:1px solid #e3e9f6}
+.bar-top i{width:12px;height:12px;border-radius:50%;background:#d5def0}.addr{margin-left:14px;font-size:13px;font-weight:600;color:#6a7497;background:#fff;padding:5px 14px;border-radius:99px}
+.view{position:absolute;top:44px;left:0;right:0;bottom:0}
+.sec{position:absolute;inset:0;padding:34px 38px 60px;display:flex;flex-direction:column;justify-content:center}
+h3{margin:0 0 6px;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#3f6fe8}
+h4{margin:0 0 22px;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.score{display:flex;gap:30px;align-items:center;margin-top:10px}
+.ring{width:200px;height:200px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+.ring div{width:160px;height:160px;border-radius:50%;background:#fff;display:grid;place-items:center;align-content:center}
+.ring b{font-size:64px;font-weight:800;line-height:1}.ring small{font-size:15px;color:#6a7497;font-weight:600}
+.lab{font-size:34px;font-weight:800}.lsub{font-size:18px;color:#4a5878;font-weight:600;margin-top:8px;line-height:1.4}
+.bars{display:grid;gap:18px;margin-top:8px}
+.br{display:grid;grid-template-columns:150px 1fr 34px;gap:14px;align-items:center;font-size:17px;font-weight:600}
+.tr{height:20px;border-radius:99px;background:#eef2fa;overflow:hidden}.fl{height:100%;border-radius:99px;background:#b8c8ee}
+.br.you{font-weight:800;color:#3f6fe8}.br.you .fl{background:linear-gradient(90deg,#3f6fe8,#7c5cff)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+.st{border-radius:18px;background:#f5f8ff;border:1px solid #e3e9f6;padding:20px 16px;min-height:200px}
+.st b{display:block;font-size:46px;font-weight:800;letter-spacing:-.03em;color:#0a1b33;line-height:1.05;margin-bottom:10px}
+.st span{font-size:15px;font-weight:600;color:#4a5878;line-height:1.35}
+.st.hot b{color:#e5484d}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pt{display:flex;gap:12px;align-items:flex-start;font-size:16px;font-weight:600;line-height:1.35;margin-bottom:14px}
+.pt i{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800;color:#fff}
+.g{background:#12a36f}.r{background:#e5484d}.y{background:#f5a524}
+.col h5{margin:0 0 14px;font-size:18px;font-weight:800}
+.chk{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #eef2fa;font-size:16px;font-weight:600}
+.chk:first-child{border-top:0}.tag{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px}.ok{background:#e3f6ee;color:#0e8a5f}.no{background:#fff1dc;color:#b5730a}
+.fix{border-radius:18px;background:#f5f8ff;border:1.5px solid #3f6fe8;padding:22px;margin-top:6px}
+.fix .q{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#3f6fe8;color:#fff;padding:5px 10px;border-radius:99px;margin-bottom:12px}
+.fix p{margin:0;font-size:21px;font-weight:700;line-height:1.35}
+.fix small{display:block;margin-top:10px;font-size:15px;color:#4a5878;font-weight:600}
+.more{margin-top:16px;display:grid;gap:10px}.more div{height:46px;border-radius:14px;background:#f5f8ff;border:1px solid #e3e9f6;filter:blur(3px)}
+.end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#3f6fe8;color:#fff}
+.end .e1{font-size:96px;font-weight:800;letter-spacing:-.045em;line-height:1}
+.end .e2{margin-top:26px;font-size:30px;font-weight:800;background:#fff;color:#3f6fe8;padding:14px 34px;border-radius:99px}
+.end .e3{margin-top:20px;font-size:22px;font-weight:600;opacity:.9}
+.ilab{font-size:16px;font-weight:700;color:#4a5878;margin:6px 0 10px}
+.iinp{height:64px;border-radius:16px;border:2px solid #d5def0;display:flex;align-items:center;padding:0 20px;font-size:26px;font-weight:700}
+.icaret{display:inline-block;width:3px;height:30px;background:#3f6fe8;margin-left:2px}
+.ibtn{margin-top:16px;height:64px;border-radius:16px;background:#3f6fe8;color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px;box-shadow:0 12px 30px rgba(63,111,232,.35)}
+.iprog{margin-top:18px;height:10px;border-radius:99px;background:#eef2fa;overflow:hidden}.ipf{height:100%;background:linear-gradient(90deg,#3f6fe8,#7c5cff)}
+
+html.dark,html.dark body{background:transparent;color:#fff}
+html.dark #bg{background:radial-gradient(640px 440px at 88% 18%,rgba(88,110,255,.22),transparent 65%),radial-gradient(520px 380px at 6% 92%,rgba(120,70,255,.18),transparent 65%)}
+html.dark .big{color:#fff}html.dark .big span{color:#8fb0ff}html.dark .kick{color:#9dbbff}
+html.dark .dots i{background:#1d2a52}html.dark .dots i.on{background:#6e9bff}
+html.dark .win{background:#0d1532;border-color:rgba(140,170,255,.22);box-shadow:0 40px 90px rgba(0,0,0,.5)}
+html.dark .bar-top{background:#111c40;border-color:rgba(140,170,255,.15)}html.dark .bar-top i{background:#2a3a6b}html.dark .addr{background:#0a1230;color:#8590b5}
+html.dark h3{color:#9dbbff}html.dark h4{color:#fff}
+html.dark .ring div{background:#0d1532}html.dark .lsub{color:#bac4e0}html.dark .rs{color:#8590b5}
+html.dark .br{color:#e4eafa}html.dark .br.you{color:#8fb0ff}html.dark .tr{background:#1d2a52}html.dark .fl{background:#4b5f9e}
+html.dark .st{background:#0a1230;border-color:rgba(140,170,255,.18)}html.dark .st b{color:#fff}html.dark .st.hot b{color:#ff6b6f}html.dark .st span{color:#bac4e0}
+html.dark .pt span{color:#e4eafa}html.dark .col h5{color:#fff}html.dark .chk{border-color:rgba(140,170,255,.12);color:#e4eafa}
+html.dark .ok{background:rgba(52,211,153,.15);color:#34d399}html.dark .no{background:rgba(251,191,36,.15);color:#fbbf24}
+html.dark .fix{background:#0a1230}html.dark .fix p{color:#fff}html.dark .fix small{color:#bac4e0}html.dark .more div{background:#0a1230;border-color:rgba(140,170,255,.15)}
+html.dark .ilab{color:#bac4e0}html.dark .iinp{border-color:#2a3a6b;color:#fff;background:#0a1230}html.dark .iprog{background:#1d2a52}
+.end{background:transparent!important;color:#0a1b33!important}html.dark .end{color:#fff!important}
+.end .e2{background:#3f6fe8!important;color:#fff!important;box-shadow:0 14px 40px rgba(63,111,232,.45)}
+.end .e3{color:#4a5878}html.dark .end .e3{color:#bac4e0}
+html,body{background:transparent!important}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0}
+</style></head><body><div id="stage">
+<div class="cap" id="cap"><div class="kick" id="kick"></div><div class="big" id="big"></div></div>
+<div class="dots" id="dots"></div>
+<div class="win" id="win"><div class="bar-top"><i></i><i></i><i></i><span class="addr" id="addr">doesaiseemystore.com</span></div><div class="view">
+<div class="sec" id="pi"><h3>Free check</h3><h4>Does AI see your store?</h4><div class="ilab">Your store's website</div><div class="iinp"><span id="ityped"></span><span class="icaret" id="icaret"></span></div><div class="ibtn" id="ibtn">Check my store</div><div class="iprog"><div class="ipf" id="ipf"></div></div></div>
+<div class="sec" id="p0"><h3>yourstore.com</h3><h4>Your AI visibility score</h4><div class="score"><div class="ring" id="ring"><div><b id="num">0</b><small>/100</small></div></div><div><div class="lab">Sometimes seen</div><div class="lsub">AI recommends you in<br><b id="ofn" style="color:#3f6fe8">3 out of 10</b> shopper searches.</div></div></div></div>
+<div class="sec" id="p1"><h3>Competitors</h3><h4>Who AI recommends instead</h4><div class="bars" id="bars"></div></div>
+<div class="sec" id="p2"><h3>Stats and data</h3><h4>The numbers that matter</h4><div class="stats"><div class="st hot"><b id="s1">0/10</b><span>searches where AI picked someone else</span></div><div class="st"><b id="s2">1×</b><span>more mentions for your top competitor</span></div><div class="st"><b id="s3">0</b><span>other shops AI recommended for what you sell</span></div></div></div>
+<div class="sec" id="p3"><h3>Your store, checked</h3><h4>What's working. What's not.</h4><div class="two"><div class="col"><div id="pts"></div></div><div class="col" id="chks"></div></div></div>
+<div class="sec" id="p4"><h3>Ways to change</h3><h4>Exactly what to fix</h4><div class="fix" id="fix"><span class="q">Quickest win</span><p>Add your star ratings to your product data, so AI can see your reviews.</p><small>Usually a 10-minute job in Shopify.</small></div><div class="more"><div></div><div></div></div></div>
+</div></div>
+<div class="end" id="end"><div class="e1">Check your store free.</div><div class="e2">Try it now ↓</div><div class="e3">Under 60 seconds · No sign-up · No card</div></div>
+</div><script>
+const clamp=x=>Math.max(0,Math.min(1,x));const ease=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const T=[1.4,2.7,3.9,5.2,6.5,7.7];
+const CAP=[["In your report","Your <span>AI score.</span>"],["In your report","Who AI picks <span>instead.</span>"],["In your report","The numbers <span>that matter.</span>"],["In your report","What's working. <span>What's not.</span>"],["In your report","Exactly what <span>to fix.</span>"]];
+const BARS=[["Brand A Candles",7],["Brand B Home",5],["You",3],["Wick & Co.",2],["Ember Lane",1]];
+const PTS=[["g","✓","AI picks you first for baking-scented candles."],["r","!","AI can't see your reviews, so it can't show your ratings."],["r","!","You're missing from gift searches, where rivals win."]];
+const CHK=[["ok","AI access","Open"],["ok","Sitemap","Found"],["no","Product data","Missing reviews"],["ok","Delivery & returns","Linked"]];
+const URL="yourstore.com";
+let DARK=true;function demoTheme(th){DARK=th!=='light';document.documentElement.classList.toggle('dark',DARK);}
+window.draw=function(T0){
+  const t=T0*9/10.5;
+
+  const intro=t<T[0];let k=0;for(let i=0;i<5;i++)if(t>=T[i])k=i;
+  const cap=document.getElementById('cap');
+  if(intro){document.getElementById('kick').textContent="Step 1";document.getElementById('big').innerHTML="Enter <span>your store.</span>";
+    const cin=back(t/0.35);cap.style.opacity=clamp(t/0.12)*clamp((T[0]-t)/0.15);cap.style.transform=`translateY(${(1-cin)*36}px)`;}
+  else{const lt=t-T[k];document.getElementById('kick').textContent=CAP[k][0];document.getElementById('big').innerHTML=CAP[k][1];
+    const cin=back(lt/0.32),cout=clamp(((k<4?T[k+1]:T[5])-t)/0.15);cap.style.opacity=clamp(lt/0.12)*cout;cap.style.transform=`translateY(${(1-cin)*36}px)`;}
+  document.getElementById('dots').innerHTML=[0,1,2,3,4].map(i=>`<i class="${!intro&&i<=k?'on':''}"></i>`).join('');
+  const w=document.getElementById('win');w.style.transform=`translateY(${(1-back(t/0.4))*620}px)`;
+  const fo=1-ease((t-T[5]+0.15)/0.3);w.style.opacity=fo;document.getElementById('dots').style.opacity=fo;
+  document.getElementById('addr').textContent=t<T[0]-0.1?'doesaiseemystore.com':'doesaiseemystore.com/report/yourstore';
+  // intro typing
+  const pi=document.getElementById('pi');pi.style.opacity=1-ease((t-(T[0]-0.2))/0.25);pi.style.transform=`translateY(${-ease((t-(T[0]-0.2))/0.3)*60}px)`;
+  const n=Math.floor(clamp((t-0.35)/0.5)*URL.length);document.getElementById('ityped').textContent=URL.slice(0,n);
+  document.getElementById('icaret').style.opacity=t<0.95?1:0;
+  const press=t>0.9&&t<1.02;const ib=document.getElementById('ibtn');ib.style.transform=press?'scale(.96)':'none';
+  document.getElementById('ipf').style.width=(ease((t-0.95)/0.4)*100)+'%';
+  // sections
+  for(let i=0;i<5;i++){const el=document.getElementById('p'+i);const a=T[i],b=T[i+1];const pin=ease((t-a)/0.28),pout=ease((t-(b-0.2))/0.25);
+    el.style.opacity=(t>=a-0.01&&t<b+0.1)?pin*(1-pout):0;el.style.transform=`translateY(${(1-pin)*60-pout*60}px)`;}
+  const v=Math.round(46*ease((t-T[0]-0.1)/0.8));document.getElementById('num').textContent=v;
+  document.getElementById('ring').style.background=`conic-gradient(#f5a524 ${v}%, ${DARK?'#1d2a52':'#eef2fa'} 0)`;
+  document.getElementById('bars').innerHTML=BARS.map((b,i)=>{const p=ease((t-T[1]-0.15-i*0.08)/0.45);return `<div class="br ${b[0]==='You'?'you':''}" style="opacity:${clamp((t-T[1]-0.12-i*0.08)/0.15)}"><span>${b[0]}</span><div class="tr"><div class="fl" style="width:${p*b[1]/7*100}%"></div></div><span>${Math.round(p*b[1])}</span></div>`}).join('');
+  const sp=i=>ease((t-T[2]-0.2-i*0.18)/0.5);
+  document.getElementById('s1').textContent=Math.max(0,Math.round(7*sp(0)))+'/10';
+  document.getElementById('s2').textContent=(1+sp(1)).toFixed(sp(1)<1?1:0)+'×';
+  document.getElementById('s3').textContent=Math.round(23*sp(2));
+  [...document.querySelectorAll('#p2 .st')].forEach((e,i)=>{const p=back((t-T[2]-0.12-i*0.18)/0.32);e.style.opacity=clamp((t-T[2]-0.12-i*0.18)/0.12);e.style.transform=`translateY(${(1-p)*30}px)`;});
+  document.getElementById('pts').innerHTML='<h5>Highlights</h5>'+PTS.map((p,i)=>{const o=clamp((t-T[3]-0.15-i*0.2)/0.15);return `<div class="pt" style="opacity:${o};transform:translateX(${(1-ease((t-T[3]-0.15-i*0.2)/0.28))*-20}px)"><i class="${p[0]}">${p[1]}</i><span>${p[2]}</span></div>`}).join('');
+  document.getElementById('chks').innerHTML='<h5>What we checked</h5>'+CHK.map((c,i)=>{const o=clamp((t-T[3]-0.25-i*0.15)/0.12);return `<div class="chk" style="opacity:${o}"><i class="pt" style="margin:0"><i class="${c[0]==='ok'?'g':'y'}" style="width:26px;height:26px">${c[0]==='ok'?'✓':'!'}</i></i><span>${c[1]}</span><span class="tag ${c[0]}">${c[2]}</span></div>`}).join('');
+  const f=document.getElementById('fix');const fp=back((t-T[4]-0.15)/0.35);f.style.transform=`scale(${0.92+0.08*fp})`;f.style.opacity=clamp((t-T[4]-0.15)/0.12);
+  const en=document.getElementById('end');const ep=ease((t-T[5])/0.3);en.style.opacity=t<T[5]?0:1;
+  const e1=en.querySelector('.e1');const b1=back((t-T[5]-0.12)/0.35);e1.style.transform=`translateY(${(1-b1)*40}px)`;e1.style.opacity=clamp((t-T[5]-0.12)/0.12);
+  const e2=en.querySelector('.e2');const b2=back((t-T[5]-0.35)/0.35);e2.style.transform=`scale(${0.8+0.2*b2})`;e2.style.opacity=clamp((t-T[5]-0.35)/0.12);
+  en.querySelector('.e3').style.opacity=clamp((t-T[5]-0.55)/0.2);
+};
+
+// ---- Player: the page tells it when to play, pause or switch theme ----
+function fit(){document.getElementById('stage').style.transform='scale('+(innerWidth/1280)+')';}
+addEventListener('resize',fit);fit();
+const LEN=10.5;let playing=false,start=0,at=0;
+function frame(now){if(!playing)return;at=(now-start)/1000;if(at>=LEN){at=LEN;draw(LEN-0.001);playing=false;try{parent.postMessage({demo:'ended'},'*')}catch(e){}return;}draw(at);requestAnimationFrame(frame);}
+window.demoPlay=function(fromStart){if(fromStart||at>=LEN)at=0;start=performance.now()-at*1000;if(!playing){playing=true;requestAnimationFrame(frame);}try{parent.postMessage({demo:'playing'},'*')}catch(e){}};
+window.demoPause=function(){playing=false;try{parent.postMessage({demo:'paused'},'*')}catch(e){}};
+window.demoTheme=demoTheme;
+try{demoTheme(parent.document.documentElement.dataset.theme==='light'?'light':'dark');}catch(e){}
+draw(0.6);
+</script></body></html>
