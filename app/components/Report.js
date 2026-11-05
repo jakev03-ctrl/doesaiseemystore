@@ -409,7 +409,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
               </div>
             ))}
             {locked &&
-              filler(Math.min(2, hidden.stats || 2), (i) => (
+              filler(Math.min(2, hidden.stats || 1), (i) => (
                 <div className="statbox blurred" aria-hidden="true" key={`hs${i}`}>
                   <b>00</b>
                   <span>A hidden stat about you and your competitors.</span>
