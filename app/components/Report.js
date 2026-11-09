@@ -188,9 +188,12 @@ function requestEmail(report) {
   const link = report.id ? `${site}/report/${report.id}` : site;
   const subject = `Free full report: ${report.shop.domain}`;
   const body = `Hi Team,
-I'd like my free full report.
+
+I'd love my full report!
+
 Link: ${link}
-Tell me about your store:
+
+Please share a few details about your store so we can conduct further analysis:
 `;
   return `mailto:${CONTACT}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
