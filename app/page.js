@@ -7,6 +7,9 @@ import Script from "next/script";
 import Report from "./components/Report";
 import ChatDemo from "./components/ChatDemo";
 import HeroVideo from "./components/HeroVideo";
+import Constellation from "./components/Constellation";
+import MyQuestions from "./components/MyQuestions";
+import StatsBand from "./components/StatsBand";
 import { loadRecent, saveRecent } from "./components/recent";
 import { runScanJob, pendingJob, waitForJob } from "./components/scanClient";
 
@@ -62,6 +65,9 @@ export default function Home() {
   const [category, setCategory] = useState("");
   const [extra, setExtra] = useState("");
   const [location, setLocation] = useState("");
+  const [mode, setMode] = useState("mine"); // "mine" or "rival" (checking a competitor's store)
+  const [compareTo, setCompareTo] = useState("");
+  const [customs, setCustoms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -78,6 +84,8 @@ export default function Home() {
   const titleRef = useRef(null);
   const subRef = useRef(null);
   const extrasRef = useRef(null);
+  const kickRef = useRef(null);
+  const constRef = useRef(null);
 
 
   useEffect(() => {
@@ -111,6 +119,9 @@ export default function Home() {
       setCategory(q.get("sell") || "");
       setLocation(q.get("loc") || "");
       setExtra(q.get("extra") || "");
+      if (q.get("mode") === "rival") setMode("rival");
+      setCompareTo(q.get("vs") || "");
+      setCustoms(q.getAll("q").slice(0, 3));
       if (q.get("recheck") === "1") setFresh(true);
       setTimeout(() => document.getElementById("check")?.scrollIntoView({ behavior: "smooth" }), 300);
     }
@@ -128,10 +139,12 @@ export default function Home() {
       const title = titleRef.current;
       const sub = subRef.current;
       const extras = extrasRef.current;
+      const kick = kickRef.current;
+      const sky = constRef.current;
       if (!hero || !title || !sub || !extras) return;
 
       const formTop = document.getElementById("check")?.getBoundingClientRect().top ?? 9999;
-      const wantFloat = formTop < -420;
+      const wantFloat = formTop < -420 && !document.getElementById("results");
       if (wantFloat !== floatShown) {
         floatShown = wantFloat;
         setShowFloat(wantFloat);
@@ -143,7 +156,12 @@ export default function Home() {
       const small = window.innerWidth < 640;
       const e = 1 - Math.pow(1 - p, 3);
       const lerp = (a, b) => a + (b - a) * e;
-      hero.style.marginTop = lerp(window.innerHeight * 0.2, 4) + "px";
+      hero.style.marginTop = lerp(window.innerHeight * 0.17, 4) + "px";
+      if (kick) {
+        kick.style.opacity = String(Math.max(0, 1 - p * 3));
+        kick.style.marginBottom = lerp(14, -18) + "px";
+      }
+      if (sky) sky.style.opacity = String(Math.max(0, 1 - p * 1.6));
       title.style.fontSize = lerp(small ? 54 : 104, small ? 30 : 46) + "px";
       sub.style.fontSize = lerp(small ? 18 : 22, small ? 14 : 16) + "px";
       sub.style.marginTop = lerp(26, 8) + "px";
@@ -228,12 +246,29 @@ export default function Home() {
 
   function scan(e) {
     e.preventDefault();
-    runScan({ url, category, location, extra }, fresh);
+    runScan({ url, category, location, extra, mode, compareTo: mode === "rival" ? compareTo : "", questions: customs }, fresh);
+  }
+
+  function switchMode(m) {
+    setMode(m);
+    setError("");
   }
 
   // "Check again" from the report: same details, skipping today's saved result.
   function recheck(r) {
-    const details = { url: r.shop.domain, category: r.category || category, location: r.location || "", extra: r.extra || "" };
+    const rival = r.subject === "them";
+    const details = {
+      url: r.shop.domain,
+      category: r.category || category,
+      location: r.location || "",
+      extra: r.extra || "",
+      mode: rival ? "rival" : "mine",
+      compareTo: rival && r.h2h?.youAre === "b" ? r.h2h.b.domain : "",
+      questions: r.customs || [],
+    };
+    setMode(details.mode);
+    setCompareTo(details.compareTo);
+    setCustoms(details.questions);
     setUrl(details.url);
     setCategory(details.category);
     setLocation(details.location);
@@ -251,6 +286,9 @@ export default function Home() {
       <div className="track">
         <span id="top" className="form-anchor" aria-hidden="true" />
         <div className="stage">
+          <div className="const-wrap" ref={constRef} aria-hidden="true">
+            <Constellation />
+          </div>
           <header className="top">
             <a href="/" className="logo">
               DoesAI<b>See</b>MyStore
@@ -262,6 +300,9 @@ export default function Home() {
           </header>
 
           <div className="hero" ref={heroRef}>
+            <p className="hero-kick" ref={kickRef}>
+              The free AI visibility check for online shops
+            </p>
             <h1 ref={titleRef}>
               Does AI <span className="see">see</span> your store?
             </h1>
@@ -273,8 +314,8 @@ export default function Home() {
 
           <div className="extras" ref={extrasRef}>
             <ul className="chips" aria-label="What you get">
-              {["Free check", "Under 60 seconds", "No account needed"].map((c) => (
-                <li key={c}>
+              {["Free check", "Under 60 seconds", "No account needed", "Check competitors too"].map((c, i) => (
+                <li key={c} className={i === 3 ? "extra-chip" : undefined}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
@@ -296,14 +337,27 @@ export default function Home() {
       <HeroVideo />
 
       <section id="check" className="formsec">
-        <h2 className="formsec-title">Check your store</h2>
-          <form className="card form" onSubmit={scan}>
+        <h2 className="formsec-title">Check a store</h2>
+        <form className={`card form compact${mode === "rival" ? " rival" : ""}`} onSubmit={scan}>
+          <div className="form-head">
+            <b>{mode === "rival" ? "Checking a competitor" : "Whose store?"}</b>
+            <div className="seg2" role="group" aria-label="Whose store">
+              <button type="button" className={mode === "mine" ? "on" : ""} aria-pressed={mode === "mine"} onClick={() => switchMode("mine")} disabled={loading}>
+                My store
+              </button>
+              <button type="button" className={mode === "rival" ? "on" : ""} aria-pressed={mode === "rival"} onClick={() => switchMode("rival")} disabled={loading}>
+                A competitor's
+              </button>
+            </div>
+          </div>
+
+          <div className="fgrid">
             <label>
-              Your store's website
+              {mode === "rival" ? "Their website" : "Your store's website"}
               <input
                 type="text"
                 inputMode="url"
-                placeholder="e.g. mystore.co.uk"
+                placeholder={mode === "rival" ? "e.g. theirstore.co.uk" : "e.g. mystore.co.uk"}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
@@ -311,18 +365,33 @@ export default function Home() {
               />
             </label>
             <label>
-              What do you sell?
+              {mode === "rival" ? "What do they sell?" : "What do you sell?"}
               <input
                 type="text"
-                placeholder="e.g. scented candles"
+                placeholder="Be specific, e.g. scented candles"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 required
                 maxLength={80}
                 disabled={loading}
               />
-              <span className="hint">Be specific: "scented candles" works better than "lifestyle".</span>
             </label>
+            {mode === "rival" && (
+              <label className="span2">
+                <span>
+                  Your store <span className="optional">Optional · to see you both head-to-head</span>
+                </span>
+                <input
+                  type="text"
+                  inputMode="url"
+                  placeholder="e.g. mystore.co.uk"
+                  value={compareTo}
+                  onChange={(e) => setCompareTo(e.target.value)}
+                  maxLength={300}
+                  disabled={loading}
+                />
+              </label>
+            )}
             <label>
               <span>
                 Location <span className="optional">Optional</span>
@@ -330,7 +399,7 @@ export default function Home() {
               <input
                 type="text"
                 list="locations"
-                placeholder="e.g. United Kingdom, London, USA or Worldwide"
+                placeholder="e.g. United Kingdom or Worldwide"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 maxLength={60}
@@ -349,61 +418,63 @@ export default function Home() {
               </span>
               <input
                 type="text"
-                placeholder="e.g. eco-friendly, under £30, gifts for teenagers"
+                placeholder="e.g. eco-friendly, under £30, gifts"
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
                 maxLength={120}
                 disabled={loading}
               />
-              <span className="hint">Anything you'd like the searches to take into account, like style, price or who it's for.</span>
             </label>
+          </div>
 
-            {BOT_KEY && <div className="cf-turnstile" data-sitekey={BOT_KEY} data-callback="onBotToken" data-theme="dark" />}
+          <MyQuestions value={customs} onChange={setCustoms} category={category} disabled={loading} />
 
-            <button type="submit" disabled={loading || Boolean(BOT_KEY && !botToken)}>
-              {loading ? "Checking…" : fresh ? "Check again" : "Check my store"}
-            </button>
+          {BOT_KEY && <div className="cf-turnstile" data-sitekey={BOT_KEY} data-callback="onBotToken" data-theme="dark" />}
 
-            {loading && (
-              <div className="progress" aria-live="polite">
-                <div className="progress-top">
-                  <span className="progress-step" key={step}>
-                    {steps[step]}
-                  </span>
-                  <span className="progress-pct">{progress}%</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${progress}%` }} />
-                </div>
-                <p className="progress-tip">
-                  <b>Did you know?</b> {DID_YOU_KNOW[Math.floor(step / 2) % DID_YOU_KNOW.length]}
-                </p>
+          <button type="submit" disabled={loading || Boolean(BOT_KEY && !botToken)}>
+            {loading ? "Checking…" : fresh ? "Check again" : mode === "rival" ? "Check their store" : "Check my store"}
+          </button>
+
+          {loading && (
+            <div className="progress" aria-live="polite">
+              <div className="progress-top">
+                <span className="progress-step" key={step}>
+                  {steps[step]}
+                </span>
+                <span className="progress-pct">{progress}%</span>
               </div>
-            )}
-
-            {error && <p className="error">{error}</p>}
-
-            {!loading && (remaining !== null || cachedNote) && (
-              <p className="hint checks-left">
-                {cachedNote ? "Showing your result from earlier today. " : ""}
-                {remaining !== null &&
-                  (remaining > 0
-                    ? `${remaining} free ${remaining === 1 ? "check" : "checks"} left today`
-                    : "No free checks left today. Come back tomorrow!")}
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="progress-tip">
+                <b>Did you know?</b> {DID_YOU_KNOW[Math.floor(step / 2) % DID_YOU_KNOW.length]}
               </p>
-            )}
+            </div>
+          )}
 
-            {!loading && recent.length > 0 && (
-              <div className="recent">
-                <span className="recent-label">Your recent checks:</span>
-                {recent.slice(0, 3).map((r) => (
-                  <a key={r.id} href={`/report/${r.id}`} className="recent-item">
-                    {r.name} <b>{r.overall}</b>
-                  </a>
-                ))}
-              </div>
-            )}
-          </form>
+          {error && <p className="error">{error}</p>}
+
+          {!loading && (remaining !== null || cachedNote) && (
+            <p className="hint checks-left">
+              {cachedNote ? "Showing your result from earlier today. " : ""}
+              {remaining !== null &&
+                (remaining > 0
+                  ? `${remaining} free ${remaining === 1 ? "check" : "checks"} left today`
+                  : "No free checks left today. Come back tomorrow!")}
+            </p>
+          )}
+
+          {!loading && recent.length > 0 && (
+            <div className="recent">
+              <span className="recent-label">Your recent checks:</span>
+              {recent.slice(0, 3).map((r) => (
+                <a key={r.id} href={`/report/${r.id}`} className="recent-item">
+                  {r.name} <b>{r.overall}</b>
+                </a>
+              ))}
+            </div>
+          )}
+        </form>
       </section>
 
       <ChatDemo />
@@ -413,6 +484,8 @@ export default function Home() {
       </a>
 
       {result && <Report report={result} onRecheck={loading ? null : () => recheck(result)} />}
+
+      <StatsBand />
 
       <HomeInfo />
 

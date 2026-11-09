@@ -53,7 +53,7 @@ export default async function ReportPage({ params, searchParams }) {
         </nav>
       </header>
 
-      <Report report={report} shared clientView={client} />
+      <Report report={report} shared clientView={client} access={client ? access : ""} />
 
       <div className="card cta">
         <h3>Does AI see your store?</h3>

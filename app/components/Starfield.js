@@ -63,6 +63,7 @@ export default function Starfield() {
       // Light theme: the same stars, turned down to soft blue-grey specks.
       const light = document.documentElement.dataset.theme === "light";
       const lift = window.scrollY * 0.05;
+      const near = []; // light mode: the bigger stars, joined by faint lines for a little texture
       for (const s of stars) {
         if (!still) {
           s.x -= s.speed;
@@ -72,8 +73,9 @@ export default function Starfield() {
             s.y = Math.random() * h;
           }
         }
-        const a = s.base * (0.65 + 0.35 * Math.sin(s.tw)) * (light ? 0.45 : 1);
+        const a = s.base * (0.65 + 0.35 * Math.sin(s.tw)) * (light ? 0.7 : 1);
         const y = (((s.y - lift * (0.3 + s.speed * 4)) % h) + h) % h;
+        if (light && s.r > 1.05) near.push([s.x, y]);
         ctx.beginPath();
         ctx.arc(s.x, y, s.r, 0, Math.PI * 2);
         ctx.fillStyle = light
@@ -84,6 +86,21 @@ export default function Starfield() {
             ? `rgba(170, 195, 255, ${a})`
             : `rgba(255, 255, 255, ${a})`;
         ctx.fill();
+      }
+      if (light) {
+        ctx.lineWidth = 1;
+        for (let i = 0; i < near.length; i++) {
+          for (let j = i + 1; j < near.length; j++) {
+            const d = Math.hypot(near[i][0] - near[j][0], near[i][1] - near[j][1]);
+            if (d < 110) {
+              ctx.strokeStyle = `rgba(63, 111, 232, ${0.16 * (1 - d / 110)})`;
+              ctx.beginPath();
+              ctx.moveTo(near[i][0], near[i][1]);
+              ctx.lineTo(near[j][0], near[j][1]);
+              ctx.stroke();
+            }
+          }
+        }
       }
     }
 

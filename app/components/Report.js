@@ -3,40 +3,44 @@
 import { useEffect, useState } from "react";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
-import CompareBox from "./CompareBox";
+import QuestionExplorer from "./QuestionExplorer";
+import { H2HCard, H2HBox } from "./HeadToHead";
 
 // While full reports are free (to collect reviews). Set NEXT_PUBLIC_FREE_REPORTS=0 in Vercel to switch off.
 const FREE_REPORTS = process.env.NEXT_PUBLIC_FREE_REPORTS !== "0";
 
-// The score ring fills and the number counts up from 0.
-function Ring({ value }) {
-  const [shown, setShown] = useState(0);
+// The score gauge fills and the number counts up from 0.
+function Gauge({ value }) {
+  const [shown, setShown] = useState(value);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setShown(value);
       return;
     }
     let frame;
-    const start = performance.now();
+    const start = performance.now() + 250;
+    setShown(0);
     const tick = (now) => {
-      const p = Math.min(1, (now - start) / 1400);
+      const p = Math.max(0, Math.min(1, (now - start) / 1400));
       setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
       if (p < 1) frame = requestAnimationFrame(tick);
     };
-    const delay = setTimeout(() => (frame = requestAnimationFrame(tick)), 250);
-    return () => {
-      clearTimeout(delay);
-      cancelAnimationFrame(frame);
-    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
   }, [value]);
   const colour = value >= 70 ? "var(--good)" : value >= 40 ? "var(--mid)" : "var(--bad)";
+  const LEN = 314.16;
   return (
-    <div className="ring" style={{ "--v": shown, "--c": colour }} aria-label={`Score ${value} out of 100`}>
-      <div className="ring-inner">
-        <span className="ring-num">{shown}</span>
-        <span className="ring-of">/100</span>
-      </div>
-    </div>
+    <svg className="gauge-svg" viewBox="0 0 240 150" role="img" aria-label={`Score ${value} out of 100`}>
+      <path d="M20 128 A100 100 0 0 1 220 128" fill="none" stroke="var(--line-soft)" strokeWidth="18" strokeLinecap="round" />
+      <path d="M20 128 A100 100 0 0 1 220 128" fill="none" stroke={colour} strokeWidth="18" strokeLinecap="round" strokeDasharray={LEN} strokeDashoffset={LEN * (1 - shown / 100)} />
+      <text x="120" y="112" textAnchor="middle" fontFamily="Georgia, serif" fontSize="52" fontWeight="700" fill="var(--ink)">
+        {shown}
+      </text>
+      <text x="120" y="138" textAnchor="middle" fontSize="13" fill="var(--muted)">
+        out of 100
+      </text>
+    </svg>
   );
 }
 
@@ -73,12 +77,6 @@ const CHECK_ROWS = [
   ["policies", "Delivery & returns"],
 ];
 
-function ordinal(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 const longDate = (d) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
 function scoreLine(r) {
@@ -109,26 +107,45 @@ function strength(pct) {
 const filler = (n, make) => Array.from({ length: Math.min(n || 0, 4) }, (_, i) => make(i));
 
 // Score over time (needs at least 2 checks).
-function History({ history }) {
-  if (!history || history.length < 2) return null;
-  const w = 320;
-  const h = 70;
-  const pts = history.map((p, i) => [12 + (i * (w - 24)) / (history.length - 1), h - 10 - (p.overall / 100) * (h - 24)]);
+function Trend({ history }) {
+  const pts = history.slice(-8);
+  const W = 520;
+  const H = 130;
+  const L = 30;
+  const R = 16;
+  const T = 18;
+  const B = 24;
+  const x = (i) => L + (i * (W - L - R)) / Math.max(1, pts.length - 1);
+  const y = (v) => T + (1 - v / 100) * (H - T - B);
+  const line = pts.map((p, i) => `${x(i)},${y(p.overall)}`).join(" ");
+  const day = (d) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "");
   return (
-    <div className="history">
-      <span className="history-label">Your score over time</span>
-      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img" aria-label={`Scores: ${history.map((p) => p.overall).join(", ")}`}>
-        <polyline points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        {pts.map(([x, y], i) => (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Scores: ${pts.map((p) => p.overall).join(", ")}`}>
+      {[0, 50, 100].map((v) => (
+        <g key={v}>
+          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="var(--line-soft)" />
+          <text x={L - 8} y={y(v) + 4} textAnchor="end" fontSize="10" fill="var(--muted)">
+            {v}
+          </text>
+        </g>
+      ))}
+      <polygon points={`${x(0)},${y(0)} ${line} ${x(pts.length - 1)},${y(0)}`} fill="var(--accent)" opacity="0.14" />
+      <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => {
+        const end = i === pts.length - 1;
+        return (
           <g key={i}>
-            <circle cx={x} cy={y} r="4" fill="var(--accent)" />
-            <text x={x} y={y - 9} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--soft)">
-              {history[i].overall}
+            <circle cx={x(i)} cy={y(p.overall)} r={end ? 5.5 : 4} fill={end ? "var(--good)" : "var(--accent)"} />
+            <text x={x(i)} y={y(p.overall) - 10} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--soft)">
+              {p.overall}
+            </text>
+            <text x={x(i)} y={H - 6} textAnchor="middle" fontSize="10" fill="var(--muted)">
+              {end ? "Today" : day(p.at)}
             </text>
           </g>
-        ))}
-      </svg>
-    </div>
+        );
+      })}
+    </svg>
   );
 }
 
@@ -232,8 +249,8 @@ function LockedBottom({ report }) {
           <p className="eyebrow">{FREE_REPORTS ? "Free for a limited time" : "Full report"}</p>
           <h3>{FREE_REPORTS ? "Get your full report free" : "Unlock your full report"}</h3>
           <p className="muted lock-sub">
-            Every point, every stat, every search we tested, who AI recommends instead, all your fixes with ready-to-paste text, and a
-            step-by-step growth plan.
+            Every question we asked AI and who it picked, your score over time, who AI recommends instead, your biggest opportunity,
+            all your fixes with ready-to-paste text, and a step-by-step growth plan.
           </p>
           <a className="button" href={requestHref}>
             {FREE_REPORTS ? "Get my full report free" : "Enquire now"}
@@ -253,16 +270,41 @@ function recheckLink(report) {
   const q = new URLSearchParams({ website: report.shop.domain, sell: report.category || "", recheck: "1" });
   if (report.location) q.set("loc", report.location);
   if (report.extra) q.set("extra", report.extra);
+  if (report.subject === "them") q.set("mode", "rival");
+  const other = report.h2h ? (report.h2h.youAre === "b" ? report.h2h.b.domain : null) : null;
+  if (other) q.set("vs", other);
+  for (const c of report.customs || []) q.append("q", c);
   return `/?${q.toString()}`;
 }
 
-export default function Report({ report, onRecheck, clientView = false }) {
+function MapBars({ rows }) {
+  const max = Math.max(1, ...rows.map((r) => r.value));
+  return (
+    <div className="bars-h">
+      {rows.map((r, i) => (
+        <div className={`bar${r.you ? " you" : ""}`} key={i}>
+          <span className={`bar-name${r.hidden ? " blurred" : ""}`}>{r.label}</span>
+          <div className="bar-track">
+            <div className="bar-fill grow" style={{ width: `${Math.max(4, (r.value / max) * 100)}%`, animationDelay: `${0.3 + i * 0.07}s` }} />
+          </div>
+          <span className="bar-num">{r.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function Report({ report, onRecheck, clientView = false, access = "" }) {
   const [copied, setCopied] = useState(false);
   // On a report link, only show "Check again" to the person who ran the check (saved on their device), or the owner.
   const [mine, setMine] = useState(false);
+  const [h2h, setH2h] = useState(report.h2h || null);
   useEffect(() => setMine(isRecent(report.id) || !report.locked), [report.id, report.locked]);
+  useEffect(() => setH2h(report.h2h || null), [report.id, report.h2h]);
   const canRecheck = Boolean(onRecheck) || mine;
   const locked = report.locked;
+  const them = report.subject === "them";
+  const w = them ? { you: "them", You: "They", your: "their", Your: "Their" } : { you: "you", You: "You", your: "your", Your: "Your" };
   const hidden = report.hidden || {};
   const fixes = report.fixes || [];
   const stats = report.stats || [];
@@ -277,12 +319,23 @@ export default function Report({ report, onRecheck, clientView = false }) {
   }
 
   const change = report.previous ? { diff: report.overall - report.previous.overall, date: new Date(report.previous.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" }) } : null;
+  const history = report.history || [];
 
+  // "Who AI recommends": names in the full report; bar lengths only in the free one.
   const competitors = report.competitors || [];
-  const mapMax = Math.max(report.youMentions || 0, ...competitors.map((c) => c.count), 1);
-  const mapRows = [...competitors.map((c) => ({ label: c.name, value: c.count, you: false })), { label: "You", value: report.youMentions || 0, you: true }].sort(
-    (a, b) => b.value - a.value || (a.you ? 1 : -1)
-  );
+  const selfLabel = them ? report.shop.name : "You";
+  const mapRows = locked
+    ? [...(report.mapCounts || []).map((v) => ({ label: "Hidden shop", value: v, hidden: true })), { label: selfLabel, value: report.found || 0, you: true }]
+    : [...competitors.slice(0, 5).map((c) => ({ label: c.name, value: c.count })), { label: selfLabel, value: report.youMentions || 0, you: true }];
+  mapRows.sort((a, b) => b.value - a.value || (a.you ? 1 : -1));
+
+  const nav = [
+    ["r-score", "Score"],
+    h2h && ["r-h2h", "Head-to-head"],
+    ((locked ? report.searchPreview : report.allSearches) || []).length > 0 && ["r-questions", "Questions"],
+    !locked && competitors.length > 0 && ["r-comp", "Competitors"],
+    fixes.length > 0 && ["r-fixes", them ? "How to beat them" : "Fixes"],
+  ].filter(Boolean);
 
   return (
     <section id="results" className="results">
@@ -290,37 +343,87 @@ export default function Report({ report, onRecheck, clientView = false }) {
 
       {/* 1. Company */}
       <header className="company">
-        {!locked && <p className="eyebrow">AI visibility report</p>}
+        {(!locked || them) && <p className="eyebrow">{them ? "Competitor check" : "AI visibility report"}</p>}
         <h2 className="company-name">{report.shop.name}</h2>
         <p className="company-meta">
           {report.shop.domain} · {locked ? "Checked " : ""}
           {longDate(report.createdAt)}
           {report.market ? ` · ${report.market}` : ""}
+          {report.category ? ` · ${report.category}` : ""}
           {!locked ? " · Prepared by DoesAISeeMyStore" : ""}
         </p>
       </header>
 
-      {/* 2. Score */}
-      <div className="card score">
-        <Ring value={report.overall} />
-        <div className="score-text">
-          <h2>
+      {nav.length > 2 && (
+        <div className="rnav no-print">
+          <nav aria-label="Report sections">
+            {nav.map(([id, t]) => (
+              <a key={id} href={`#${id}`}>
+                {t}
+              </a>
+            ))}
+          </nav>
+        </div>
+      )}
+
+      {/* 2. Score dashboard */}
+      <div className="dash" id="r-score">
+        <div className="card gauge">
+          <Gauge value={report.overall} />
+          <h2 className="g-label">
             {report.label} <Tip text={TIPS.score} />
           </h2>
-          <p>{scoreLine(report)}</p>
+          <p className="muted small">{scoreLine(report).replace("recommends you", `recommends ${w.you}`).replace("recommend you", `recommend ${w.you}`)}</p>
+          <div className="g-nums">
+            <a href="#r-questions">
+              <b>
+                {report.found ?? 0}
+                <small> / {report.checked ?? 0}</small>
+              </b>
+              <span>searches {them ? "they" : "you"} came up in</span>
+            </a>
+            <a href="#r-questions">
+              <b>{report.topPicks ?? 0}</b>
+              <span>times picked first</span>
+            </a>
+          </div>
           {change && (
             <p className={`change ${change.diff > 0 ? "up" : change.diff < 0 ? "down" : "same"}`}>
-              <span className="before-after">
-                Before <b>{report.previous.overall}</b> → Now <b>{report.overall}</b>
-              </span>{" "}
-              {change.diff > 0 ? `▲ Up ${change.diff} points` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)} points` : "No change"} since your last check on {change.date}
+              {change.diff > 0 ? `▲ Up ${change.diff}` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)}` : "No change"} since {change.date} (was {report.previous.overall})
             </p>
           )}
         </div>
-        <History history={report.history} />
-        {canRecheck && (
-          <div className="recheck no-print">
-            <p className="muted small">{change ? "Keep improving and check again to track your progress." : "Made changes to your store? Check again to see your before and after."}</p>
+        <div className="dash-right">
+          <div className="card trend">
+            <div className="mini-h">
+              <b>{w.Your} score over time</b>
+              {history.length >= 2 && locked && <span className="lockchip">Full report</span>}
+              {history.length >= 2 && !locked && history[history.length - 1].overall - history[0].overall > 0 && (
+                <span className="up">▲ +{history[history.length - 1].overall - history[0].overall} since first check</span>
+              )}
+            </div>
+            {history.length >= 2 ? (
+              <div className={locked ? "blurred" : ""} aria-hidden={locked ? "true" : undefined}>
+                <Trend history={history} />
+              </div>
+            ) : (
+              <p className="muted small">{them ? "Check them again later to see if they're pulling ahead." : "Make some changes, then check again to see your score move here."}</p>
+            )}
+          </div>
+          <div className="card">
+            <div className="mini-h">
+              <b>Who AI recommends most{report.category ? ` for ${report.category}` : ""}</b>
+              {locked && <span className="lockchip">Names in full report</span>}
+            </div>
+            <MapBars rows={mapRows} />
+          </div>
+        </div>
+      </div>
+
+      {canRecheck && (
+        <div className="card recheck-card no-print">
+          <div className="recheck">
+            <p className="muted small">{change ? "Keep improving and check again to track your progress." : them ? "Check them again any time to see what's changed." : "Made changes to your store? Check again to see your before and after."}</p>
             {onRecheck ? (
               <button type="button" className="secondary" onClick={onRecheck}>
                 ↻ Check again
@@ -331,8 +434,8 @@ export default function Report({ report, onRecheck, clientView = false }) {
               </a>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Client's private full report: just the PDF button */}
       {!locked && clientView && (
@@ -367,12 +470,15 @@ export default function Report({ report, onRecheck, clientView = false }) {
         </div>
       )}
 
+      {/* Head-to-head */}
+      {h2h && <H2HCard h={h2h} />}
+
       {/* Full: summary */}
       {!locked && (
         <div className="card summary">
           <h3>Summary</h3>
           <p>
-            <b>Where you stand:</b> {scoreLine(report)}
+            <b>Where {them ? "they stand" : "you stand"}:</b> {scoreLine(report).replace("recommends you", `recommends ${w.you}`).replace("recommend you", `recommend ${w.you}`)}
           </p>
           {report.wrong?.[0] && (
             <p>
@@ -381,7 +487,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
           )}
           {fixes[0] && (
             <p>
-              <b>Biggest opportunity:</b> {fixes[0]}
+              <b>{them ? "Best way to beat them:" : "Biggest opportunity:"}</b> {fixes[0]}
             </p>
           )}
         </div>
@@ -394,7 +500,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
             <span className="h-ic good" aria-hidden="true">
               ✓
             </span>
-            What you're doing well
+            What {them ? "they're" : "you're"} doing well
           </h3>
           {report.well?.length ? <PointList items={report.well} hidden={hidden.well} locked={locked} kind="good" /> : <p className="muted">Nothing stood out yet, so there's plenty of room to grow.</p>}
         </div>
@@ -407,7 +513,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
             <span className="h-ic bad" aria-hidden="true">
               !
             </span>
-            What you're doing wrong
+            {them ? "Where they're weak" : "What you're doing wrong"}
           </h3>
           <PointList items={report.wrong || []} hidden={hidden.wrong} locked={locked} kind="bad" />
         </div>
@@ -440,17 +546,16 @@ export default function Report({ report, onRecheck, clientView = false }) {
         </div>
       )}
 
-      {/* Full: competitors, categories, every search, checks */}
+      {/* 6. Every question we asked */}
+      <QuestionExplorer report={report} />
+
+      {/* Full: competitors, categories, checks */}
       {!locked && competitors.length > 0 && (
-        <div className="card">
+        <div className="card" id="r-comp">
           <h3>
             Who AI recommends instead <Tip text={TIPS.map} />
           </h3>
-          <div className="bars-h">
-            {mapRows.map((r, i) => (
-              <Bar key={i} label={r.label} value={r.value} max={mapMax} you={r.you} />
-            ))}
-          </div>
+          <MapBars rows={mapRows} />
           <p className="note-sm">Mentions across the searches we tested.</p>
         </div>
       )}
@@ -458,7 +563,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
       {!locked && report.categories?.length > 0 && (
         <div className="card">
           <h3>
-            Performance by category <Tip text={TIPS.categories} />
+            Performance by type of search <Tip text={TIPS.categories} />
           </h3>
           <div className="cats">
             {report.categories.map((c, i) => {
@@ -479,36 +584,10 @@ export default function Report({ report, onRecheck, clientView = false }) {
         </div>
       )}
 
-      {!locked && report.allSearches?.length > 0 && (
-        <div className="card">
-          <h3>Every search we tested</h3>
-          <div className="table" style={{ "--cols": 1 }}>
-            {report.allSearches.map((q, i) => (
-              <div className="row" key={i}>
-                <span>
-                  “{q.question}”{q.category && <span className="count"> · {q.category}</span>}
-                </span>
-                <span className="col">
-                  {q.position === 1 ? (
-                    <span className="badge gold">★ 1st</span>
-                  ) : q.position ? (
-                    <span className="badge green">{ordinal(q.position)}</span>
-                  ) : q.found ? (
-                    <span className="badge green">✓</span>
-                  ) : (
-                    <span className="badge red">Not mentioned</span>
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {!locked && report.checks && (
         <div className="card">
           <h3>
-            What we checked on your store <Tip text={TIPS.checks} />
+            What we checked on {w.your} store <Tip text={TIPS.checks} />
           </h3>
           <div className="checks">
             {CHECK_ROWS.filter(([k]) => report.checks[k]).map(([k, name]) => (
@@ -524,14 +603,14 @@ export default function Report({ report, onRecheck, clientView = false }) {
         </div>
       )}
 
-      {/* 6. Ways to change */}
+      {/* 7. Ways to change */}
       {fixes.length > 0 && (
-        <div className="card">
+        <div className="card" id="r-fixes">
           <h3>
             <span className="h-ic fix" aria-hidden="true">
               →
             </span>
-            Ways to change
+            {them ? "How to beat them" : "Ways to change"}
           </h3>
           <ol className="fixes">
             {fixes.map((f, i) => (
@@ -549,7 +628,7 @@ export default function Report({ report, onRecheck, clientView = false }) {
 
       {/* Full: ready-to-paste text */}
       {!locked && report.snippets?.length > 0 && (
-        <div className="card">
+        <div className="card" id="r-snippets">
           <h3>
             Ready-to-paste text <Tip text={TIPS.snippets} />
           </h3>
@@ -580,23 +659,32 @@ export default function Report({ report, onRecheck, clientView = false }) {
         </div>
       )}
 
-      {/* 7. Unlock (free) / footer (full) */}
+      {/* 8. Unlock (free) */}
+      {locked && <LockedBottom report={report} />}
+
+      {!h2h && <H2HBox report={report} access={access} onResult={setH2h} />}
+
+      <div className="card trackc no-print">
+        <div>
+          <h3>
+            Track {w.your} AI visibility<span className="soon">Coming soon</span>
+          </h3>
+          <p className="muted small">We'll re-run {w.your} searches and {them ? "" : "your own questions "}each month, and email you what changed.</p>
+        </div>
+        <button type="button" className="secondary" disabled>
+          Coming soon
+        </button>
+      </div>
+
       {locked ? (
-        <>
-          <LockedBottom report={report} />
-          <CompareBox report={report} />
-          <EmailReport reportId={report.id} />
-        </>
+        <EmailReport reportId={report.id} />
       ) : (
-        <>
-          <CompareBox report={report} />
-          <p className="note report-foot">
-            This is a snapshot, not a guarantee. AI answers change over time.
-            <br />
-            DoesAISeeMyStore · run by {process.env.NEXT_PUBLIC_OWNER_NAME || "Jake"} · {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com"} · Tell us how we did:
-            doesaiseemystore.com/feedback
-          </p>
-        </>
+        <p className="note report-foot">
+          This is a snapshot, not a guarantee. AI answers change over time.
+          <br />
+          DoesAISeeMyStore · run by {process.env.NEXT_PUBLIC_OWNER_NAME || "Jake"} · {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com"} · Tell us how we did:
+          doesaiseemystore.com/feedback
+        </p>
       )}
     </section>
   );

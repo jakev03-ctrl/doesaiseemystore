@@ -22,7 +22,7 @@ Optional:
 - `RESEND_API_KEY`: emails you each new enquiry (to NOTIFY_EMAIL, default doesaiseemystore@outlook.com)
 - `NEXT_PUBLIC_CONTACT_EMAIL`: email shown in the footer and on the contact page
 - `FREE_SCANS_PER_DAY` (default 2), `OWNER_SCANS_PER_DAY` (default 20), `IP_SCANS_PER_DAY` (default 6)
-- `QUESTION_COUNT` (default 10), `CACHE_HOURS` (default 24), `REPORT_DAYS` (default 90)
+- `QUESTION_COUNT` (default 10; when an owner adds their own questions we write fewer so the total stays the same), `CACHE_HOURS` (default 24), `REPORT_DAYS` (default 90), `H2H_PER_DAY` (head-to-head comparisons per visitor per day, default 15)
 - `OPENAI_MODEL` (default gpt-5-mini), `CLAUDE_MODEL`, `CLAUDE_SEARCH_MODEL`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`: Cloudflare "are you human?" check
 

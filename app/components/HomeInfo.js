@@ -1,6 +1,7 @@
 // Information sections under the homepage form and results:
 // why now, who it's for, FAQs and a final call to action.
 import CountUp from "./CountUp";
+import UsualWay from "./UsualWay";
 
 const STATS = [
   {
@@ -49,12 +50,20 @@ const FAQS = [
     a: "Yes. Everyone gets 2 free checks a day. No sign-up, card or email needed.",
   },
   {
+    q: "Can I check a competitor's store?",
+    a: "Yes. Choose \u201cA competitor's\u201d at the top of the form. Add your own store too and we'll show you both head-to-head on the same searches: which questions each of you wins, and why. It uses one free check.",
+  },
+  {
+    q: "Can I add my own questions?",
+    a: "Yes. Add up to 3 questions your buyers actually ask, or tap one of our suggestions. We test them alongside ours and mark them \u201cYour question\u201d in your report.",
+  },
+  {
     q: "Does it work outside the UK?",
     a: "Yes. Tell us where your customers are, and we'll search the way shoppers there would. Leave it blank and we'll work it out from your store, and search in the local language too.",
   },
   {
     q: "What's in the full report?",
-    a: "Every search we tested and your position in each, your full competitive map, every category, all your quick wins and a step-by-step growth plan. For a limited time it's free: just press “Get my full report free” on your results and we'll send it by email.",
+    a: "Every question we asked AI and who it picked, your score over time, your full competitor map, your biggest opportunity, all your quick wins with ready-to-paste text and a step-by-step growth plan. For a limited time it's free: just press “Get my full report free” on your results and we'll send it by email.",
   },
   {
     q: "How do you test my store?",
@@ -88,6 +97,8 @@ const FAQS = [
 export default function HomeInfo() {
   return (
     <div className="info">
+      <UsualWay />
+
       <section className="info-block" aria-labelledby="why">
         <p className="eyebrow">Why now</p>
         <h2 id="why">Why AI visibility matters now</h2>

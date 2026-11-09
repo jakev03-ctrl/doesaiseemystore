@@ -7,6 +7,8 @@ import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
 import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan, hash } from "../../../lib/limits";
 import { alertOnFailures } from "../../../lib/alerts";
+import { summariseChecks } from "../../../lib/checks";
+import { loadOther, computeH2H } from "../../../lib/h2h";
 
 export const runtime = "nodejs";
 export const maxDuration = 180; // seconds (free Vercel plan allows up to 300)
@@ -14,6 +16,23 @@ export const dynamic = "force-dynamic";
 
 const REPORT_DAYS = Number(process.env.REPORT_DAYS || 90);
 const CACHE_HOURS = Number(process.env.CACHE_HOURS || 24);
+
+// The owner's own shopper questions (up to 3). Only shopping questions, nothing else.
+function cleanQuestions(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const raw of list.slice(0, 3)) {
+    const q = String(raw || "").replace(/[<>{}\[\]]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (q.length < 6) continue;
+    if (/https?:|www\.|ignore (all|any|previous|the above)|system prompt|instruction|you are an? /i.test(q)) {
+      const err = new Error("Your own questions can only be about shopping for what you sell. Please change them and try again.");
+      err.userFacing = true;
+      throw err;
+    }
+    if (!out.some((x) => x.toLowerCase() === q.toLowerCase())) out.push(q);
+  }
+  return out;
+}
 
 function slug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -50,23 +69,6 @@ async function passesBotCheck(token, ip) {
   } catch {
     return false;
   }
-}
-
-// The simple "What we checked" facts shown on the report.
-function summariseChecks(c) {
-  const f = c.productSchema && typeof c.productSchema === "object" ? c.productSchema : null;
-  const label = { reviews: "reviews", image: "images", description: "descriptions", price: "prices", availability: "stock", brand: "brand", identifier: "product codes", shipping: "delivery info", returns: "returns info" };
-  const missing = f ? Object.keys(label).filter((k) => f[k] === false).map((k) => label[k]) : [];
-  return {
-    aiAccess: c.blockedBots.length ? { ok: false, text: `Blocked for ${c.blockedBots.join(", ")}` } : c.blockedProducts.length ? { ok: false, text: `Product pages blocked for ${c.blockedProducts.join(", ")}` } : { ok: true, text: "Open to AI assistants" },
-    sitemap: c.sitemap.found ? { ok: true, text: c.sitemap.products ? "Found, lists your products" : "Found" } : { ok: false, text: "Not found" },
-    productData:
-      c.productSchema === "none" ? { ok: false, text: "Not found on product pages" }
-      : c.productSchema === "microdata" ? { ok: true, text: "Found" }
-      : f ? { ok: missing.length <= 2, text: missing.length ? `Found, missing ${missing.slice(0, 3).join(", ")}` : "Found, complete" }
-      : null,
-    policies: { ok: c.policies.returns && c.policies.delivery, text: c.policies.returns && c.policies.delivery ? "Delivery and returns linked" : !c.policies.returns && !c.policies.delivery ? "Delivery and returns not linked from homepage" : !c.policies.returns ? "Returns not linked from homepage" : "Delivery not linked from homepage" },
-  };
 }
 
 // Is a background check finished yet? (The browser asks every couple of seconds.)
@@ -129,6 +131,14 @@ export async function POST(req) {
   const extra = String(body.extra || "").trim().slice(0, 120);
   const location = String(body.location || "").trim().slice(0, 60);
   const fresh = body.fresh === true; // "Check again": skip the saved result from earlier today
+  const mode = body.mode === "rival" ? "rival" : "mine"; // checking a competitor's store
+  let customs;
+  try {
+    customs = cleanQuestions(body.questions);
+  } catch (e) {
+    return fail(e.message);
+  }
+  const compareRaw = String(body.compareTo || "").trim().slice(0, 300);
 
   if (!owner && !(await passesBotCheck(body.botToken, ip))) {
     return fail("Please complete the quick 'are you human?' check, then try again.", 403);
@@ -137,7 +147,17 @@ export async function POST(req) {
   try {
     // Work out the shop's address first, so we can reuse a recent result.
     const { domain } = normaliseUrl(url);
-    const cacheKey = `cache:${domain}:${slug(category)}:${slug(location)}:${slug(extra)}`;
+    let compareTo = "";
+    if (compareRaw) {
+      try {
+        compareTo = normaliseUrl(compareRaw).domain;
+      } catch {
+        return fail("Please check the second web address, it doesn't look right.");
+      }
+      if (compareTo === domain) compareTo = "";
+    }
+    const variant = mode === "rival" || customs.length || compareTo ? `:${mode}:${hash(customs.join("|") + "|" + compareTo).slice(0, 10)}` : "";
+    const cacheKey = `cache:${domain}:${slug(category)}:${slug(location)}:${slug(extra)}${variant}`;
 
     // Reuse a result from the last day (free, and doesn't use up a scan). Owners always get a fresh scan.
     if (!owner && !fresh) {
@@ -174,8 +194,10 @@ export async function POST(req) {
     async function work() {
   const cost = newCost();
   const shop = await readShop(url);
-  const audit = await auditShop(shop, category, extra, location, cost);
-  const vis = await testVisibility(shop, audit.questions, audit.market, cost);
+  const baseCount = Number(process.env.QUESTION_COUNT || 10);
+  const audit = await auditShop(shop, category, extra, location, cost, { count: Math.max(7, baseCount - customs.length), rival: mode === "rival" });
+  const questions = [...audit.questions, ...customs.map((q) => ({ question: q, category: "Your question", mine: true }))];
+  const vis = await testVisibility(shop, questions, audit.market, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
 
   if (vis.checked === 0) {
@@ -209,6 +231,9 @@ export async function POST(req) {
   const report = {
     id,
     createdAt: new Date().toISOString(),
+    subject: mode === "rival" ? "them" : "you",
+    customs,
+    compareTo: compareTo || null,
     shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
     category,
     extra,
@@ -240,6 +265,16 @@ export async function POST(req) {
     history: [...history, { at: new Date().toISOString(), overall: null }].slice(-12),
   };
   report.history[report.history.length - 1].overall = overall;
+
+  // Head-to-head on the same searches (no extra AI cost): your store vs theirs.
+  if (compareTo) {
+    try {
+      const other = await loadOther(compareTo);
+      report.h2h = computeH2H(report, other, mode === "rival" ? "b" : "a");
+    } catch (e) {
+      console.error("Head-to-head failed:", e?.message);
+    }
+  }
 
   await setJSON(`report:${id}`, report, REPORT_DAYS * 24 * 60 * 60);
   await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
