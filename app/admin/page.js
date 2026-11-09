@@ -58,7 +58,7 @@ export default async function Admin({ searchParams }) {
   const page = Math.max(1, Number(sp.page) || 1);
   const params = { view, mine: showMine ? "1" : "", page };
 
-  const [chart, days, months, years, log, recent, inbox, messageTotal, feedback, subscribers, statuses, feedbackTotal] = await Promise.all([
+  const [chart, days, months, years, log, recent, inbox, messageTotal, feedback, subscribers, statuses, feedbackTotal, clientErrors] = await Promise.all([
     loadStats(view),
     loadStats("day"),
     loadStats("month"),
@@ -71,6 +71,7 @@ export default async function Admin({ searchParams }) {
     getList("subscribers", 0, 499),
     getJSON("enquiry:statuses").then((x) => x || {}).catch(() => ({})),
     listLength("feedback").catch(() => 0),
+    getList("client-errors", 0, 9).catch(() => []),
   ]);
   const enquiryKey = (m) => createHash("sha256").update(`${m.at}|${m.email}`).digest("hex").slice(0, 24);
   const sentCount = Object.values(statuses).filter((v) => v && v.status !== "new").length;
@@ -210,6 +211,22 @@ export default async function Admin({ searchParams }) {
           <p className="muted small health-sub">
             Last system error: {when(lastFail.at)} · <span className="bad">{lastFail.error}</span>
           </p>
+        )}
+        {clientErrors.length > 0 && (
+          <>
+            <p className="muted small health-sub">Page crashes in visitors' browsers (latest {clientErrors.length}):</p>
+            <ul className="comp">
+              {clientErrors.map((c, i) => (
+                <li key={i}>
+                  <span>
+                    <span className="bad">{c.message}</span>
+                    <span className="muted small"> · {c.page} · {/Safari/.test(c.agent) && !/Chrome/.test(c.agent) ? "Safari" : /Chrome/.test(c.agent) ? "Chrome" : "Other browser"}</span>
+                  </span>
+                  <span className="count">{when(c.at)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
         <p className="muted small health-sub">
           Scan times and costs only count scans made after these updates. Costs are estimates; your exact bill is at console.anthropic.com. "Out of API credit" means it's time to top up at console.anthropic.com.

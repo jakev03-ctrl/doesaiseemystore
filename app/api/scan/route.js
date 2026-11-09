@@ -79,7 +79,11 @@ async function jobStatus(req, jobId) {
     const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
     return NextResponse.json({ status: "done", report: { ...publicView(report, { full: owner }), remaining: job.remaining } });
   }
-  if (job.status === "error") return NextResponse.json({ status: "error", error: job.error });
+  if (job.status === "error") {
+    // The owner sees the real reason (e.g. "Out of API credit"), visitors see a friendly message.
+    const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
+    return NextResponse.json({ status: "error", error: owner && job.detail ? `${job.error} (Owner only: ${job.detail})` : job.error });
+  }
   return NextResponse.json({ status: "running", elapsed: Date.now() - job.startedAt });
 }
 
@@ -161,7 +165,7 @@ export async function POST(req) {
       const running = await getJSON(lockKey);
       if (running) return fail("A check is already running for you. It'll be ready in a moment.", 429);
     }
-    await setJSON(lockKey, { at: Date.now() }, 240);
+    await setJSON(lockKey, { at: Date.now() }, 200);
 
     const jobId = randomBytes(9).toString("base64url");
     await setJSON(`job:${jobId}`, { status: "running", startedAt: Date.now() }, 60 * 60);
@@ -261,11 +265,15 @@ export async function POST(req) {
           await logScan({ domain: url.slice(0, 80), category, extra, owner, ms: Date.now() - started, error: String(e?.message || "error").slice(0, 160), errorType: kind.type, system: kind.system });
         }
         if (kind.system) await alertOnFailures(e?.message).catch(() => {});
-        const msg =
-          e?.message && !/api|key|anthropic|openai|json|redis|upstash|credit|rate/i.test(e.message)
-            ? e.message
-            : "Something went wrong while scanning. Please try again in a minute.";
-        await setJSON(`job:${jobId}`, { status: "error", error: msg }, 60 * 60);
+        const raw = String(e?.message || "");
+        const msg = /credit|billing|balance|quota/i.test(raw)
+          ? "Our checks are taking a short break right now. Please try again a little later. This didn't use up one of your free checks."
+          : /rate.?limit|429|overloaded|529|too many/i.test(raw)
+            ? "Lots of people are checking their stores right now. Please try again in a minute. This didn't use up one of your free checks."
+            : raw && !/api|key|anthropic|openai|json|redis|upstash/i.test(raw)
+              ? `${raw} This didn't use up one of your free checks.`
+              : "Something went wrong while scanning. Please try again in a minute. This didn't use up one of your free checks.";
+        await setJSON(`job:${jobId}`, { status: "error", error: msg, detail: `${kind.type}: ${raw.slice(0, 200)}` }, 60 * 60);
       } finally {
         await setJSON(lockKey, 0, 1).catch(() => {});
       }

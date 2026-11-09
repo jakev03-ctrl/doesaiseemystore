@@ -63,7 +63,14 @@ export default function HeroVideo() {
       const r = window.scrollY > 90;
       if (r !== revealed.current) {
         revealed.current = r;
-        if (r) setInView(true);
+        setInView(r);
+        if (!r) {
+          // Back at the top: hide it, and play it from the start next time.
+          seen.current = false;
+          ended.current = false;
+          userPaused.current = false;
+          setState("idle");
+        }
         sync();
       }
     };

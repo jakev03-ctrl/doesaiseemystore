@@ -211,7 +211,12 @@ export default function Home() {
       showResult(data);
     } catch (err) {
       setError(err.message);
-      if (/free (scan|check)/i.test(err.message)) setRemaining(0);
+      if (/free (scan|check)s? left|come back tomorrow|used your free/i.test(err.message)) setRemaining(0);
+      // A failed check isn't counted, so show the real number again.
+      fetch("/api/scan", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => typeof d.remaining === "number" && setRemaining(d.remaining))
+        .catch(() => {});
     } finally {
       setLoading(false);
       if (BOT_KEY && window.turnstile) {
