@@ -82,7 +82,8 @@ async function jobStatus(req, jobId) {
   if (job.status === "error") {
     // The owner sees the real reason (e.g. "Out of API credit"), visitors see a friendly message.
     const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
-    return NextResponse.json({ status: "error", error: owner && job.detail ? `${job.error} (Owner only: ${job.detail})` : job.error });
+    const code = job.detail ? ` (Reason: ${job.detail.split(":")[0]})` : "";
+    return NextResponse.json({ status: "error", error: owner && job.detail ? `${job.error} (Owner only: ${job.detail})` : `${job.error}${code}` });
   }
   return NextResponse.json({ status: "running", elapsed: Date.now() - job.startedAt });
 }

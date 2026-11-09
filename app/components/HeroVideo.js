@@ -29,7 +29,7 @@ export default function HeroVideo() {
 
   function sync() {
     const w = demo();
-    if (!ready.current || !w?.demoPlay) return;
+    if (!w?.demoPlay) return; // demo not loaded yet: we'll be called again as soon as it is
     const want = revealed.current && ratio.current >= 0.5;
     if (!want) userPaused.current = false;
     if (want && !playing.current && !ended.current && !userPaused.current) {
@@ -89,7 +89,19 @@ export default function HeroVideo() {
       io.observe(wrap.current);
     } else ratio.current = 1;
 
+    // On the live site the demo can finish loading before this code is listening, so the
+    // "loaded" signal is missed. Check every 200ms until it's there, then start it.
+    let tries = 0;
+    const poll = setInterval(() => {
+      tries++;
+      if (demo()?.demoPlay) {
+        clearInterval(poll);
+        onLoad();
+      } else if (tries > 100) clearInterval(poll);
+    }, 200);
+
     return () => {
+      clearInterval(poll);
       window.removeEventListener("message", onMsg);
       window.removeEventListener("themechange", onTheme);
       window.removeEventListener("scroll", onScroll);
