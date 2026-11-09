@@ -179,8 +179,24 @@ function Snippet({ s }) {
   );
 }
 
+const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+
+// "Get my full report free" opens the visitor's own email app with a message ready to send.
+// Nothing is stored on the website: the enquiry is just an email to you.
+function requestEmail(report) {
+  const site = typeof window !== "undefined" ? window.location.origin : "https://www.doesaiseemystore.com";
+  const link = report.id ? `${site}/report/${report.id}` : site;
+  const subject = `Free full report: ${report.shop.domain}`;
+  const body = `Hi Team,
+I'd like my free full report.
+Link: ${link}
+Tell me about your store:
+`;
+  return `mailto:${CONTACT}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function LockedBottom({ report }) {
-  const requestHref = `/request?website=${encodeURIComponent(report.shop.domain)}${report.id ? `&report=${report.id}` : ""}`;
+  const requestHref = requestEmail(report);
   return (
     <div className="fadewrap">
       <div className="fade" aria-hidden="true">
@@ -221,6 +237,8 @@ function LockedBottom({ report }) {
           </a>
           <p className="muted small">
             {FREE_REPORTS ? "No payment and no account. In return, we'd love your honest feedback." : "No account needed. We'll reply by email with the details."}
+            <br />
+            Opens your email app with a message ready to send. Or email <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
           </p>
         </div>
       </div>
