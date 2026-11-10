@@ -6,15 +6,15 @@ import { useEffect, useRef, useState } from "react";
 const USUAL = [
   "A generic SEO checklist dressed up as “AI visibility”",
   "A score from a black box, with no way to check it",
-  "The same handful of questions for every kind of shop",
-  "Vague tips like “improve your content”",
+  "The same handful of questions for every kind of store",
+  "Big promises of more sales, and vague tips like “improve your content”",
   "Sign-up, card details and a sales call before you see anything",
 ];
 const OURS = [
   "We ask a real AI assistant, with live web search, what your shoppers would ask",
   "Every search is listed: what we asked, and who got recommended",
   "Questions written for your products, your market and your language, plus your own",
-  "Fixes with copy-and-paste text for your store",
+  "Clear next steps, with how long each takes and where to click",
   "Free, under 60 seconds, no account needed",
 ];
 

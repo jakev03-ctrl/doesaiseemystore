@@ -25,7 +25,7 @@ function Place({ q }) {
 
 function Picks({ q, self }) {
   if (!q.picks) return <span className="muted">–</span>;
-  if (!q.picks.length) return <span className="muted">No shops named</span>;
+  if (!q.picks.length) return <span className="muted">No stores named</span>;
   return q.picks.map((p, i) => (
     <span key={i}>
       {i > 0 && ", "}
@@ -116,7 +116,7 @@ export default function QuestionExplorer({ report }) {
                       <td>
                         <span className={`chip ${i % 2 ? "green" : "red"}`}>{i % 2 ? "2nd" : "Missed"}</span>
                       </td>
-                      <td className="who">Hidden shops</td>
+                      <td className="who">Hidden stores</td>
                       <td>{OPP.high}</td>
                     </tr>
                   ))}
@@ -171,7 +171,7 @@ export default function QuestionExplorer({ report }) {
         </table>
       </div>
       <p className="note-sm">
-        “Opportunity” is worked out from what we saw: whether {them ? "they" : "you"} came up, how many other shops did, and how close it was.
+        “Opportunity” is worked out from what we saw: whether {them ? "they" : "you"} came up, how many other stores did, and how close it was.
         {all.some((q) => q.picks) ? " Tap a column heading to sort." : ""}
       </p>
       {o && (

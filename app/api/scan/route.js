@@ -258,6 +258,8 @@ export async function POST(req) {
     snippets: audit.snippets,
     shopsSeen: vis.shopsSeen,
     fixes: audit.fixes,
+    fixDetails: audit.fixDetails,
+    nextSteps: audit.nextSteps,
     plan: audit.plan,
     checks: shop.checks ? summariseChecks(shop.checks) : null,
     costUsd,

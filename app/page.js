@@ -30,10 +30,10 @@ function progressSteps(location) {
 }
 
 const DID_YOU_KNOW = [
-  "Shoppers often go with the first shop AI recommends.",
+  "Shoppers often go with the first store AI recommends.",
   "AI reads delivery times and returns policies when choosing who to recommend.",
   "Clear product details make it easier for AI to recommend you.",
-  "AI assistants compare shops in seconds, not pages of search results.",
+  "AI assistants compare stores in seconds, not pages of search results.",
 ];
 
 const STEP_MS = 6500;
@@ -301,14 +301,14 @@ export default function Home() {
 
           <div className="hero" ref={heroRef}>
             <p className="hero-kick" ref={kickRef}>
-              The free AI visibility check for online shops
+              The free AI visibility check for online stores
             </p>
             <h1 ref={titleRef}>
               Does AI <span className="see">see</span> your store?
             </h1>
             <p className="sub" ref={subRef}>
-              When shoppers ask AI assistants what to buy, we check if your shop comes up, show you who
-              gets picked instead, and tell you exactly what to fix.
+              When shoppers ask AI what to buy, does your store come up? See how AI sees your store today, and the simple
+              changes that help it find you.
             </p>
           </div>
 

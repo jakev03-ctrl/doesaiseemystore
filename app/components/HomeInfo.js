@@ -11,7 +11,7 @@ const STATS = [
   },
   {
     big: "393%",
-    text: "growth in visits to online shops from AI assistants in a year, and those visitors were more likely to buy.",
+    text: "growth in visits to online stores from AI assistants in a year, and those visitors were more likely to buy.",
     src: "Adobe data via TechCrunch, April 2026",
   },
   {
@@ -39,15 +39,19 @@ const ICONS = {
 };
 
 const WHO = [
-  { icon: "shop", title: "Online shops", text: "Small and medium stores on Shopify, Etsy, WooCommerce and more, anywhere in the world." },
-  { icon: "star", title: "Independent brands", text: "Great products, up against the big names AI tends to recommend by default." },
-  { icon: "grow", title: "Ready to grow", text: "Businesses that want to get ahead of the shift to AI shopping before their competitors do." },
+  { icon: "star", title: "Great products, up against big names", text: "AI tends to recommend the brands everyone already knows. We show you how to give it a reason to mention you too." },
+  { icon: "shop", title: "No marketing team needed", text: "Plain English, clear steps and how long each one takes. Most fixes are things you can do yourself in an afternoon." },
+  { icon: "grow", title: "Curious how AI shopping works", text: "Learn what AI looks at when it recommends a store, and what it means for your products." },
 ];
 
 const FAQS = [
   {
     q: "Is it really free?",
     a: "Yes. Everyone gets 2 free checks a day. No sign-up, card or email needed.",
+  },
+  {
+    q: "Will this get me more sales?",
+    a: "We can't promise that, and no one honestly can. What we do is show you how AI sees your store today, where you're being missed, and the changes most likely to help AI find and recommend you. What happens next is up to your products and your customers.",
   },
   {
     q: "Can I check a competitor's store?",
@@ -80,7 +84,7 @@ const FAQS = [
   },
   {
     q: "Who's behind DoesAISeeMyStore?",
-    a: "It's run by Jake, here in the UK. It started from a simple question: when shoppers ask AI what to buy, do small shops even get a look in? Got a question? Get in touch any time.",
+    a: "It's run by Jake, here in the UK. It started from a simple question: when shoppers ask AI what to buy, do small stores even get a look in? Got a question? Get in touch any time.",
     link: { href: "/contact", label: "Contact" },
   },
   {
@@ -118,7 +122,7 @@ export default function HomeInfo() {
 
       <section className="info-block" aria-labelledby="who">
         <p className="eyebrow">Who it's for</p>
-        <h2 id="who">Built for growing stores</h2>
+        <h2 id="who">Made for stores like yours</h2>
         <div className="grid3">
           {WHO.map((w) => (
             <div className="card" key={w.title}>
@@ -156,8 +160,8 @@ export default function HomeInfo() {
       </section>
 
       <section className="card cta">
-        <h3>Ready to find out?</h3>
-        <p className="muted">It's free and takes under 60 seconds.</p>
+        <h3>See how AI sees your store</h3>
+        <p className="muted">Free, under 60 seconds, and you'll know exactly what to do next.</p>
         <a className="button" href="#check">
           Check my store
         </a>

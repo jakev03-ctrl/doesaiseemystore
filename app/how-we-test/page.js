@@ -21,7 +21,7 @@ const STEPS = [
   },
   {
     t: "We record who gets recommended",
-    d: "For every search we note whether your store came up, where it came in the list, and which other shops were recommended instead.",
+    d: "For every search we note whether your store came up, where it came in the list, and which other stores were recommended instead.",
   },
   {
     t: "We work out your score and stats",

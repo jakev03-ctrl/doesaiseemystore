@@ -64,7 +64,7 @@ function Tip({ text }) {
 const TIPS = {
   score: "Your overall score out of 100. It combines how often AI recommended you with how easy your product info is for AI to read.",
   stats: "Worked out from the real searches we ran for your store, not estimated.",
-  map: "How many of our searches each shop was recommended in. More mentions means AI trusts that shop more for what you sell.",
+  map: "How many of our searches each store was recommended in. More mentions means AI trusts that store more for what you sell.",
   categories: "How often you were recommended for each type of search, like price, quality or gift searches.",
   checks: "Things we checked directly on your website, so you know exactly what's already in place.",
   snippets: "Ready-written text you can paste straight onto your store. Fill in anything in [square brackets] first.",
@@ -229,7 +229,7 @@ function LockedBottom({ report }) {
           </div>
         </div>
         <div className="card">
-          <h3>Your step-by-step growth plan</h3>
+          <h3>What you can do next</h3>
           <ol className="fixes">
             <li>Week one: placeholder text for the first stage of your plan.</li>
             <li>Weeks two and three: placeholder text for the next stage.</li>
@@ -250,7 +250,7 @@ function LockedBottom({ report }) {
           <h3>{FREE_REPORTS ? "Get your full report free" : "Unlock your full report"}</h3>
           <p className="muted lock-sub">
             Every question we asked AI and who it picked, your score over time, who AI recommends instead, your biggest opportunity,
-            all your fixes with ready-to-paste text, and a step-by-step growth plan.
+            all your next steps, every fix with where to click and ready-to-paste text, and what to do next.
           </p>
           <a className="button" href={requestHref}>
             {FREE_REPORTS ? "Get my full report free" : "Enquire now"}
@@ -275,6 +275,65 @@ function recheckLink(report) {
   if (other) q.set("vs", other);
   for (const c of report.customs || []) q.append("q", c);
   return `/?${q.toString()}`;
+}
+
+// One fix, with how long it takes, why it matters and where to click.
+function FixItem({ n, text, d }) {
+  return (
+    <div className="fx-item">
+      <div className="fx-top">
+        <span className="fx-n">{n}</span>
+        <b>{text}</b>
+        {d?.effort && <span className="effort">⏱ {d.effort}</span>}
+      </div>
+      {d?.why && (
+        <p className="fx-why">
+          <span>Why this matters</span>
+          {d.why}
+        </p>
+      )}
+      {d?.how && (
+        <p className="fx-how">
+          <span>Where to click</span>
+          {d.how}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// "Your next 3 steps": the changes that help most for the least effort.
+function NextSteps({ report }) {
+  const steps = report.next || [];
+  if (!steps.length) return null;
+  const more = report.locked ? report.hidden?.next || 0 : 0;
+  return (
+    <div className="card next3">
+      <div className="mini-h">
+        <h3>Your next {steps.length + more === 1 ? "step" : `${steps.length + more} steps`}</h3>
+        {more > 0 ? <span className="lockchip">{more} more in full report</span> : report.nextTotal ? <span className="muted small">About {report.nextTotal} in total</span> : null}
+      </div>
+      <div className="n3">
+        {steps.map((s, i) => (
+          <a className="n3-item" href="#r-fixes" key={i}>
+            <span className="fx-n">{i + 1}</span>
+            <span className="n3-t">{s.short}</span>
+            {s.effort && <span className="effort">⏱ {s.effort}</span>}
+          </a>
+        ))}
+        {Array.from({ length: more }, (_, i) => (
+          <div className="n3-item blurred" aria-hidden="true" key={`m${i}`}>
+            <span className="fx-n">{steps.length + i + 1}</span>
+            <span className="n3-t">A hidden next step for your store</span>
+            <span className="effort">⏱ 00 minutes</span>
+          </div>
+        ))}
+      </div>
+      <p className="muted small n3-note">
+        {more > 0 ? `Your other ${more === 1 ? "step is" : `${more} steps are`} in the full report. ` : ""}Start with the quickest. Each one below shows why it matters and where to click.
+      </p>
+    </div>
+  );
 }
 
 function MapBars({ rows }) {
@@ -325,7 +384,7 @@ export default function Report({ report, onRecheck, clientView = false, access =
   const competitors = report.competitors || [];
   const selfLabel = them ? report.shop.name : "You";
   const mapRows = locked
-    ? [...(report.mapCounts || []).map((v) => ({ label: "Hidden shop", value: v, hidden: true })), { label: selfLabel, value: report.found || 0, you: true }]
+    ? [...(report.mapCounts || []).map((v) => ({ label: "Hidden store", value: v, hidden: true })), { label: selfLabel, value: report.found || 0, you: true }]
     : [...competitors.slice(0, 5).map((c) => ({ label: c.name, value: c.count })), { label: selfLabel, value: report.youMentions || 0, you: true }];
   mapRows.sort((a, b) => b.value - a.value || (a.you ? 1 : -1));
 
@@ -419,6 +478,9 @@ export default function Report({ report, onRecheck, clientView = false, access =
           </div>
         </div>
       </div>
+
+      {/* Straight after the score: your next 3 steps (1 shown free, 2 blurred) */}
+      <NextSteps report={report} />
 
       {canRecheck && (
         <div className="card recheck-card no-print">
@@ -612,17 +674,34 @@ export default function Report({ report, onRecheck, clientView = false, access =
             </span>
             {them ? "How to beat them" : "Ways to change"}
           </h3>
-          <ol className="fixes">
-            {fixes.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-            {locked &&
-              filler(hidden.fixes, (i) => (
-                <li key={`hf${i}`} className="blurred" aria-hidden="true">
-                  Another quick win, short and to the point.
-                </li>
+          {(report.fixDetails || []).some((d) => d && (d.why || d.how)) ? (
+            <div className="fx">
+              {fixes.map((f, i) => (
+                <FixItem key={i} n={i + 1} text={f} d={report.fixDetails?.[i]} />
               ))}
-          </ol>
+              {locked &&
+                filler(hidden.fixes, (i) => (
+                  <div key={`hf${i}`} className="fx-item blurred" aria-hidden="true">
+                    <div className="fx-top">
+                      <span className="fx-n">{fixes.length + i + 1}</span>
+                      <b>Another quick win, short and to the point.</b>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <ol className="fixes">
+              {fixes.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
+              {locked &&
+                filler(hidden.fixes, (i) => (
+                  <li key={`hf${i}`} className="blurred" aria-hidden="true">
+                    Another quick win, short and to the point.
+                  </li>
+                ))}
+            </ol>
+          )}
         </div>
       )}
 
@@ -643,7 +722,7 @@ export default function Report({ report, onRecheck, clientView = false, access =
       {/* Full: growth plan */}
       {!locked && report.plan?.length > 0 && (
         <div className="card">
-          <h3>Your step-by-step growth plan</h3>
+          <h3>What you can do next</h3>
           <div className="plan">
             {report.plan.map((st, i) => (
               <div className="plan-stage" key={i}>

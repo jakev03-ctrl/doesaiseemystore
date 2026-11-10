@@ -1073,3 +1073,25 @@ html[data-theme="light"] .sparks {
 }
 html[data-theme="light"] .sparks svg { -webkit-mask-image: none; }
 html[data-theme="light"] label, html[data-theme="light"] .myq-head { color: var(--text-2); }
+
+/* v33: your next 3 steps, and fixes with time, why and where to click */
+.next3 { border-color: rgba(52, 211, 153, .4); }
+.next3 .mini-h h3 { margin: 0; }
+.n3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+@media (max-width: 700px) { .n3 { grid-template-columns: 1fr; } }
+.n3-item { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: start; text-decoration: none; color: var(--ink); padding: 12px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line-soft); }
+a.n3-item:hover { border-color: var(--accent); }
+.n3-t { font-weight: 600; font-size: 14.5px; line-height: 1.4; }
+.n3-item .effort { grid-column: 2; justify-self: start; }
+.n3-note { margin: 10px 0 0; }
+.fx { display: grid; gap: 12px; }
+.fx-item { padding: 14px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line-soft); }
+.fx-top { display: flex; gap: 10px; align-items: flex-start; }
+.fx-top b { flex: 1; font-size: 15.5px; line-height: 1.4; }
+.fx-n { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 800; font-size: 13px; }
+.effort { font-size: 12px; font-weight: 700; white-space: nowrap; padding: 3px 9px; border-radius: 99px; background: rgba(52, 211, 153, .16); color: var(--good); }
+.fx-why, .fx-how { margin: 10px 0 0 36px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.fx-why span, .fx-how span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 2px; }
+.fx-how { padding: 10px 12px; border-radius: 10px; background: rgba(110, 155, 255, .1); border: 1px dashed var(--glass-line); }
+@media (max-width: 520px) { .fx-why, .fx-how { margin-left: 0; } .fx-top { flex-wrap: wrap; } }
+@media print { .fx-how { border-style: solid; } }

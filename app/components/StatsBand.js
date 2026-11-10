@@ -49,7 +49,7 @@ export default function StatsBand() {
         <h2 id="bandTitle">
           Billions now ask AI what to buy.
           <br />
-          <span>Be the shop it recommends.</span>
+          <span>Make sure it can see you.</span>
         </h2>
         <div className="band-stats">
           {STATS.map((s, i) => (
