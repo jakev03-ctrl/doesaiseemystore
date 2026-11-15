@@ -59,8 +59,8 @@ export default function ContactForm() {
         <textarea value={form.message} onChange={set("message")} required rows={6} maxLength={3000} />
       </label>
       <label className="hp" aria-hidden="true">
-        Company site
-        <input type="text" tabIndex={-1} autoComplete="off" value={form.company_site} onChange={set("company_site")} />
+        Leave this empty
+        <input type="text" name="leave_empty" tabIndex={-1} autoComplete="off" value={form.company_site} onChange={set("company_site")} />
       </label>
       <button type="submit" disabled={status === "sending"}>
         {status === "sending" ? "Sending…" : "Send message"}

@@ -172,6 +172,10 @@ export async function POST(req) {
     }
 
     const limit = await checkLimit({ deviceId, ip, owner });
+    if (!limit.ok && limit.busy) {
+      await countEvent("limited");
+      return fail("We've reached today's limit for free checks across the site. Please try again tomorrow.", 429);
+    }
     if (!limit.ok) {
       await countEvent("limited");
       return fail(

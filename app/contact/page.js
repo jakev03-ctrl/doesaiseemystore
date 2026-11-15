@@ -2,6 +2,8 @@ import ContactForm from "../components/ContactForm";
 import Footer from "../components/Footer";
 
 export const metadata = {
+  alternates: { canonical: "/contact" },
+  openGraph: { title: "Contact DoesAISeeMyStore", description: "Questions, feedback or a report you would like removed? Get in touch.", url: "/contact", siteName: "DoesAISeeMyStore", type: "website", images: [{ url: "/og.png", width: 1200, height: 630, alt: "Does AI see your store? Free AI visibility check" }] },
   title: "Contact | DoesAISeeMyStore",
   description: "Questions, feedback or a report you'd like removed? Get in touch with DoesAISeeMyStore.",
 };

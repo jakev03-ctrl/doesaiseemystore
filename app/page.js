@@ -283,6 +283,7 @@ export default function Home() {
     <>
       {BOT_KEY && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />}
 
+      <main id="main">
       <div className="track">
         <span id="top" className="form-anchor" aria-hidden="true" />
         <div className="stage">
@@ -324,7 +325,7 @@ export default function Home() {
               ))}
             </ul>
             <a className="cta-pill" href="#check" onClick={toForm}>
-              Find out in 60 seconds <span className="arrow" aria-hidden="true">↓</span>
+              Check my store <span className="arrow" aria-hidden="true">↓</span>
             </a>
             <span className="scroll-cue" aria-hidden="true">
               Scroll to see it in action ↓
@@ -488,6 +489,7 @@ export default function Home() {
       <StatsBand />
 
       <HomeInfo />
+      </main>
 
       <Footer />
     </>

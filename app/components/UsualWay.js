@@ -11,11 +11,11 @@ const USUAL = [
   "Sign-up, card details and a sales call before you see anything",
 ];
 const OURS = [
-  "We ask a real AI assistant, with live web search, what your shoppers would ask",
+  "We ask leading AI assistants, with live web search, the questions your shoppers ask",
   "Every search is listed: what we asked, and who got recommended",
   "Questions written for your products, your market and your language, plus your own",
   "Clear next steps, with how long each takes and where to click",
-  "Free, under 60 seconds, no account needed",
+  "Free, with no account needed",
 ];
 
 export default function UsualWay() {
@@ -71,7 +71,7 @@ export default function UsualWay() {
         </div>
       </div>
       <p className="vs-foot">
-        Run any of our searches yourself in ChatGPT and see what you get. <a href="/how-we-test">See exactly how we test →</a>
+        Every search is listed in your report: what shoppers asked, and who got picked. <a href="/how-we-test">See how we test →</a>
       </p>
     </section>
   );

@@ -1,7 +1,12 @@
 import Footer from "../components/Footer";
-import { NEWS } from "../../lib/news";
+import { NEWS as RAW } from "../../lib/news";
+
+// Newest first.
+const NEWS = [...RAW].sort((a, b) => new Date(b.date) - new Date(a.date));
 
 export const metadata = {
+  alternates: { canonical: "/news" },
+  openGraph: { title: "AI shopping news", description: "How AI assistants are changing the way people shop, and why it matters for online stores.", url: "/news", siteName: "DoesAISeeMyStore", type: "website", images: [{ url: "/og.png", width: 1200, height: 630, alt: "Does AI see your store? Free AI visibility check" }] },
   title: "AI shopping news | DoesAISeeMyStore",
   description:
     "How AI assistants are changing the way people shop, and why it matters for online stores. A roundup from leading news and research sources.",
@@ -59,7 +64,7 @@ export default function NewsPage() {
         <div className="card cta">
           <h3>Is your store ready?</h3>
           <p className="muted">Find out if AI assistants recommend you, or your competitors instead.</p>
-          <a className="button" href="/#top">
+          <a className="button" href="/#check">
             Check my store, free
           </a>
         </div>

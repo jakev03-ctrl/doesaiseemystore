@@ -1,6 +1,8 @@
 import Footer from "../components/Footer";
 
 export const metadata = {
+  alternates: { canonical: "/how-we-test" },
+  openGraph: { title: "How we test", description: "Exactly how DoesAISeeMyStore checks whether AI shopping assistants recommend your store.", url: "/how-we-test", siteName: "DoesAISeeMyStore", type: "website", images: [{ url: "/og.png", width: 1200, height: 630, alt: "Does AI see your store? Free AI visibility check" }] },
   title: "How we test | DoesAISeeMyStore",
   description:
     "How DoesAISeeMyStore checks whether AI shopping assistants recommend your store: what we read, the searches we run, how the score works and what we never do.",
@@ -17,7 +19,7 @@ const STEPS = [
   },
   {
     t: "We search like your customers",
-    d: "We write realistic questions a shopper in your market would ask about what you sell, in their language and currency, then ask an AI assistant with live web search, the same way a real shopper would.",
+    d: "We write realistic questions a shopper in your market would ask about what you sell, in their language and currency, then put them to leading AI assistants with live web search, the same way a real shopper would.",
   },
   {
     t: "We record who gets recommended",
@@ -68,10 +70,18 @@ export default function HowWeTest() {
             <li>We don't sell or share your information.</li>
             <li>We don't promise sales or rankings. AI answers change, so every report is a snapshot.</li>
           </ul>
+          <h3>What your score means</h3>
+          <ul>
+            <li><b>Often recommended</b>: AI recommended you in 70% or more of the searches.</li>
+            <li><b>Sometimes seen</b>: 40% to 69% of searches.</li>
+            <li><b>Rarely seen</b>: you came up, but in fewer than 40% of searches.</li>
+            <li><b>Invisible to AI</b>: you didn't come up in any of the searches.</li>
+          </ul>
           <h3>Why results can change</h3>
           <p>
-            AI assistants don't give the same answer every time, a bit like search results. That's why the most useful thing is to check again
-            after you've made changes and watch the trend.
+            AI assistants don't give the same answer every time, and different assistants can answer differently, a bit like search results.
+            Each check runs about 10 shopper searches, so a result like "3 out of 10" could come back a little higher or lower on another day.
+            That's why the most useful thing is to check again after you've made changes and watch the trend.
           </p>
         </div>
 

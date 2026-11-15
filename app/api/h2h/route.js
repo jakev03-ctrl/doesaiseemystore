@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getJSON, setJSON, increment } from "../../../lib/store";
 import { normaliseUrl } from "../../../lib/shop";
 import { loadOther, computeH2H, publicH2H } from "../../../lib/h2h";
-import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, hash } from "../../../lib/limits";
+import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, scramble } from "../../../lib/limits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -48,7 +48,7 @@ export async function POST(req) {
   if (!h) {
     if (!owner) {
       const who = req.cookies.get(DEVICE_COOKIE)?.value || (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
-      const used = await increment(`limit:h2h:${hash(who)}:${new Date().toISOString().slice(0, 10)}`, 2 * 24 * 60 * 60);
+      const used = await increment(`limit:h2h:${scramble(who)}:${new Date().toISOString().slice(0, 10)}`, 2 * 24 * 60 * 60);
       if (used > PER_DAY) return NextResponse.json({ error: "That's a lot of comparisons for one day. Please come back tomorrow." }, { status: 429 });
     }
     const other = await loadOther(domain);

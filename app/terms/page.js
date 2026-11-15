@@ -1,6 +1,11 @@
 import Footer from "../components/Footer";
 
-export const metadata = { title: "Terms | DoesAISeeMyStore" };
+export const metadata = {
+  title: "Terms | DoesAISeeMyStore",
+  description: "The terms for using DoesAISeeMyStore and its reports.",
+  alternates: { canonical: "/terms" },
+  openGraph: { title: "Terms", description: "The terms for using DoesAISeeMyStore.", url: "/terms", siteName: "DoesAISeeMyStore", type: "website", images: [{ url: "/og.png", width: 1200, height: 630, alt: "Does AI see your store? Free AI visibility check" }] },
+};
 
 export default function Terms() {
   const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
@@ -37,10 +42,11 @@ export default function Terms() {
         <h3>2. The free check</h3>
         <ul>
           <li>The free check is provided as it is, for general information only.</li>
-          <li>We limit how many free checks can be run each day, and may change or stop the free check at any time.</li>
+          <li>Each person can run 2 free checks a day. We may change this limit, or change or stop the free check, at any time.</li>
           <li>
-            You should only check stores you own, manage or have a genuine interest in. Please don't use the
-            site to send automated or excessive requests.
+            You can check your own store or a competitor's. We only read information that's publicly available on
+            a store's website, and we respect each site's robots.txt. Please don't use the site to send automated
+            or excessive requests.
           </li>
         </ul>
 
@@ -56,7 +62,7 @@ export default function Terms() {
         <h3>4. Full reports and paid services</h3>
         <ul>
           <li>
-            For a limited time, full reports are free. There's nothing to pay and no obligation. We may ask for
+            During our beta, full reports are free. There's nothing to pay and no obligation. We may ask for
             your honest feedback afterwards, but giving it is optional, and you're free to say whatever you
             genuinely think. We may end the free offer at any time, but we'll still send any free report we've
             already agreed to send.

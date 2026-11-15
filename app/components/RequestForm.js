@@ -71,8 +71,8 @@ export default function RequestForm({ website = "", reportId = "" }) {
         <span className="hint">So we can send your report and get in touch.</span>
       </label>
       <label className="hp" aria-hidden="true">
-        Company site
-        <input type="text" tabIndex={-1} autoComplete="off" value={form.company_site} onChange={set("company_site")} />
+        Leave this empty
+        <input type="text" name="leave_empty" tabIndex={-1} autoComplete="off" value={form.company_site} onChange={set("company_site")} />
       </label>
       <button type="submit" disabled={status === "sending"}>
         {status === "sending" ? "Sending…" : process.env.NEXT_PUBLIC_FREE_REPORTS !== "0" ? "Request my free full report" : "Request my in-depth report"}

@@ -2,6 +2,8 @@ import RequestForm from "../components/RequestForm";
 import Footer from "../components/Footer";
 
 export const metadata = {
+  alternates: { canonical: "/request" },
+  openGraph: { title: "Get your full AI visibility report", description: "A detailed AI visibility report for your store, with a full breakdown and a clear action plan.", url: "/request", siteName: "DoesAISeeMyStore", type: "website", images: [{ url: "/og.png", width: 1200, height: 630, alt: "Does AI see your store? Free AI visibility check" }] },
   title: "Request an in-depth report | DoesAISeeMyStore",
   description: "Get a detailed AI visibility report for your store, with a full breakdown and a clear action plan.",
 };
@@ -26,7 +28,7 @@ export default async function RequestPage({ searchParams }) {
         </header>
 
         <div className="page-intro">
-          <p className="eyebrow">{FREE_REPORTS ? "Free for a limited time" : "In-depth report"}</p>
+          <p className="eyebrow">{FREE_REPORTS ? "Free during our beta" : "In-depth report"}</p>
           <h1>Get the full picture</h1>
           <p className="sub">
             Your free check is a snapshot. An in-depth report goes further: a detailed breakdown of how AI
@@ -45,7 +47,7 @@ export default async function RequestPage({ searchParams }) {
           </ul>
           <p className="muted small">
             {FREE_REPORTS
-              ? "For a limited time, full reports are free while we gather feedback. No payment and no account. All we ask is your honest feedback afterwards, good or bad. It's completely optional."
+              ? "During our beta, full reports are free while we gather feedback. No payment and no account. All we ask is your honest feedback afterwards, good or bad. It's completely optional."
               : "Enquiring is free and doesn't commit you to anything. We'll email you the price and delivery time before you decide."}
           </p>
         </div>

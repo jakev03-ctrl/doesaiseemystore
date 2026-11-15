@@ -6,18 +6,21 @@ import UsualWay from "./UsualWay";
 const STATS = [
   {
     big: "1 in 2",
-    text: "shoppers used AI to help them shop in the past three months.",
-    src: "McKinsey, October 2026",
+    text: "shoppers in McKinsey's 11-market survey had used AI to help them shop.",
+    src: "McKinsey, 2026",
+    href: "https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/who-wins-when-ai-does-the-shopping-new-evidence-on-agentic-commerce",
   },
   {
     big: "393%",
-    text: "growth in visits to online stores from AI assistants in a year, and those visitors were more likely to buy.",
-    src: "Adobe data via TechCrunch, April 2026",
+    text: "growth in visits to US retail websites from AI assistants in a year, and those visitors were more likely to buy.",
+    src: "Adobe, Q1 2026",
+    href: "https://business.adobe.com/blog/ai-traffic-surge-retail-sites-not-machine-readable",
   },
   {
-    big: "1 in 3",
-    text: "retail product pages aren't easy for AI to read, so many stores are being skipped.",
-    src: "Adobe data via TechCrunch, April 2026",
+    big: "1/3",
+    text: "of a typical retail product page's content can't be read by AI, according to Adobe's checks of US retail sites.",
+    src: "Adobe, April 2026",
+    href: "https://business.adobe.com/blog/ai-traffic-surge-retail-sites-not-machine-readable",
   },
 ];
 
@@ -67,7 +70,7 @@ const FAQS = [
   },
   {
     q: "What's in the full report?",
-    a: "Every question we asked AI and who it picked, your score over time, your full competitor map, your biggest opportunity, all your quick wins with ready-to-paste text and a step-by-step growth plan. For a limited time it's free: just press “Get my full report free” on your results and we'll send it by email.",
+    a: "Every question we asked AI and who it picked, your score over time, your full competitor map, your biggest opportunity, all your quick wins with ready-to-paste text and a step-by-step growth plan. During our beta it's free: just press “Get my full report free” on your results and we'll send it by email.",
   },
   {
     q: "How do you test my store?",
@@ -111,7 +114,11 @@ export default function HomeInfo() {
             <div className="card" key={s.big}>
               <CountUp text={s.big} />
               <p className="muted">{s.text}</p>
-              <p className="src">{s.src}</p>
+              <p className="src">
+                <a href={s.href} target="_blank" rel="noopener noreferrer">
+                  {s.src}
+                </a>
+              </p>
             </div>
           ))}
         </div>
@@ -138,6 +145,16 @@ export default function HomeInfo() {
         </div>
       </section>
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <section className="info-block" aria-labelledby="faq">
         <p className="eyebrow">Questions</p>
         <h2 id="faq">Frequently asked</h2>
@@ -161,7 +178,7 @@ export default function HomeInfo() {
 
       <section className="card cta">
         <h3>See how AI sees your store</h3>
-        <p className="muted">Free, under 60 seconds, and you'll know exactly what to do next.</p>
+        <p className="muted">It's free, and you'll know exactly what to do next.</p>
         <a className="button" href="#check">
           Check my store
         </a>

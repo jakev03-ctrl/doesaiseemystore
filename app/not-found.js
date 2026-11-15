@@ -11,7 +11,7 @@ export default function NotFound() {
       </header>
       <div className="card cta">
         <h3>We couldn't find that page</h3>
-        <p className="muted">Reports are kept for 90 days, so this one may have expired.</p>
+        <p className="muted">The page may have moved, or the link may be mistyped.</p>
         <a className="button" href="/">
           Check a store
         </a>

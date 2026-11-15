@@ -246,7 +246,7 @@ function LockedBottom({ report }) {
               <path d="M8 11V7a4 4 0 0 1 8 0v4" />
             </svg>
           </div>
-          <p className="eyebrow">{FREE_REPORTS ? "Free for a limited time" : "Full report"}</p>
+          <p className="eyebrow">{FREE_REPORTS ? "Free during our beta" : "Full report"}</p>
           <h3>{FREE_REPORTS ? "Get your full report free" : "Unlock your full report"}</h3>
           <p className="muted lock-sub">
             Every question we asked AI and who it picked, your score over time, who AI recommends instead, your biggest opportunity,
@@ -410,6 +410,10 @@ export default function Report({ report, onRecheck, clientView = false, access =
           {report.market ? ` · ${report.market}` : ""}
           {report.category ? ` · ${report.category}` : ""}
           {!locked ? " · Prepared by DoesAISeeMyStore" : ""}
+        </p>
+        <p className="tested-note">
+          Tested with leading AI assistants using live web search · {report.checked || 0} shopper searches. AI answers vary between
+          assistants and over time, so treat this as a snapshot.
         </p>
       </header>
 

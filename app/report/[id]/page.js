@@ -17,8 +17,9 @@ async function load(id, full = false) {
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const report = await load(id);
-  if (!report) return { title: "Report not found | DoesAISeeMyStore" };
+  if (!report) return { title: "Report not found | DoesAISeeMyStore", robots: { index: false } };
   return {
+    robots: { index: false, follow: false },
     title: `${report.shop.name} scored ${report.overall}/100 | DoesAISeeMyStore`,
     description: `Does AI recommend ${report.shop.name}? See the full AI visibility report, then check your own store free.`,
     openGraph: {

@@ -6,10 +6,10 @@ import Constellation from "./Constellation";
 // "Billions now ask AI what to buy": big, sourced numbers that count up when you scroll to them.
 // Check these figures every few months and update them with the latest announcements.
 const STATS = [
-  { to: 1, dec: 0, suf: "B+", text: "people use ChatGPT every week", src: "OpenAI, Aug 2026", href: "https://tech.yahoo.com/ai/chatgpt/articles/chatgpt-tops-1b-weekly-users-191537749.html" },
-  { to: 2.5, dec: 1, suf: "B+", text: "questions asked to ChatGPT every day", src: "OpenAI, Jul 2025", href: "https://eastleighvoice.co.ke/openai/183553/chatgpt-now-handles-over-2-5-billion-prompts-a-day-openai-confirms" },
-  { to: 2.5, dec: 1, suf: "B+", text: "monthly users of Google's AI Overviews", src: "Google, May 2026", href: "https://dataconomy.com/2026/06/12/ai-overviews-25-billion-monthly-users/" },
-  { to: 1, dec: 0, suf: "B+", text: "people use Gemini every month", src: "Google, Aug 2026", href: "https://www.iphoneincanada.ca/2026/08/12/google-gemini-app-surpasses-1-billion-monthly-active-users/" },
+  { to: 1.2, dec: 1, suf: "B+", text: "people use ChatGPT every week", src: "OpenAI DevDay, Sep 2026", href: "https://openai.com/index/devday-2026-recap/" },
+  { to: 2.5, dec: 1, suf: "B+", text: "monthly users of Google's AI Overviews", src: "Google I/O, May 2026", href: "https://blog.google/innovation-and-ai/sundar-pichai-io-2026/" },
+  { to: 1, dec: 0, suf: "B+", text: "monthly users of Google's AI Mode", src: "Google I/O, May 2026", href: "https://blog.google/innovation-and-ai/sundar-pichai-io-2026/" },
+  { to: 900, dec: 0, suf: "M+", text: "people use the Gemini app every month", src: "Google I/O, May 2026", href: "https://blog.google/innovation-and-ai/sundar-pichai-io-2026/" },
 ];
 
 const ease = (x) => 1 - Math.pow(1 - x, 3);
