@@ -45,6 +45,23 @@ function Rows({ list, self }) {
             <span className="chip blue">Your question</span>
           </>
         )}
+        {q.deep && (
+          <>
+            {" "}
+            <span className="chip violet">Dug deeper</span>
+          </>
+        )}
+        {Array.isArray(q.by) && q.by.length > 1 && (
+          <span className="qx-sub">
+            <span className="sq" aria-label={`Recommended by ${q.by.filter((x) => x === 1).length} of ${q.by.length} AI assistants`}>
+              {q.by.map((x, j) => (
+                <i key={j} className={x === 1 ? "on" : x === null ? "na" : ""} title={`Assistant ${"ABCDE"[j]}`} />
+              ))}
+            </span>
+            {q.tries > q.by.length ? ` Seen in ${q.hits} of ${q.tries} tries` : ""}
+          </span>
+        )}
+        {Array.isArray(q.by) && q.by.length <= 1 && q.tries > 1 && <span className="qx-sub">Seen in {q.hits} of {q.tries} tries</span>}
       </td>
       <td>{q.mine ? "Yours" : q.category || "–"}</td>
       <td>

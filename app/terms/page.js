@@ -33,7 +33,7 @@ export default function Terms() {
 
         <h3>1. Who we are</h3>
         <p>
-          DoesAISeeMyStore is an online service run by {owner}, based in the United Kingdom, that checks how AI
+          DoesAISeeMyStore is an online service run by {owner}, based in Lancashire, United Kingdom, that checks how AI
           shopping assistants respond to questions about online stores. You can contact us at{" "}
           <a href={`mailto:${email}`}>{email}</a>
           {address ? `, or write to ${address}` : ""}.

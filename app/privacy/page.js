@@ -28,7 +28,7 @@ export default function Privacy() {
 
         <h3>Who we are</h3>
         <p>
-          DoesAISeeMyStore is run by {owner}, based in the United Kingdom. We're responsible for the
+          DoesAISeeMyStore is run by {owner}, based in Lancashire, United Kingdom. We're responsible for the
           information described here. Contact: <a href={`mailto:${email}`}>{email}</a>.
           {address ? ` Address: ${address}.` : ""}
         </p>

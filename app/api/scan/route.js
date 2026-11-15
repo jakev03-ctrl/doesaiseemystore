@@ -1,7 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
-import { auditShop, testVisibility, label, newCost } from "../../../lib/analyse";
+import { auditShop, testVisibility, label, newCost, askAboutStore, productMentions, explainResults } from "../../../lib/analyse";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
@@ -201,7 +201,16 @@ export async function POST(req) {
   const baseCount = Number(process.env.QUESTION_COUNT || 10);
   const audit = await auditShop(shop, category, extra, location, cost, { count: Math.max(7, baseCount - customs.length), rival: mode === "rival" });
   const questions = [...audit.questions, ...customs.map((q) => ({ question: q, category: "Your question", mine: true }))];
-  const vis = await testVisibility(shop, questions, audit.market, cost);
+  // The searches, and (at the same time) asking AI what it knows about the store.
+  const [vis, about] = await Promise.all([
+    testVisibility(shop, questions, audit.market, cost),
+    askAboutStore(shop, audit.market, cost).catch((e) => {
+      console.error("About-the-store search failed:", e?.message);
+      return "";
+    }),
+  ]);
+  const insight = vis.checked ? await explainResults(shop, category, vis.replay, about, cost, mode === "rival") : null;
+  const products = productMentions(shop.products, category, vis.texts || []);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
 
   if (vis.checked === 0) {
@@ -246,6 +255,12 @@ export async function POST(req) {
     topPicks: vis.topPicks,
     rank: vis.rank,
     categories: vis.categories,
+    sources: vis.sources || [],
+    replay: vis.replay ? { ...vis.replay, why: insight?.why || [], match: insight?.match || null } : null,
+    accuracy: insight?.accuracy || [],
+    products,
+    dugDeeper: vis.dugDeeper || null,
+    repeats: vis.repeats || 1,
     overall,
     visibility,
     label: label(visibility),

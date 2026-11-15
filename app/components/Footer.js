@@ -14,7 +14,7 @@ export default function Footer() {
         {email && <a href={`mailto:${email}`}>{email}</a>}
       </nav>
       <p className="footer-who">
-        DoesAISeeMyStore is run by {owner}, based in the United Kingdom{address ? ` · ${address}` : ""}.
+        DoesAISeeMyStore is run by {owner}, based in Lancashire, United Kingdom{address ? ` · ${address}` : ""}.
       </p>
     </footer>
   );

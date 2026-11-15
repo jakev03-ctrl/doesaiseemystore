@@ -1,5 +1,6 @@
 "use client";
 
+import { Replay, DugDeeper, Assistants, Sources, Accuracy, Products } from "./ReportExtras";
 import { useEffect, useState } from "react";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
@@ -392,6 +393,7 @@ export default function Report({ report, onRecheck, clientView = false, access =
     ["r-score", "Score"],
     h2h && ["r-h2h", "Head-to-head"],
     ((locked ? report.searchPreview : report.allSearches) || []).length > 0 && ["r-questions", "Questions"],
+    report.replay && ["r-replay", "Replay"],
     !locked && competitors.length > 0 && ["r-comp", "Competitors"],
     fixes.length > 0 && ["r-fixes", them ? "How to beat them" : "Fixes"],
   ].filter(Boolean);
@@ -482,6 +484,9 @@ export default function Report({ report, onRecheck, clientView = false, access =
           </div>
         </div>
       </div>
+
+      {/* The replay: one real AI answer, and why the sale went elsewhere */}
+      <Replay report={report} />
 
       {/* Straight after the score: your next 3 steps (1 shown free, 2 blurred) */}
       <NextSteps report={report} />
@@ -613,7 +618,9 @@ export default function Report({ report, onRecheck, clientView = false, access =
       )}
 
       {/* 6. Every question we asked */}
+      <DugDeeper report={report} />
       <QuestionExplorer report={report} />
+      <Assistants report={report} />
 
       {/* Full: competitors, categories, checks */}
       {!locked && competitors.length > 0 && (
@@ -625,6 +632,10 @@ export default function Report({ report, onRecheck, clientView = false, access =
           <p className="note-sm">Mentions across the searches we tested.</p>
         </div>
       )}
+
+      <Sources report={report} />
+      <Accuracy report={report} />
+      <Products report={report} />
 
       {!locked && report.categories?.length > 0 && (
         <div className="card">

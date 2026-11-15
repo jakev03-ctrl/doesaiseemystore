@@ -26,6 +26,14 @@ const STEPS = [
     d: "For every search we note whether your store came up, where it came in the list, and which other stores were recommended instead.",
   },
   {
+    t: "We dig deeper where you were missed",
+    d: "After the first round, we look at the type of search where AI missed you most, and ask a couple of narrower questions in that area. That tells you whether AI misses you across the whole area or just for one question.",
+  },
+  {
+    t: "We check what AI says about you",
+    d: "We ask AI about your store by name, then compare its answer with your own website: what you sell, prices, delivery and returns. Wrong answers lose sales even when AI does mention you.",
+  },
+  {
     t: "We work out your score and stats",
     d: "Your score combines how often you were recommended (60%) with how easy your product information is for AI to understand (40%). Every stat in your report is counted from these real results, not estimated.",
   },
@@ -47,7 +55,7 @@ export default function HowWeTest() {
         <div className="page-intro">
           <p className="eyebrow">How we test</p>
           <h1>How your check works</h1>
-          <p className="sub">No guesswork: here's exactly what happens in the 60 seconds after you press "Check my store".</p>
+          <p className="sub">No guesswork: here's exactly what happens in the minute or two after you press "Check my store".</p>
         </div>
 
         <ol className="how-steps">
@@ -80,14 +88,14 @@ export default function HowWeTest() {
           <h3>Why results can change</h3>
           <p>
             AI assistants don't give the same answer every time, and different assistants can answer differently, a bit like search results.
-            Each check runs about 10 shopper searches, so a result like "3 out of 10" could come back a little higher or lower on another day.
+            Each check runs about 10 to 12 shopper searches on each AI assistant, so a result like "3 out of 10" could come back a little higher or lower on another day.
             That's why the most useful thing is to check again after you've made changes and watch the trend.
           </p>
         </div>
 
         <div className="card cta">
           <h3>Ready to see yours?</h3>
-          <p className="muted">Free, no sign-up, and it takes under 60 seconds.</p>
+          <p className="muted">Free, no sign-up, and it takes under 2 minutes.</p>
           <a className="button" href="/#check">
             Check my store
           </a>

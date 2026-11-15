@@ -25,6 +25,8 @@ function progressSteps(location) {
     "Scanning the competition…",
     "Seeing who AI recommends first…",
     "Finding where you could win…",
+    "Digging deeper where you were missed…",
+    "Checking what AI says about you…",
     "Building your report…",
   ];
 }
@@ -36,7 +38,7 @@ const DID_YOU_KNOW = [
   "AI assistants compare stores in seconds, not pages of search results.",
 ];
 
-const STEP_MS = 6500;
+const STEP_MS = 8500;
 
 const LOCATIONS = [
   "United Kingdom",
@@ -297,7 +299,7 @@ export default function Home() {
             <nav className="topnav" aria-label="Main">
               <a href="/news">News</a>
             </nav>
-            <span className="tag">Free check in under 60 seconds</span>
+            <span className="tag">Free check in under 2 minutes</span>
           </header>
 
           <div className="hero" ref={heroRef}>
@@ -315,7 +317,7 @@ export default function Home() {
 
           <div className="extras" ref={extrasRef}>
             <ul className="chips" aria-label="What you get">
-              {["Free check", "Under 60 seconds", "No account needed", "Check competitors too"].map((c, i) => (
+              {["Free check", "Under 2 minutes", "No account needed", "Check competitors too"].map((c, i) => (
                 <li key={c} className={i === 3 ? "extra-chip" : undefined}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6 9 17l-5-5" />
@@ -435,6 +437,13 @@ export default function Home() {
           <button type="submit" disabled={loading || Boolean(BOT_KEY && !botToken)}>
             {loading ? "Checking…" : fresh ? "Check again" : mode === "rival" ? "Check their store" : "Check my store"}
           </button>
+
+          {!loading && !result && (
+            <div className="form-foot">
+              <span>Free check forever. Full report free during our beta.</span>
+              <a href="/example">See an example report →</a>
+            </div>
+          )}
 
           {loading && (
             <div className="progress" aria-live="polite">
