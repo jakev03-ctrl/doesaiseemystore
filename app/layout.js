@@ -27,7 +27,7 @@ const SITE = process.env.SITE_URL || "https://www.doesaiseemystore.com";
 const LD = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "Organization", "@id": `${SITE}/#org`, name: "DoesAISeeMyStore", url: SITE, logo: `${SITE}/logo-512.png`, email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com", areaServed: "GB" },
+    { "@type": "Organization", "@id": `${SITE}/#org`, name: "DoesAISeeMyStore", url: SITE, logo: `${SITE}/logo-512.png`, email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com", areaServed: "GB" },
     { "@type": "WebSite", "@id": `${SITE}/#site`, name: "DoesAISeeMyStore", url: SITE, inLanguage: "en-GB", publisher: { "@id": `${SITE}/#org` } },
     {
       "@type": "WebApplication",

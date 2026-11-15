@@ -1188,3 +1188,4 @@ html[data-theme="light"] .chip.violet { color: #6a4bd6; }
 .logo::before { content: ""; flex: none; width: 30px; height: 30px; margin-right: 10px; background: url(/logo-mark.svg) center / contain no-repeat; }
 .ex .logo::before { display: none; }
 @media print { .logo::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+.privacy-who { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line-soft); }

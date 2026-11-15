@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default function Privacy() {
-  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com";
   const owner = process.env.NEXT_PUBLIC_OWNER_NAME || "Jake";
   const address = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS || "";
   return (
@@ -28,9 +28,8 @@ export default function Privacy() {
 
         <h3>Who we are</h3>
         <p>
-          DoesAISeeMyStore is run by {owner}, based in Lancashire, United Kingdom. We're responsible for the
-          information described here. Contact: <a href={`mailto:${email}`}>{email}</a>.
-          {address ? ` Address: ${address}.` : ""}
+          We're DoesAISeeMyStore (details at the bottom of this page), and we're responsible for the information
+          described here. Contact: <a href={`mailto:${email}`}>{email}</a>.
         </p>
 
         <h3>What we collect, and why</h3>
@@ -116,6 +115,10 @@ export default function Privacy() {
           we use it. Just email <a href={`mailto:${email}`}>{email}</a> or use our{" "}
           <a href="/contact">contact page</a>. If you're unhappy with how we've handled your information, you
           can complain to the Information Commissioner's Office (ico.org.uk).
+        </p>
+
+        <p className="muted small privacy-who">
+          DoesAISeeMyStore is run by {owner}, based in Lancashire, United Kingdom{address ? ` · ${address}` : ""}.
         </p>
       </article>
 

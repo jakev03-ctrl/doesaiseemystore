@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default function BotPage() {
-  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com";
   return (
     <>
       <main id="main" className="wrap narrow">

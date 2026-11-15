@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function RequestForm({ website = "", reportId = "" }) {
-  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com";
   const [form, setForm] = useState({ business: "", website, email: "", message: "", company_site: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | sent
   const [error, setError] = useState("");

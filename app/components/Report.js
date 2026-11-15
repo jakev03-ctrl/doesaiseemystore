@@ -197,7 +197,7 @@ function Snippet({ s }) {
   );
 }
 
-const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com";
+const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com";
 
 // "Get my full report free" opens the visitor's own email app with a message ready to send.
 // Nothing is stored on the website: the enquiry is just an email to you.
@@ -776,7 +776,7 @@ export default function Report({ report, onRecheck, clientView = false, access =
         <p className="note report-foot">
           This is a snapshot, not a guarantee. AI answers change over time.
           <br />
-          DoesAISeeMyStore · run by {process.env.NEXT_PUBLIC_OWNER_NAME || "Jake"} · {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "doesaiseemystore@outlook.com"} · Tell us how we did:
+          DoesAISeeMyStore · {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com"} · Tell us how we did:
           doesaiseemystore.com/feedback
         </p>
       )}
