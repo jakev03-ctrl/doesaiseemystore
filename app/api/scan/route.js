@@ -201,7 +201,7 @@ export async function POST(req) {
   const shop = await readShop(url);
   // Re-checks of the same store ask the same questions (a fair before and after).
   // v3: questions now depend on whether the store is local, so older saved sets aren't reused.
-  const questionsKey = `questions3:${shop.domain}:${slug(category)}:${mode}`;
+  const questionsKey = `questions:${shop.domain}:${slug(category)}:${mode}`;
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
   const check = await runCheck(shop, { category, extra, location, customs, rival: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
@@ -226,7 +226,7 @@ export async function POST(req) {
     const prevId = await getJSON(latestKey);
     const prev = prevId ? await getJSON(`report:${prevId}`) : null;
     // Only compare like with like: scores from the old method aren't on the same scale.
-    if (prev && prev.version === 2 && prev.method === 3) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+    if (prev && prev.version === 2) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
   } catch {}
 
   // Score history for this store (last 12 checks), for the "score over time" chart.
