@@ -11,11 +11,11 @@ export const metadata = {
 const STEPS = [
   {
     t: "We get to know your store",
-    d: "Before asking AI anything, we read your store like a curious customer: your homepage, about page, delivery and returns pages, FAQs and your products. We build a picture of what you sell, who buys from you, what you stand for and how big you are, and check it against what you told us.",
+    d: "Before asking AI anything, we read your store like a curious customer: your homepage, about page, delivery and returns pages, FAQs and your products. We build a picture of what you sell, who buys from you, what you stand for and how big you are, and check it against what you told us. We work out whether you're a local shop or an online-first store, then research your real direct competitors: shops of your size and kind (nearby, if you're local), not just the national giants.",
   },
   {
     t: "We write the searches real shoppers make",
-    d: "Most are the everyday searches anyone types for what you sell: the fair test. A few are built around you: your speciality, your typical customer, a need you solve, and small independent sellers like you. They're written in your shoppers' language, currency and season, and re-checks use the same searches so before and after is fair.",
+    d: "Most are the everyday searches anyone types for what you sell: the fair test. For a local shop, that means the searches people near you make, like “best clothes shops in Lytham” or “near me”, asked as if from your town. A few are built around you: your speciality, your typical customer, a need you solve, and small independent sellers like you. They're written in your shoppers' language, currency and season, and re-checks use the same searches so before and after is fair.",
   },
   {
     t: "We ask AI exactly like a shopper would",

@@ -1290,6 +1290,12 @@ html[data-theme="light"] .rv-card { box-shadow: 0 10px 30px rgba(30, 50, 120, 0.
 .rv-k { font-size: 11.5px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mut); }
 .rv-profile { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .rv-profile p { margin: 5px 0 0; font-size: 14.5px; }
+.rv-peers { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-top: 10px; }
+.rv-peers b { display: block; margin-top: 4px; font-size: 15.5px; }
+.rv-peers p { margin: 4px 0 0; font-size: 13.5px; color: var(--rv-soft, inherit); opacity: .85; }
+.rv-sm { font-size: 14px; margin: 4px 0 0; }
+.rv-mb { margin-bottom: 26px; }
+.rv-mb .rv-brs { margin-top: 12px; }
 .rv-flag { margin-top: 14px; display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border-radius: 14px; background: rgba(245, 177, 76, 0.07); border: 1px solid rgba(245, 177, 76, 0.25); font-size: 14.5px; color: var(--soft); }
 .rv-flag b { color: var(--tx); }
 
@@ -1444,3 +1450,21 @@ html[data-theme="light"] { --space: #f6f8fd; }
 html[data-theme="light"] .ex-ribbon { color: #7a5200; background: #fff8e6; border-color: #f3d68a; }
 html[data-theme="light"] .ex-ribbon b { color: #a86d00; }
 .rv-stack .rv-ready { grid-template-columns: repeat(2, minmax(0, 1fr)); } @media (min-width: 900px) { .rv-stack .rv-ready { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Wide report: break out of the narrow page column and use the screen. */
+@media screen and (min-width: 900px) {
+  .results.rv2 {
+    --rvw: min(1360px, calc(100vw - 80px));
+    max-width: none;
+    width: var(--rvw);
+    margin-left: calc((100% - var(--rvw)) / 2);
+    margin-right: 0;
+  }
+  .rv2 .rv-profile { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rv2 .rv-hero { gap: 40px; grid-template-columns: minmax(0, 1fr) 460px; align-items: center; }
+  .rv2 .rv-hero h1, .rv2 .rv-name { font-size: clamp(44px, 4.4vw, 64px); }
+}
+@media screen and (min-width: 1300px) {
+  .rv2 { font-size: 17px; }
+  .rv2 .rv-soft, .rv2 .rv-note { max-width: 1000px; }
+}

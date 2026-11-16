@@ -187,6 +187,9 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
   const M = report.marketView || {};
   const Wn = report.winners;
   const steps = report.steps || [];
+  const pf0 = report.profile || {};
+  const isLocal = ["local", "regional"].includes(pf0.reach);
+  const peers = report.peers || [];
   const glanceIcons = { stand: ["pin", "acc", "Where you stand"], working: ["check", "good", "What's working"], holding: ["warn", "warn", `What's holding ${w.you} back`], winning: ["trophy", "bad", "Who's winning, and why"] };
   if (them) glanceIcons.stand[2] = "Where they stand";
 
@@ -205,7 +208,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
           <div className="rv-meta">
             <span>Real shopper searches</span>
             {report.followUps > 0 && <span>{report.followUps} follow-up tests</span>}
-            {report.rivalsStudied > 0 && <span>{report.rivalsStudied} rival studied</span>}
+            {peers.length > 0 ? <span>{peers.length} direct competitors found</span> : report.rivalsStudied > 0 && <span>{report.rivalsStudied} rival studied</span>}
             {report.pagesRead > 1 && <span>{report.pagesRead} pages read</span>}
             <span>{longDate(report.createdAt)}</span>
           </div>
@@ -249,9 +252,9 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
       {/* The 4 mini-scores */}
       <div className="rv-minis">
         <div className="rv-card rv-mini">
-          <div className="rv-mini-h"><Ic name="globe" tone="bad" />Broad reach</div>
+          <div className="rv-mini-h"><Ic name="globe" tone="bad" />{isLocal ? "Local reach" : "Broad reach"}</div>
           <div className="rv-val">{s.broad}<small> /100</small></div>
-          <p>Everyday searches: picked in {s.broadPct ? `${s.broadPct}%` : "none"}</p>
+          <p>{isLocal ? "Everyday local searches" : "Everyday searches"}: picked in {s.broadPct ? `${s.broadPct}%` : "none"}</p>
           <div className="rv-meter"><i style={{ width: `${Math.max(3, s.broad)}%`, background: s.broad >= 55 ? "var(--good)" : s.broad >= 35 ? "var(--warn)" : "var(--bad)" }} /></div>
         </div>
         <div className="rv-card rv-mini">
@@ -326,6 +329,27 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
         {pf.mismatch && !them && (
           <div className="rv-flag"><Ic name="flag" tone="warn" /><span><b>{pf.mismatch}</b> That's how we built your personal questions, and it's what AI should know you for.</span></div>
         )}
+        {pf.reach && (
+          <p className="rv-note">
+            <b>{isLocal ? `A local shop${pf.city ? ` in ${pf.city}` : ""}${pf.reach === "regional" ? ", with a real online side" : ""}.` : "An online-first store."}</b>{" "}
+            {isLocal ? `So we tested the searches shoppers near ${w.you} make, like a phone in ${pf.city || "your area"} would, and compared ${w.you} with shops of ${w.your} size and kind, not national chains.` : `So we tested the searches shoppers make across ${report.market || "the country"}, and compared ${w.you} with stores of ${w.your} size and kind.`}
+          </p>
+        )}
+        {peers.length > 0 && (
+          <>
+            <h3 className="rv-h3 rv-mt">{w.Your} direct competitors</h3>
+            <p className="rv-soft rv-sm">Shops a customer would genuinely compare with {w.you}: the same kind of shop, a similar size and style{isLocal ? ", nearby" : ""}. We found these before asking AI anything.</p>
+            <div className="rv-peers">
+              {peers.map((p, i) => (
+                <div className="rv-tile" key={i}>
+                  <div className="rv-k">{p.where || "Competitor"}</div>
+                  <b>{p.name}</b>
+                  {p.why ? <p>{p.why}</p> : null}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Section>
 
       {/* 2. Replay */}
@@ -351,7 +375,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
                 </span>
               </div>
             </div>
-            <div>
+            {(R.why || []).length > 0 && <div>
               <h3 className="rv-h3">Why AI chose them, not {them ? name : "you"}</h3>
               <div className="rv-why">
                 {(R.why || []).map((x, i) => (
@@ -361,7 +385,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
                   </div>
                 ))}
               </div>
-            </div>
+            </div>}
           </div>
         </Section>
       )}
@@ -384,7 +408,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
       {/* 4. Every search */}
       <Section n={4} id="r-questions" title="Every search we ran" sub={`${locked ? "Some of the searches we ran. " : ""}The same questions are reused every time ${them ? "they're" : "you"} check${them ? "ed" : ""} again, so before and after is a fair test.`} lock={locked}>
         <div className="rv-legend">{LEGEND.map((l) => <Lvl key={l} level={l} />)}</div>
-        {broad.length > 0 && <div className="rv-grp">Everyday searches · how most shoppers ask</div>}
+        {broad.length > 0 && <div className="rv-grp">{isLocal ? `Everyday local searches · how shoppers near ${w.you} ask` : "Everyday searches · how most shoppers ask"}</div>}
         {broad.map((q, i) => <SearchRow key={`b${i}`} q={q} />)}
         {personal.length > 0 && <div className="rv-grp">{w.Your} niche · built from what we learned about {w.you}</div>}
         {personal.map((q, i) => <SearchRow key={`p${i}`} q={q} />)}
@@ -398,7 +422,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
         <div className="rv-ladder">
           {[
             ["Recommended unprompted", L.here === 1 ? `In ${s.recPct}% of searches` : s.nichePct > 0 && !s.broadPct ? "Only in niche searches" : s.recPct ? `In ${s.recPct}% of searches` : "Not yet"],
-            ["Shows up when pushed", L.push ? (L.push.present ? `Asked "any smaller shops?", AI named ${w.you} ${L.push.position ? ord(L.push.position) : ""}`.trim() : `Still not named when pushed`) : "Not needed"],
+            ["Shows up when pushed", L.push ? (L.push.present ? `Asked "any smaller shops?", AI named ${w.you} ${L.push.position ? ord(L.push.position) : ""}`.trim() : `Still not named when pushed`) : s.appearPct ? `Mentioned in ${s.appearPct}% of searches` : "Not tested this time"],
             ["Known by name", L.known ? `✓ AI knows who ${w.you} ${them ? "are" : "are"}` : `AI doesn't know ${w.you} by name yet`],
             ["Unknown to AI", L.here === 4 ? `This is ${w.you}, for now` : `✓ Not ${w.you}`],
           ].map(([t, p], i) => (
@@ -423,12 +447,12 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
       </Section>
 
       {/* 6. Why the winners win */}
-      <Section n={6} title="Why the winners win" sub={`We read the website of the store AI picks most, and compared it with ${w.your}s using AI's own reasons.`} lock={locked}>
+      <Section n={6} title={Wn?.rival?.peer ? `${w.You} vs ${w.your} closest competitor` : "Why the winners win"} sub={Wn?.rival?.peer ? `We read the website of ${Wn.rival.name}, a shop of ${w.your} size and kind, and compared it with ${w.your}s using what AI looks for.` : `We read the website of the store AI picks most, and compared it with ${w.your}s using AI's own reasons.`} lock={locked}>
         {Wn && Wn.rows?.length ? (
           <>
             <div className="rv-tablewrap">
               <table className="rv-table">
-                <thead><tr><th>What AI looks for</th><th>{Wn.rival.name} · AI's top pick</th><th>{name}</th></tr></thead>
+                <thead><tr><th>What AI looks for</th><th>{Wn.rival.name}{Wn.rival.peer ? (Wn.rival.pct ? ` · picked in ${Wn.rival.pct}%` : "") : " · AI's top pick"}</th><th>{name}</th></tr></thead>
                 <tbody>
                   {Wn.rows.map((r, i) => (
                     <tr key={i} className={r.blur ? "rv-blur" : ""}>
@@ -446,12 +470,27 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
             </div>
           </>
         ) : (
-          <p className="rv-soft">AI didn't favour one clear rival in these searches, so there's no single store to compare with. The fixes above still apply.</p>
+          <p className="rv-soft">We couldn't compare a single rival this time. The fixes above still apply.</p>
         )}
       </Section>
 
       {/* 7. Market */}
       <Section n={7} title="The market, through AI's eyes" sub="What AI's answers tell us about the whole market, not just this store." lock={locked} tag={M.type}>
+        {(M.peers || []).length > 0 && (
+          <div className="rv-mb">
+            <h3 className="rv-h3">{w.You} vs {w.your} direct competitors</h3>
+            <p className="rv-soft rv-sm">How often AI recommended each one in the same searches.{M.bigPct ? ` Big national names appeared in ${M.bigPct}% of answers; they're shown below for context, not as ${w.your} benchmark.` : ""}</p>
+            <div className="rv-brs">
+              {[{ name: `${name} (${them ? "them" : "you"})`, pct: M.youPct || 0, you: true }, ...M.peers].sort((a, b) => b.pct - a.pct).map((x, i) => (
+                <div className={cx("rv-br", x.blur && "rv-blur")} key={i}>
+                  <span>{x.you ? <b>{x.name}</b> : x.name}</span>
+                  <div className="rv-track"><i className={x.you ? "me" : ""} style={{ width: `${Math.max(3, x.pct)}%` }} /></div>
+                  <span className="v">{x.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="rv-grid2">
           <div>
             <div className="rv-donut">
