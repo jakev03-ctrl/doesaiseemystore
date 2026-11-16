@@ -2,6 +2,7 @@
 
 import { Replay, DugDeeper, Assistants, Sources, Accuracy, Products } from "./ReportExtras";
 import { useEffect, useState } from "react";
+import ReportV2 from "./ReportV2";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
 import QuestionExplorer from "./QuestionExplorer";
@@ -82,8 +83,8 @@ const longDate = (d) => new Date(d).toLocaleDateString("en-GB", { day: "numeric"
 
 function scoreLine(r) {
   if (!r.checked) return "";
-  if (!r.found) return `AI didn't recommend you in any of the ${r.checked} shopper searches we ran.`;
-  return `AI recommends you in ${r.found} out of ${r.checked} shopper searches.`;
+  if (!r.found) return `AI didn't recommend you in any of the shopper searches we ran.`;
+  return `AI recommends you in ${Math.round((r.found / r.checked) * 100)}% of shopper searches.`;
 }
 
 function Bar({ label, value, max, you }) {
@@ -354,7 +355,7 @@ function MapBars({ rows }) {
   );
 }
 
-export default function Report({ report, onRecheck, clientView = false, access = "" }) {
+function ReportV1({ report, onRecheck, clientView = false, access = "" }) {
   const [copied, setCopied] = useState(false);
   // On a report link, only show "Check again" to the person who ran the check (saved on their device), or the owner.
   const [mine, setMine] = useState(false);
@@ -414,7 +415,7 @@ export default function Report({ report, onRecheck, clientView = false, access =
           {!locked ? " · Prepared by DoesAISeeMyStore" : ""}
         </p>
         <p className="tested-note">
-          Tested with leading AI assistants using live web search · {report.checked || 0} shopper searches. AI answers vary between
+          Tested with leading AI assistants using live web search and real shopper searches. AI answers vary between
           assistants and over time, so treat this as a snapshot.
         </p>
       </header>
@@ -442,10 +443,10 @@ export default function Report({ report, onRecheck, clientView = false, access =
           <div className="g-nums">
             <a href="#r-questions">
               <b>
-                {report.found ?? 0}
-                <small> / {report.checked ?? 0}</small>
+                {report.checked ? Math.round(((report.found ?? 0) / report.checked) * 100) : 0}
+                <small>%</small>
               </b>
-              <span>searches {them ? "they" : "you"} came up in</span>
+              <span>of searches {them ? "they" : "you"} came up in</span>
             </a>
             <a href="#r-questions">
               <b>{report.topPicks ?? 0}</b>
@@ -782,4 +783,9 @@ export default function Report({ report, onRecheck, clientView = false, access =
       )}
     </section>
   );
+}
+
+// v2 reports (from November 2026) use the new design; older saved reports keep the old one.
+export default function Report(props) {
+  return props.report?.version === 2 ? <ReportV2 {...props} /> : <ReportV1 {...props} />;
 }

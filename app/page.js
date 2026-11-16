@@ -18,15 +18,17 @@ const BOT_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 // General progress steps. They never reveal the actual searches being run.
 function progressSteps(location) {
   return [
-    "Reading your store through AI's eyes…",
-    "Analysing your AI appeal…",
+    "Getting to know your store…",
+    "Reading your about, delivery and returns pages…",
     "Understanding your customers…",
     location ? `Thinking like a shopper in ${location}…` : "Thinking like a shopper in your market…",
-    "Scanning the competition…",
-    "Seeing who AI recommends first…",
-    "Finding where you could win…",
-    "Digging deeper where you were missed…",
+    "Asking AI what shoppers really ask…",
+    "Reading every answer carefully…",
+    "Seeing who AI recommends instead…",
+    "Asking AI a few follow-up questions…",
+    "Studying why the winners win…",
     "Checking what AI says about you…",
+    "Writing your next steps…",
     "Building your report…",
   ];
 }
@@ -38,7 +40,7 @@ const DID_YOU_KNOW = [
   "AI assistants compare stores in seconds, not pages of search results.",
 ];
 
-const STEP_MS = 8500;
+const STEP_MS = 13000;
 
 const LOCATIONS = [
   "United Kingdom",
@@ -299,7 +301,7 @@ export default function Home() {
             <nav className="topnav" aria-label="Main">
               <a href="/news">News</a>
             </nav>
-            <span className="tag">Free check in under 2 minutes</span>
+            <span className="tag">Free check in about 2 minutes</span>
           </header>
 
           <div className="hero" ref={heroRef}>
@@ -317,7 +319,7 @@ export default function Home() {
 
           <div className="extras" ref={extrasRef}>
             <ul className="chips" aria-label="What you get">
-              {["Free check", "Under 2 minutes", "No account needed", "Check competitors too"].map((c, i) => (
+              {["Free check", "About 2 minutes", "No account needed", "Check competitors too"].map((c, i) => (
                 <li key={c} className={i === 3 ? "extra-chip" : undefined}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6 9 17l-5-5" />

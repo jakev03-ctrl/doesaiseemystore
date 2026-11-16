@@ -14,13 +14,13 @@ function save(job) {
 export function pendingJob() {
   try {
     const job = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (job && Date.now() - job.at < 5 * 60 * 1000) return job;
+    if (job && Date.now() - job.at < 6 * 60 * 1000) return job;
   } catch {}
   return null;
 }
 
 export async function waitForJob(job, { signal } = {}) {
-  const until = Date.now() + 5 * 60 * 1000;
+  const until = Date.now() + 6 * 60 * 1000;
   while (Date.now() < until) {
     if (signal?.aborted) throw new Error("cancelled");
     let data = null;

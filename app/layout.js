@@ -13,7 +13,7 @@ export const metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     title: "Does AI see your store?",
-    description: "Find out if AI assistants recommend your online store, or your competitors instead. Free check in under 2 minutes.",
+    description: "Find out if AI assistants recommend your online store, or your competitors instead. Free check in about 2 minutes.",
     url: "/",
     siteName: "DoesAISeeMyStore",
     type: "website",
@@ -42,7 +42,7 @@ const LD = {
   ],
 };
 
-export const viewport = { width: "device-width", initialScale: 1, themeColor: "#040817" };
+export const viewport = { width: "device-width", initialScale: 1, themeColor: "#050c22" };
 
 export default function RootLayout({ children }) {
   return (

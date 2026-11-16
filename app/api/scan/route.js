@@ -1,7 +1,8 @@
 import { NextResponse, after } from "next/server";
 import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
-import { auditShop, testVisibility, label, newCost, askAboutStore, productMentions, explainResults } from "../../../lib/analyse";
+import { newCost } from "../../../lib/analyse";
+import { runCheck, buildReportV2 } from "../../../lib/search2";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
@@ -11,7 +12,7 @@ import { summariseChecks } from "../../../lib/checks";
 import { loadOther, computeH2H } from "../../../lib/h2h";
 
 export const runtime = "nodejs";
-export const maxDuration = 180; // seconds (free Vercel plan allows up to 300)
+export const maxDuration = 300; // seconds (the deeper v2 check takes about 2 to 3 minutes)
 export const dynamic = "force-dynamic";
 
 const REPORT_DAYS = Number(process.env.REPORT_DAYS || 90);
@@ -190,7 +191,7 @@ export async function POST(req) {
       const running = await getJSON(lockKey);
       if (running) return fail("A check is already running for you. It'll be ready in a moment.", 429);
     }
-    await setJSON(lockKey, { at: Date.now() }, 200);
+    await setJSON(lockKey, { at: Date.now() }, 320);
 
     const jobId = randomBytes(9).toString("base64url");
     await setJSON(`job:${jobId}`, { status: "running", startedAt: Date.now() }, 60 * 60);
@@ -198,22 +199,13 @@ export async function POST(req) {
     async function work() {
   const cost = newCost();
   const shop = await readShop(url);
-  const baseCount = Number(process.env.QUESTION_COUNT || 10);
-  const audit = await auditShop(shop, category, extra, location, cost, { count: Math.max(7, baseCount - customs.length), rival: mode === "rival" });
-  const questions = [...audit.questions, ...customs.map((q) => ({ question: q, category: "Your question", mine: true }))];
-  // The searches, and (at the same time) asking AI what it knows about the store.
-  const [vis, about] = await Promise.all([
-    testVisibility(shop, questions, audit.market, cost),
-    askAboutStore(shop, audit.market, cost).catch((e) => {
-      console.error("About-the-store search failed:", e?.message);
-      return "";
-    }),
-  ]);
-  const insight = vis.checked ? await explainResults(shop, category, vis.replay, about, cost, mode === "rival") : null;
-  const products = productMentions(shop.products, category, vis.texts || []);
+  // Re-checks of the same store ask the same questions (a fair before and after).
+  const questionsKey = `questions:${shop.domain}:${slug(category)}:${mode}`;
+  const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
+  const check = await runCheck(shop, { category, extra, location, customs, rival: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
 
-  if (vis.checked === 0) {
+  if (check.failed) {
     await countEvent("errors");
     await logScan({ domain: shop.domain, category, extra, owner, ms: Date.now() - started, error: "AI checks didn't complete", errorType: "AI searches failed", system: true, cost: costUsd });
     const err = new Error("Our AI checks didn't complete this time. Please try again in a minute.");
@@ -221,8 +213,9 @@ export async function POST(req) {
     throw err;
   }
 
-  const visibility = Math.round((vis.found / vis.checked) * 100);
-  const overall = Math.round(visibility * 0.6 + audit.dataScore * 0.4);
+  const v2 = buildReportV2(check, shop, { category });
+  const overall = v2.overall;
+  const visibility = v2.visibility;
   const id = randomBytes(6).toString("base64url");
 
   // Before and after: compare with the last check of this store for the same category.
@@ -242,44 +235,17 @@ export async function POST(req) {
   } catch {}
 
   const report = {
+    ...v2,
     id,
     createdAt: new Date().toISOString(),
     subject: mode === "rival" ? "them" : "you",
     customs,
     compareTo: compareTo || null,
-    shop: { name: shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
+    shop: { name: check.profile.names[0] || shop.shopName, domain: shop.domain, platform: shop.platform, productsRead: shop.products.length },
     category,
     extra,
     location,
-    market: audit.market,
-    topPicks: vis.topPicks,
-    rank: vis.rank,
-    categories: vis.categories,
-    sources: vis.sources || [],
-    replay: vis.replay ? { ...vis.replay, why: insight?.why || [], match: insight?.match || null } : null,
-    accuracy: insight?.accuracy || [],
-    products,
-    dugDeeper: vis.dugDeeper || null,
-    repeats: vis.repeats || 1,
-    overall,
-    visibility,
-    label: label(visibility),
-    found: vis.found,
-    checked: vis.checked,
-    ais: vis.ais,
-    questions: vis.questions,
-    competitors: vis.competitors,
-    dataScore: audit.dataScore,
-    summary: audit.summary,
-    highlights: audit.highlights || [],
-    good: audit.good,
-    bad: audit.bad,
-    snippets: audit.snippets,
-    shopsSeen: vis.shopsSeen,
-    fixes: audit.fixes,
-    fixDetails: audit.fixDetails,
-    nextSteps: audit.nextSteps,
-    plan: audit.plan,
+    market: check.market,
     checks: shop.checks ? summariseChecks(shop.checks) : null,
     costUsd,
     previous,
@@ -301,6 +267,7 @@ export async function POST(req) {
   await setJSON(cacheKey, id, CACHE_HOURS * 60 * 60);
   await setJSON(latestKey, id, REPORT_DAYS * 24 * 60 * 60);
   await setJSON(historyKey, report.history, 365 * 24 * 60 * 60).catch(() => {});
+  await setJSON(questionsKey, check.questions, 365 * 24 * 60 * 60).catch(() => {});
   const remaining = await recordScan({ deviceId, ip, owner });
 
   console.log("SCAN", JSON.stringify({ id, domain: shop.domain, category, extra, overall, visibility, owner }));

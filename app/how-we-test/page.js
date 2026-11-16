@@ -10,32 +10,32 @@ export const metadata = {
 
 const STEPS = [
   {
-    t: "We read your store like an AI assistant would",
-    d: "We look at your public product pages: names, descriptions, sizes, materials, prices, delivery and returns. We only read what anyone can already see.",
+    t: "We get to know your store",
+    d: "Before asking AI anything, we read your store like a curious customer: your homepage, about page, delivery and returns pages, FAQs and your products. We build a picture of what you sell, who buys from you, what you stand for and how big you are, and check it against what you told us.",
   },
   {
-    t: "We check the technical basics directly",
-    d: "Whether AI readers (like ChatGPT's, Claude's and Google's) are blocked by your robots.txt, whether you have a sitemap listing your products, and whether your product pages carry structured data AI can read. These are checked in code, not guessed.",
+    t: "We write the searches real shoppers make",
+    d: "Most are the everyday searches anyone types for what you sell: the fair test. A few are built around you: your speciality, your typical customer, a need you solve, and small independent sellers like you. They're written in your shoppers' language, currency and season, and re-checks use the same searches so before and after is fair.",
   },
   {
-    t: "We search like your customers",
-    d: "We write realistic questions a shopper in your market would ask about what you sell, in their language and currency, then put them to leading AI assistants with live web search, the same way a real shopper would.",
+    t: "We ask AI exactly like a shopper would",
+    d: "Each search goes to a leading AI assistant with live web search, worded exactly as a shopper would type it, with nothing to steer the answer. We record what the AI searched for and every page it looked at.",
   },
   {
-    t: "We record who gets recommended",
-    d: "For every search we note whether your store came up, where it came in the list, and which other stores were recommended instead.",
+    t: "We read every answer carefully",
+    d: "For each answer we note every store recommended, in what order, why, at what price, and how you came up: top pick, recommended, a passing mention, found but not chosen, or not found at all.",
   },
   {
-    t: "We dig deeper where you were missed",
-    d: "After the first round, we look at the type of search where AI missed you most, and ask a couple of narrower questions in that area. That tells you whether AI misses you across the whole area or just for one question.",
+    t: "We ask follow-up questions",
+    d: "Like a shopper asking more, we ask for smaller shops and then ask about you by name. This shows how well AI really knows you, and what it says about you. Follow-ups explain your score; they don't change it.",
   },
   {
-    t: "We check what AI says about you",
-    d: "We ask AI about your store by name, then compare its answer with your own website: what you sell, prices, delivery and returns. Wrong answers lose sales even when AI does mention you.",
+    t: "We study why the winners win",
+    d: "We read the website of the store AI picks most and compare it with yours, using the reasons AI itself gave. Every fix we suggest is tied to our AI Shopping Playbook, built from what AI companies, researchers and industry data say about how AI chooses stores.",
   },
   {
-    t: "We work out your score and stats",
-    d: "Your score combines how often you were recommended (60%) with how easy your product information is for AI to understand (40%). Every stat in your report is counted from these real results, not estimated.",
+    t: "We work out your score",
+    d: "Your AI Visibility Score comes only from what AI actually did: a top pick counts most, a passing mention much less, and your home-turf search counts double. Your AI-ready checklist is checked directly on your site.",
   },
 ];
 
@@ -55,7 +55,7 @@ export default function HowWeTest() {
         <div className="page-intro">
           <p className="eyebrow">How we test</p>
           <h1>How your check works</h1>
-          <p className="sub">No guesswork: here's exactly what happens in the minute or two after you press "Check my store".</p>
+          <p className="sub">No guesswork: here's exactly what happens in the couple of minutes after you press "Check my store".</p>
         </div>
 
         <ol className="how-steps">
@@ -80,22 +80,23 @@ export default function HowWeTest() {
           </ul>
           <h3>What your score means</h3>
           <ul>
-            <li><b>Often recommended</b>: AI recommended you in 70% or more of the searches.</li>
-            <li><b>Sometimes seen</b>: 40% to 69% of searches.</li>
-            <li><b>Rarely seen</b>: you came up, but in fewer than 40% of searches.</li>
-            <li><b>Invisible to AI</b>: you didn't come up in any of the searches.</li>
+            <li><b>AI's favourite (75+)</b>: AI's go-to store in your market.</li>
+            <li><b>Contender (55 to 74)</b>: AI recommends you regularly.</li>
+            <li><b>On the radar (35 to 54)</b>: AI knows you, but rarely picks you.</li>
+            <li><b>Whisper (15 to 34)</b>: AI mentions you now and then.</li>
+            <li><b>Ghost (under 15)</b>: AI doesn't know you exist yet.</li>
           </ul>
           <h3>Why results can change</h3>
           <p>
             AI assistants don't give the same answer every time, and different assistants can answer differently, a bit like search results.
-            Each check runs about 10 to 12 shopper searches on each AI assistant, so a result like "3 out of 10" could come back a little higher or lower on another day.
+            A check is a sample of real shopper searches, so a result could come back a little higher or lower on another day.
             That's why the most useful thing is to check again after you've made changes and watch the trend.
           </p>
         </div>
 
         <div className="card cta">
           <h3>Ready to see yours?</h3>
-          <p className="muted">Free, no sign-up, and it takes under 2 minutes.</p>
+          <p className="muted">Free, no sign-up, and it takes about 2 minutes.</p>
           <a className="button" href="/#check">
             Check my store
           </a>

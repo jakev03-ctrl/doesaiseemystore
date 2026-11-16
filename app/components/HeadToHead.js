@@ -33,20 +33,20 @@ export function H2HCard({ h }) {
           <div className="who">You</div>
           <div className="nm">{you.domain}</div>
           <div className="sc">
-            {you.found}
-            <small>/{you.checked}</small>
+            {you.checked ? Math.round((you.found / you.checked) * 100) : 0}
+            <small>%</small>
           </div>
-          <small>searches where AI recommended you</small>
+          <small>of searches where AI recommended you</small>
         </div>
         <div className="h2h-vs">vs</div>
         <div className="h2h-side them">
           <div className="who">Competitor</div>
           <div className="nm">{them.domain}</div>
           <div className="sc">
-            {them.found}
-            <small>/{them.checked}</small>
+            {them.checked ? Math.round((them.found / them.checked) * 100) : 0}
+            <small>%</small>
           </div>
-          <small>searches where AI recommended them</small>
+          <small>of searches where AI recommended them</small>
         </div>
       </div>
       <div className="h2h-cols">
@@ -78,7 +78,7 @@ export function H2HCard({ h }) {
           ))}
         </div>
       </div>
-      <p className="note-sm">Both stores on the same {you.checked} shopper searches. We only read public pages and respect each site's robots.txt.</p>
+      <p className="note-sm">Both stores on the same shopper searches. We only read public pages and respect each site's robots.txt.</p>
     </div>
   );
 }
