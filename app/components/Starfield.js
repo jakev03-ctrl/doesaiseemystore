@@ -23,13 +23,14 @@ export default function Starfield() {
     let frame = 0;
 
     function makeStars() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // 1.5x is still sharp for tiny dots, and is far less work than full Retina resolution.
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       w = window.innerWidth;
       h = window.innerHeight;
       sky.width = w * dpr;
       sky.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(420, Math.round((w * h) / 3600));
+      const count = Math.min(260, Math.round((w * h) / 5200));
       stars = Array.from({ length: count }, () => {
         const depth = Math.random();
         return {
@@ -47,9 +48,11 @@ export default function Starfield() {
 
     // ~30 frames a second is plenty for slow-drifting stars, and halves the work.
     let lastDraw = 0;
+    let scrollingUntil = 0;
     function loop(now) {
       frame = requestAnimationFrame(loop);
-      if (document.hidden || now - lastDraw < 33) return;
+      // While the page is scrolling, the stars hold still: scrolling stays smooth.
+      if (document.hidden || now < scrollingUntil || now - lastDraw < 33) return;
       lastDraw = now;
       paint();
     }
@@ -62,7 +65,7 @@ export default function Starfield() {
       ctx.clearRect(0, 0, w, h);
       // Light theme: the same stars, turned down to soft blue-grey specks.
       const light = document.documentElement.dataset.theme === "light";
-      const lift = window.scrollY * 0.05;
+      const lift = 0;
       const near = []; // light mode: the bigger stars, joined by faint lines for a little texture
       for (const s of stars) {
         if (!still) {
@@ -108,7 +111,9 @@ export default function Starfield() {
       makeStars();
       if (still) draw();
     };
-    const onScroll = () => draw();
+    const onScroll = () => {
+      scrollingUntil = performance.now() + 180;
+    };
     const onTheme = () => still && draw();
     window.addEventListener("themechange", onTheme);
 
@@ -116,7 +121,7 @@ export default function Starfield() {
     draw();
     if (!still) frame = requestAnimationFrame(loop);
     window.addEventListener("resize", onResize);
-    if (still) window.addEventListener("scroll", onScroll, { passive: true });
+    if (!still) window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       cancelAnimationFrame(frame);

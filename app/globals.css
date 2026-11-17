@@ -40,7 +40,6 @@ a { color: var(--accent-2); }
   background:
     radial-gradient(60vmax 40vmax at 78% 18%, rgba(88, 110, 255, 0.16), transparent 60%),
     radial-gradient(50vmax 35vmax at 12% 85%, rgba(120, 70, 255, 0.12), transparent 60%);
-  animation: drift 40s ease-in-out infinite alternate;
 }
 @keyframes drift { to { transform: translate3d(-3%, 2%, 0) scale(1.05); } }
 
@@ -1214,7 +1213,13 @@ html[data-theme="light"] .rv2 {
 .rv2 .good { color: var(--good); } .rv2 .warn { color: var(--warn); } .rv2 .bad { color: var(--bad); }
 .rv2 .rv-soft { color: var(--soft); font-size: 14px; margin: 0; }
 .rv2 .rv-mt { margin-top: 18px; }
-.rv-blur { filter: blur(5px); user-select: none; pointer-events: none; }
+/* Hidden parts of free reports. A soft text glow instead of a real blur filter: it looks the same,
+   but costs almost nothing to draw, so long reports scroll smoothly (especially in Safari). */
+.rv-blur { user-select: none; -webkit-user-select: none; pointer-events: none; }
+.rv-blur, .rv-blur * { color: transparent !important; text-shadow: 0 0 7px rgba(185, 195, 225, 0.8) !important; }
+.rv-blur svg, .rv-blur i, .rv-blur .rv-track { opacity: 0.35; }
+html[data-theme="light"] .rv-blur, html[data-theme="light"] .rv-blur * { text-shadow: 0 0 7px rgba(60, 70, 110, 0.55) !important; }
+@media print { .rv-blur, .rv-blur * { text-shadow: none !important; color: #bbb !important; } }
 .rv-card { background: var(--s1); border: 1px solid var(--line); border-radius: 20px; }
 html[data-theme="light"] .rv-card { box-shadow: 0 10px 30px rgba(30, 50, 120, 0.06); }
 
