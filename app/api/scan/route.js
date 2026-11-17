@@ -202,7 +202,7 @@ export async function POST(req) {
   const shop = await readShop(url, { allowUnreachable: true });
   // Re-checks of the same store ask the same questions (a fair before and after).
   // v3 search (three phases): its questions are written differently, so older saved sets aren't reused.
-  const questionsKey = `questions4:${shop.domain}:${slug(category)}:${mode}`;
+  const questionsKey = `questions5:${shop.domain}:${slug(category)}:${mode}`;
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
   const check = await runCheck(shop, { category, extra, location, customs, them: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
