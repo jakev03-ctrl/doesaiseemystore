@@ -70,11 +70,11 @@ const FAQS = [
   },
   {
     q: "What's in the full report?",
-    a: "Every question we asked AI and who it picked, your score over time, your full competitor map, your biggest opportunity, all your quick wins with ready-to-paste text and a step-by-step growth plan. During our beta it's free: just press “Get my full report free” on your results and we'll send it by email.",
+    a: "Every question we asked AI and who it picked, everything AI can and can't see on your website, what the web says about you and whether AI gets your details right, who AI recommends instead and why, and all your fixes with ready-to-paste text and a step-by-step plan. During our beta it's free: just press “Get my full report free” on your results and we'll send it by email.",
   },
   {
     q: "How do you test my store?",
-    a: "We read your public product pages, check the technical basics directly, then ask an AI assistant with live web search the questions your customers would ask, and count who gets recommended.",
+    a: "Three steps. We read your website the way AI does, we see what the web says about you, then we ask an AI assistant with live web search the questions your customers would ask, and see whether it recommends you. If it doesn't, we show you why and what to fix.",
     link: { href: "/how-we-test", label: "See exactly how we test" },
   },
   {

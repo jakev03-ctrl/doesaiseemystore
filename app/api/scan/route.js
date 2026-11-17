@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { randomBytes, randomUUID } from "crypto";
 import { readShop, normaliseUrl } from "../../../lib/shop";
 import { newCost } from "../../../lib/analyse";
-import { runCheck, buildReportV2 } from "../../../lib/search2";
+import { runCheck, buildReportV3 } from "../../../lib/search3";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
@@ -12,7 +12,7 @@ import { summariseChecks } from "../../../lib/checks";
 import { loadOther, computeH2H } from "../../../lib/h2h";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // seconds (the deeper v2 check takes about 2 to 3 minutes)
+export const maxDuration = 300; // seconds (a check takes about 2 to 3 minutes)
 export const dynamic = "force-dynamic";
 
 const REPORT_DAYS = Number(process.env.REPORT_DAYS || 90);
@@ -200,10 +200,10 @@ export async function POST(req) {
   const cost = newCost();
   const shop = await readShop(url);
   // Re-checks of the same store ask the same questions (a fair before and after).
-  // v3: questions now depend on whether the store is local, so older saved sets aren't reused.
-  const questionsKey = `questions:${shop.domain}:${slug(category)}:${mode}`;
+  // v3 search (three phases): its questions are written differently, so older saved sets aren't reused.
+  const questionsKey = `questions4:${shop.domain}:${slug(category)}:${mode}`;
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
-  const check = await runCheck(shop, { category, extra, location, customs, rival: mode === "rival", savedQuestions }, cost);
+  const check = await runCheck(shop, { category, extra, location, customs, them: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
 
   if (check.failed) {
@@ -214,9 +214,9 @@ export async function POST(req) {
     throw err;
   }
 
-  const v2 = buildReportV2(check, shop, { category });
-  const overall = v2.overall;
-  const visibility = v2.visibility;
+  const v3 = buildReportV3(check, shop, { category });
+  const overall = v3.overall;
+  const visibility = v3.visibility;
   const id = randomBytes(6).toString("base64url");
 
   // Before and after: compare with the last check of this store for the same category.
@@ -226,18 +226,18 @@ export async function POST(req) {
     const prevId = await getJSON(latestKey);
     const prev = prevId ? await getJSON(`report:${prevId}`) : null;
     // Only compare like with like: scores from the old method aren't on the same scale.
-    if (prev && prev.version === 2) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+    if (prev && prev.version === 3) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
   } catch {}
 
   // Score history for this store (last 12 checks), for the "score over time" chart.
   const historyKey = `history:${shop.domain}:${slug(category)}`;
   let history = [];
   try {
-    history = ((await getJSON(historyKey)) || []).filter((h) => h && h.m === 3);
+    history = ((await getJSON(historyKey)) || []).filter((h) => h && h.m === 4);
   } catch {}
 
   const report = {
-    ...v2,
+    ...v3,
     id,
     createdAt: new Date().toISOString(),
     subject: mode === "rival" ? "them" : "you",
@@ -251,8 +251,8 @@ export async function POST(req) {
     checks: shop.checks ? summariseChecks(shop.checks) : null,
     costUsd,
     previous,
-    method: 3,
-    history: [...history, { at: new Date().toISOString(), overall: null, m: 3 }].slice(-12),
+    method: 4,
+    history: [...history, { at: new Date().toISOString(), overall: null, m: 4 }].slice(-12),
   };
   report.history[report.history.length - 1].overall = overall;
 

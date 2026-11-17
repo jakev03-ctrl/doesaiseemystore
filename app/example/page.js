@@ -35,7 +35,7 @@ export default function ExamplePage() {
       <div className="card cta">
         <p className="eyebrow">That was Shoe Heaven</p>
         <h3>Now see what AI says about your store.</h3>
-        <p className="muted">The same report for your store, with your real competitors, your real products and real AI answers.</p>
+        <p className="muted">The same report for your store: what AI sees on your website, what the web says about you, and real AI answers to your shoppers' questions.</p>
         <a className="button" href="/#check">
           Check my store free
         </a>

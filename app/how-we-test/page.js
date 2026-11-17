@@ -10,32 +10,24 @@ export const metadata = {
 
 const STEPS = [
   {
-    t: "We get to know your store",
-    d: "Before asking AI anything, we read your store like a curious customer: your homepage, about page, delivery and returns pages, FAQs and your products. We build a picture of what you sell, who buys from you, what you stand for and how big you are, and check it against what you told us.",
+    t: "We read your website the way AI does",
+    d: "Before asking AI anything, we read your store like an AI assistant would: your homepage, about page, delivery and returns pages, contact page, FAQs and your products. We check what AI can actually read there (products, prices, stock, delivery, returns, your story and your reviews), whether AI search robots are allowed in, and whether your sitemap lists your products. Each finding is checked against our AI Shopping Playbook.",
   },
   {
-    t: "We write the searches real shoppers make",
-    d: "Most are the everyday searches anyone types for what you sell: the fair test. A few are built around you: your speciality, your typical customer, a need you solve, and small independent sellers like you. They're written in your shoppers' language, currency and season, and re-checks use the same searches so before and after is fair.",
+    t: "We see what the web says about you",
+    d: "We ask AI about your store by name, the way a curious shopper would, and look at where you turn up online: Google and local listings, review sites, social media, marketplaces, articles and guides. AI leans heavily on what other sites say, so if the web barely mentions you, that's often why AI does too. We also check whether what AI says about you matches your own website.",
   },
   {
-    t: "We ask AI exactly like a shopper would",
-    d: "Each search goes to a leading AI assistant with live web search, worded exactly as a shopper would type it, with nothing to steer the answer. We record what the AI searched for and every page it looked at.",
+    t: "We run the real test: shopper searches",
+    d: "We write the questions real shoppers ask for what you sell: everyday searches anyone might type, plus a few about the products you're known for. They're in your shoppers' language, currency and season, and your store is never named. Each one goes to a leading AI assistant with live web search, and we note whether it recommends you, mentions you, finds your site but chooses others, or doesn't find you at all. Re-checks use the same questions, so before and after is a fair test.",
   },
   {
-    t: "We read every answer carefully",
-    d: "For each answer we note every store recommended, in what order, why, at what price, and how you came up: top pick, recommended, a passing mention, found but not chosen, or not found at all.",
+    t: "We show who AI picks instead, and why",
+    d: "From the same answers, we show which stores AI recommended instead and what it said about them. It's not a market study: it's there to show what those stores make clear that you don't, so you know what to change.",
   },
   {
-    t: "We ask follow-up questions",
-    d: "Like a shopper asking more, we ask for smaller shops and then ask about you by name. This shows how well AI really knows you, and what it says about you. Follow-ups explain your score; they don't change it.",
-  },
-  {
-    t: "We study why the winners win",
-    d: "We read the website of the store AI picks most and compare it with yours, using the reasons AI itself gave. Every fix we suggest is tied to our AI Shopping Playbook, built from what AI companies, researchers and industry data say about how AI chooses stores.",
-  },
-  {
-    t: "We work out your score",
-    d: "Your AI Visibility Score comes only from what AI actually did: a top pick counts most, a passing mention much less, and your home-turf search counts double. Your AI-ready checklist is checked directly on your site.",
+    t: "We work out your score and your fixes",
+    d: "Your AI Visibility Score comes only from what AI actually did when shoppers asked: a top pick counts most, a passing mention much less, and searches about your speciality count double. Then we write your fixes, best first, each tied to something this check found and to a factor in our AI Shopping Playbook.",
   },
 ];
 

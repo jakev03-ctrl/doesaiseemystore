@@ -3,6 +3,7 @@
 import { Replay, DugDeeper, Assistants, Sources, Accuracy, Products } from "./ReportExtras";
 import { useEffect, useState } from "react";
 import ReportV2 from "./ReportV2";
+import ReportV3 from "./ReportV3";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
 import QuestionExplorer from "./QuestionExplorer";
@@ -787,5 +788,6 @@ function ReportV1({ report, onRecheck, clientView = false, access = "" }) {
 
 // v2 reports (from November 2026) use the new design; older saved reports keep the old one.
 export default function Report(props) {
+  if (props.report?.version === 3) return <ReportV3 {...props} />;
   return props.report?.version === 2 ? <ReportV2 {...props} /> : <ReportV1 {...props} />;
 }

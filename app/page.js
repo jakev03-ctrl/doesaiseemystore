@@ -18,17 +18,15 @@ const BOT_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 // General progress steps. They never reveal the actual searches being run.
 function progressSteps(location) {
   return [
-    "Getting to know your store…",
-    "Reading your about, delivery and returns pages…",
-    "Understanding your customers…",
+    "Reading your website like AI does…",
+    "Checking your products, delivery and returns pages…",
+    "Seeing what AI can and can't read…",
+    "Searching the web for what it says about you…",
     location ? `Thinking like a shopper in ${location}…` : "Thinking like a shopper in your market…",
     "Asking AI what shoppers really ask…",
-    "Reading every answer carefully…",
+    "Seeing whether AI recommends you…",
     "Seeing who AI recommends instead…",
-    "Asking AI a few follow-up questions…",
-    "Studying why the winners win…",
-    "Checking what AI says about you…",
-    "Writing your next steps…",
+    "Writing your fixes…",
     "Building your report…",
   ];
 }

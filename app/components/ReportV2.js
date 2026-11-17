@@ -690,3 +690,6 @@ function AnswerLines({ lines }) {
   });
   return <div className="rv-answer">{out}</div>;
 }
+
+// Shared with the v3 report.
+export { Icon, Ic, Fid, Lvl, Section, Unlock, requestEmail, recheckLink, Step, SearchRow, AnswerLines, LEVELS, LEGEND, VERDICT, money, ord, cx, longDate };
