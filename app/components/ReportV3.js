@@ -74,6 +74,15 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           <div className="rv-kick">{them ? "Competitor check" : "AI visibility report"}</div>
           <h2 className="rv-name">{name}</h2>
           <p className="rv-sub">{[report.shop.domain, report.category, report.market].filter(Boolean).join(" · ")}</p>
+          {pf.summary && (
+            <div className="rv-understood">
+              <div className="rv-k">How we understood {w.your} business</div>
+              <p>{pf.summary}</p>
+              {!example && !them && (
+                <a className="no-print" href={recheckLink({ ...report, extra: report.extra || pf.summary })}>Not quite right? Edit it and check again →</a>
+              )}
+            </div>
+          )}
           <div className="rv-meta">
             <span>Real shopper searches</span>
             {report.pagesRead > 1 && <span>{report.pagesRead} pages read</span>}
@@ -124,8 +133,8 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
         </div>
         <div className="rv-card rv-mini">
           <div className="rv-mini-h"><Ic name="home" tone="warn" />{w.Your} website</div>
-          <div className="rv-val">{s.ready}<small> of {s.readyOf} AI-ready</small></div>
-          <p>{s.readyOf - s.ready > 0 ? `${s.readyOf - s.ready} ${s.readyOf - s.ready === 1 ? "thing" : "things"} AI can't see yet` : "Everything we checked is AI-ready"}</p>
+          {s.readyOf ? <div className="rv-val">{s.ready}<small> of {s.readyOf} AI-ready</small></div> : <div className="rv-val txt">Couldn't check</div>}
+          <p>{s.readyOf - s.ready > 0 ? `${s.readyOf - s.ready} ${s.readyOf - s.ready === 1 ? "thing" : "things"} AI can't see yet` : s.readyOf ? "Everything we checked is AI-ready" : "Your website didn't open for us"}{s.unchecked && s.readyOf ? ` · ${s.unchecked} couldn't check` : ""}</p>
           <div className="rv-meter"><i style={{ width: `${Math.max(3, s.readyOf ? (s.ready / s.readyOf) * 100 : 0)}%`, background: tone(s.readyOf ? (s.ready / s.readyOf) * 100 : 0) }} /></div>
         </div>
         <div className="rv-card rv-mini">
@@ -170,13 +179,16 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
 
       {/* 1. Does AI recommend you? */}
       <Section n={1} id="r-questions" title={them ? "Does AI recommend them?" : "Does AI recommend you?"} sub={`${locked ? "Some of the questions we asked. " : ""}Real shopper questions, asked with live web search. We never named ${name}. The same questions are reused every time ${them ? "they're" : "you're"} checked, so before and after is a fair test.`} lock={locked}>
-        <div className="rv-legend">{LEGEND.map((l) => <Lvl key={l} level={l} />)}</div>
+        <div className="rv-legend">{[...LEGEND, ...((report.searches || []).some((q) => q.level === "none") ? ["none"] : [])].map((l) => <Lvl key={l} level={l} />)}</div>
         {everyday.length > 0 && <div className="rv-grp">Everyday searches · how most shoppers ask</div>}
         {everyday.map((q, i) => <SearchRow key={`e${i}`} q={q} />)}
         {special.length > 0 && <div className="rv-grp">{w.Your} speciality · the products {w.you} {w.are} known for</div>}
         {special.map((q, i) => <SearchRow key={`s${i}`} q={q} />)}
         {(report.own || []).length > 0 && <div className="rv-grp">{w.Your} own questions</div>}
         {(report.own || []).map((q, i) => <SearchRow key={`o${i}`} q={q} />)}
+        {(report.searches || []).some((q) => q.level === "none") && (
+          <p className="rv-note">"No shop recommended" means AI didn't name any shop for that question, so nobody could win it. Those searches aren't counted in {w.your} score.</p>
+        )}
         {L.push && (
           <p className="rv-note">
             <b>We pushed once.</b> When the shopper asked for smaller or independent shops, AI {L.push.present ? `named ${name}${L.push.position ? ` ${ord(L.push.position)}` : ""}.` : `still didn't name ${name}.`} This doesn't change the score; it shows how close {w.you} {w.are}.
@@ -186,7 +198,10 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
       </Section>
 
       {/* 2. What AI sees on your website */}
-      <Section n={2} id="r-site" title={`What AI sees on ${w.your} website`} sub={`We read ${report.pagesRead > 1 ? `${report.pagesRead} pages` : "the website"}${report.productsRead ? ` and ${report.productsRead} products` : ""} the way an AI assistant would.`} tag={`${s.ready} of ${s.readyOf} AI-ready`}>
+      <Section n={2} id="r-site" title={`What AI sees on ${w.your} website`} sub={report.siteUnreachable ? `We tried to read ${w.your} website the way an AI assistant would.` : `We read ${report.pagesRead > 1 ? `${report.pagesRead} pages` : "the website"}${report.productsRead ? ` and ${report.productsRead} products` : ""} the way an AI assistant would.`} tag={s.readyOf ? `${s.ready} of ${s.readyOf} AI-ready` : "Couldn't check"}>
+        {report.siteUnreachable && (
+          <div className="rv-flag"><Ic name="warn" tone="bad" /><span><b>We couldn't open {w.your} website.</b> It may block automated visitors, or it was down when we checked. AI tools may be turned away in the same way, which would stop them reading {w.your} products and policies. Everything else in this report comes from AI's own answers.</span></div>
+        )}
         <div className="rv-profile">
           {[[them ? "What they sell" : "What you sell", pf.sells], [them ? "Where they sell" : "Where you sell", pf.where], [them ? "Who they are" : "Who you are", pf.who], ["How big", pf.size], [`${w.Your} values`, pf.values], ["Who buys from " + w.you, pf.buyers]]
             .filter(([, v]) => v && !/^unknown$/i.test(v))
@@ -210,11 +225,11 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           </div>
         )}
         <h3 className="rv-h3 rv-mt">AI-ready checklist</h3>
-        <p className="rv-soft rv-sm">Checked directly on the site, using our AI Shopping Playbook.</p>
+        <p className="rv-soft rv-sm">Checked directly on the site, using our AI Shopping Playbook.{s.unchecked ? ` "?" means we couldn't check it (usually our reader's limit, not a fault of ${w.your} site), so it isn't counted.` : ""}</p>
         <div className="rv-ready rv-mt-s">
           {(report.ready || []).map((r, i) => (
-            <div className={cx("rv-chk", r.blur && "rv-blur")} key={i}>
-              <span className={`i ${r.ok ? "y" : "n"}`}>{r.ok ? "✓" : "✕"}</span>
+            <div className={cx("rv-chk", r.blur && "rv-blur", r.ok === null && "unk")} key={i}>
+              <span className={`i ${r.ok === null ? "u" : r.ok ? "y" : "n"}`}>{r.ok === null ? "?" : r.ok ? "✓" : "✕"}</span>
               <div><b>{r.title}<Fid f={r.factor} /></b><span>{r.detail}</span></div>
             </div>
           ))}
@@ -231,11 +246,11 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           </div>
           <div className="rv-presence">
             {(web.presence || []).map((p) => (
-              <div key={p.key} className={cx("rv-pres", p.found ? "y" : "n")}>
-                <span className="i">{p.found ? "✓" : "✕"}</span>
+              <div key={p.key} className={cx("rv-pres", p.found ? "y" : "u")}>
+                <span className="i">{p.found ? "✓" : "–"}</span>
                 <div>
                   <b>{p.label}</b>
-                  <span className={p.hostsBlur && p.found ? "rv-blur" : ""}>{p.found ? p.hosts.join(", ") : "Nothing found"}</span>
+                  <span className={p.hostsBlur && p.found ? "rv-blur" : ""}>{p.found ? p.hosts.join(", ") : "Didn't come up in this search"}</span>
                 </div>
               </div>
             ))}
@@ -300,7 +315,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
                   <div className="rv-alert">
                     <Ic name="eye" tone="vio" />
                     <span>
-                      {R.level === "fnc" ? <b>AI looked at {w.your} website, then chose others.</b> : ["men", "rec"].includes(R.level) ? <b>{name} came {R.position ? ord(R.position) : "low in the list"}.</b> : <b>{name} wasn't mentioned.</b>}{" "}
+                      {R.level === "fnc" ? <b>AI looked at {w.your} website, then chose others.</b> : ["men", "rec"].includes(R.level) ? <b>{R.position ? `${name} came ${ord(R.position)}.` : `${name} was only mentioned in passing.`}</b> : <b>{name} wasn't mentioned.</b>}{" "}
                       {R.match?.title ? `${w.You} sell ${R.match.title}${money(cur, R.match.price) ? ` (${money(cur, R.match.price)})` : ""}, which fits this search.` : ""}
                     </span>
                   </div>

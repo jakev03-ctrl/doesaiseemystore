@@ -198,7 +198,8 @@ export async function POST(req) {
 
     async function work() {
   const cost = newCost();
-  const shop = await readShop(url);
+  // Even if we can't open the site, the check can still ask AI about the store (and say we couldn't open it).
+  const shop = await readShop(url, { allowUnreachable: true });
   // Re-checks of the same store ask the same questions (a fair before and after).
   // v3 search (three phases): its questions are written differently, so older saved sets aren't reused.
   const questionsKey = `questions4:${shop.domain}:${slug(category)}:${mode}`;

@@ -1489,3 +1489,11 @@ html[data-theme="light"] .ex-ribbon b { color: #a86d00; }
 .rv-why1 { margin: 0 0 0 2px; font-size: 13.5px; color: var(--mut); }
 .rv-mk { font-style: normal; font-size: 11px; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--s3); color: var(--mut); }
 @media (max-width: 640px) { .rv-presence { grid-template-columns: 1fr; } }
+/* v40 */
+.l-none { background: rgba(140, 150, 180, 0.12); color: var(--mut); }
+.rv-chk .i.u, .rv-pres.u .i { background: rgba(140, 150, 180, 0.14); color: var(--mut); }
+.rv-chk.unk b { color: var(--soft); }
+.rv-understood { margin-top: 14px; padding: 12px 15px; border-radius: 14px; background: var(--s2); border: 1px solid var(--line); max-width: 640px; }
+.rv-understood p { margin: 4px 0 0; font-size: 14.5px; color: var(--tx); line-height: 1.45; }
+.rv-understood a { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--acc2); text-decoration: none; }
+.rv-understood a:hover { text-decoration: underline; }

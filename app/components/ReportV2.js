@@ -20,6 +20,7 @@ const LEVELS = {
   nf: ["l-nf", "Not found"],
   warned: ["l-nf", "Warned against"],
   hidden: ["l-men", "Hidden"],
+  none: ["l-none", "No shop recommended"],
 };
 const LEGEND = ["top", "rec", "men", "fnc", "nf"];
 const VERDICT = { right: ["good", "✓ Right"], partly: ["warn", "≈ Partly"], wrong: ["bad", "✕ Wrong"], missing: ["bad", "✕ Missing"] };

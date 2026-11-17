@@ -263,7 +263,8 @@ export default function Home() {
       url: r.shop.domain,
       category: r.category || category,
       location: r.location || "",
-      extra: r.extra || "",
+      // If the owner left this blank, use how we understood their business (they can edit it on the form).
+      extra: r.extra || r.profile?.summary || "",
       mode: rival ? "rival" : "mine",
       compareTo: rival && r.h2h?.youAre === "b" ? r.h2h.b.domain : "",
       questions: r.customs || [],
