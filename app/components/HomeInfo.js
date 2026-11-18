@@ -70,7 +70,7 @@ const FAQS = [
   },
   {
     q: "What's in the full report?",
-    a: "Every question we asked AI and who it picked, everything AI can and can't see on your website, what the web says about you and whether AI gets your details right, who AI recommends instead and why, and all your fixes with ready-to-paste text and a step-by-step plan. During our beta it's free: just press “Get my full report free” on your results and we'll send it by email.",
+    a: "Every question we asked AI and who it picked, everything AI can and can't see on your website, what the web says about you and whether AI gets your details right, who AI recommends instead and why, and all your fixes with ready-to-paste text and a step-by-step plan. It's completely free: just press “Get my full report” on your results and we'll send it by email. All we ask in return is an honest review.",
   },
   {
     q: "How do you test my store?",

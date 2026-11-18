@@ -442,7 +442,7 @@ export default function Home() {
 
           {!loading && !result && (
             <div className="form-foot">
-              <span>Free check forever. Full report free during our beta.</span>
+              <span>Free check, and your full report is free too. We only ask for an honest review.</span>
               <a href="/example">See an example report →</a>
             </div>
           )}

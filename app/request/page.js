@@ -28,7 +28,7 @@ export default async function RequestPage({ searchParams }) {
         </header>
 
         <div className="page-intro">
-          <p className="eyebrow">{FREE_REPORTS ? "Free during our beta" : "In-depth report"}</p>
+          <p className="eyebrow">{FREE_REPORTS ? "Completely free" : "In-depth report"}</p>
           <h1>Get the full picture</h1>
           <p className="sub">
             Your free check is a snapshot. An in-depth report goes further: a detailed breakdown of how AI
@@ -47,7 +47,7 @@ export default async function RequestPage({ searchParams }) {
           </ul>
           <p className="muted small">
             {FREE_REPORTS
-              ? "During our beta, full reports are free while we gather feedback. No payment and no account. All we ask is your honest feedback afterwards, good or bad. It's completely optional."
+              ? "Full reports are completely free. No payment and no account. All we ask in return is an honest review, good or bad."
               : "Enquiring is free and doesn't commit you to anything. We'll email you the price and delivery time before you decide."}
           </p>
         </div>

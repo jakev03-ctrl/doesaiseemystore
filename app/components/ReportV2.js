@@ -628,7 +628,7 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
       {locked && !example && (
         <div className="rv-beta no-print">
           <div>
-            <h3>{FREE_REPORTS ? "See the full picture, free during our beta" : "Unlock the full report"}</h3>
+            <h3>{FREE_REPORTS ? "Get your full report, completely free" : "Unlock the full report"}</h3>
             <p>Every search, every competitor, AI's full opinion of {w.you}, and {w.your} step-by-step plan. Opens your email app with a message ready to send.</p>
           </div>
           <a className="rv-btn" href={requestEmail(report)}>{FREE_REPORTS ? "Get the full report →" : "Enquire now →"}</a>

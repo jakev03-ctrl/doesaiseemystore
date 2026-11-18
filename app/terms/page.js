@@ -62,9 +62,9 @@ export default function Terms() {
         <h3>4. Full reports and paid services</h3>
         <ul>
           <li>
-            During our beta, full reports are free. There's nothing to pay and no obligation. We may ask for
-            your honest feedback afterwards, but giving it is optional, and you're free to say whatever you
-            genuinely think. We may end the free offer at any time, but we'll still send any free report we've
+            Full reports are free. There's nothing to pay and no obligation. We ask for an honest review
+            afterwards, but leaving one is optional, your report doesn't depend on it, and you're free to say
+            whatever you genuinely think. We may end the free offer at any time, but we'll still send any free report we've
             already agreed to send.
           </li>
           <li>
