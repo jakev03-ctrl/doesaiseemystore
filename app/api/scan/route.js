@@ -12,6 +12,8 @@ import { summariseChecks } from "../../../lib/checks";
 import { loadOther, computeH2H } from "../../../lib/h2h";
 
 export const runtime = "nodejs";
+// Read stores from London, so UK stores show us their UK site (some send US visitors to a .us store).
+export const preferredRegion = "lhr1";
 export const maxDuration = 300; // seconds (a check takes about 2 to 3 minutes)
 export const dynamic = "force-dynamic";
 
@@ -203,7 +205,8 @@ export async function POST(req) {
   // Re-checks of the same store ask the same questions (a fair before and after).
   // v3 search (three phases): its questions are written differently, so older saved sets aren't reused.
   // v6: questions written with the stricter rules (owner details in at most 2, real features only).
-  const questionsKey = `questions6:${shop.domain}:${slug(category)}:${mode}`;
+  // The location is part of the key: questions written for UK shoppers aren't reused for a check in another country.
+  const questionsKey = `questions6:${shop.domain}:${slug(category)}:${mode}${location ? ":" + slug(location) : ""}`;
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
   const check = await runCheck(shop, { category, extra, location, customs, them: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
@@ -228,7 +231,8 @@ export async function POST(req) {
     const prevId = await getJSON(latestKey);
     const prev = prevId ? await getJSON(`report:${prevId}`) : null;
     // Only compare like with like: scores from the old method aren't on the same scale.
-    if (prev && prev.version === 3 && prev.method === 6) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+    // ...and only within the same country (a US check isn't a fair "after" for a UK one).
+    if (prev && prev.version === 3 && prev.method === 6 && (prev.market?.label || "") === (check.market?.label || "")) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
   } catch {}
 
   // Score history for this store (last 12 checks), for the "score over time" chart.
