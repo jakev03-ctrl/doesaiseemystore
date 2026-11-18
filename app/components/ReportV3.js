@@ -144,6 +144,31 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
         </div>
       </div>
 
+      {/* In numbers: a few headline figures, all straight from this check */}
+      {(() => {
+        const f = report.figures;
+        if (!f) return null;
+        const tiles = [
+          f.firstPickPct > 0 && [`${f.firstPickPct}%`, "of searches, AI's first pick"],
+          f.usualPosition && [ord(f.usualPosition), "usual place when recommended"],
+          f.sawSitePct > 0 && [`${f.sawSitePct}%`, `of answers looked at ${w.your} website`],
+          f.foundNotChosenPct > 0 && [`${f.foundNotChosenPct}%`, `read ${w.your} site, then chose others`],
+          f.topRival && [`${f.topRival.pct}%`, `${f.topRival.name}, picked most instead`],
+          f.otherSites !== null && f.otherSites !== undefined && [String(f.otherSites), `other websites mention ${w.you}`],
+        ].filter(Boolean).slice(0, 5);
+        if (tiles.length < 3) return null;
+        return (
+          <div className="rv-card rv-nums" aria-label="In numbers">
+            <div className="rv-nums-h">In numbers</div>
+            <div className="rv-nums-row">
+              {tiles.map(([v, l], i) => (
+                <div className="rv-num" key={i}><b>{v}</b><span>{l}</span></div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* At a glance */}
       {(report.glance || []).length > 0 && (
         <section className="rv-card rv-glance" id="r-glance">
@@ -194,7 +219,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
             <b>We pushed once.</b> When the shopper asked for smaller or independent shops, AI {L.push.present ? `named ${name}${L.push.position ? ` ${ord(L.push.position)}` : ""}.` : `still didn't name ${name}.`} This doesn't change the score; it shows how close {w.you} {w.are}.
           </p>
         )}
-        {locked && <Unlock report={report}>See every search, and who AI picked, in {w.your} full report.</Unlock>}
+        {locked && <Unlock report={report}>{(report.hooks || {}).rival ? `See every search, and why AI picked ${report.hooks.rival} and others instead of ${w.you}, in ${w.your} full report.` : `See every search, and who AI picked, in ${w.your} full report.`}</Unlock>}
       </Section>
 
       {/* 2. What AI sees on your website */}
@@ -223,6 +248,9 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
               <ul className="rv-list">{site.bad.map((x, i) => <li key={i} className={blurred(x) ? "rv-blur" : ""}>{txt(x)}</li>)}</ul>
             </div>
           </div>
+        )}
+        {report.figures?.productsPricePct != null && (
+          <p className="rv-note"><b>Across the {report.productsRead} products we read:</b> {report.figures.productsPricePct}% show a price AI can read, and {report.figures.productsDetailPct}% list specific details (sizes, materials, ingredients and so on).</p>
         )}
         <h3 className="rv-h3 rv-mt">AI-ready checklist</h3>
         <p className="rv-soft rv-sm">Checked directly on the site, using our AI Shopping Playbook.{s.unchecked ? ` "?" means we couldn't check it (usually our reader's limit, not a fault of ${w.your} site), so it isn't counted.` : ""}</p>
@@ -267,6 +295,9 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           {(report.accuracy || []).length > 0 && (
             <>
               <h3 className="rv-h3 rv-mt">Does AI get {w.you} right?</h3>
+              {locked && (report.hooks || {}).wrongFacts > 0 && (
+                <p className="rv-hook">AI told shoppers {report.hooks.wrongFacts === 1 ? "something" : `${report.hooks.wrongFacts} things`} about {w.you} that {w.your} website doesn't back up. {report.hooks.wrongFacts === 1 ? "It's" : "They're"} in {w.your} full report.</p>
+              )}
               <div className="rv-tablewrap">
                 <table className="rv-table">
                   <thead><tr><th>Topic</th><th>What AI told the shopper</th><th>{w.Your} website says</th><th /></tr></thead>
@@ -372,7 +403,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
               )}
             </div>
           )}
-          {locked && <Unlock report={report}>Every fix, ready-to-paste text and {w.your} plan are in {w.your} full report.</Unlock>}
+          {locked && <Unlock report={report}>{(report.hooks || {}).fixes > 1 ? `${report.hooks.fixes} fixes found${report.hooks.stepsTime ? `; the top 3 take about ${report.hooks.stepsTime}` : ""}. Every fix, ready-to-paste text and ${w.your} plan are in ${w.your} full report.` : `Every fix, ready-to-paste text and ${w.your} plan are in ${w.your} full report.`}</Unlock>}
         </Section>
       )}
 

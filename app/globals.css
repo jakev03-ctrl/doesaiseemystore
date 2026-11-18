@@ -1502,3 +1502,12 @@ html[data-theme="light"] .ex-ribbon b { color: #a86d00; }
 .rv-understood p { margin: 4px 0 0; font-size: 14.5px; color: var(--tx); line-height: 1.45; }
 .rv-understood a { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--acc2); text-decoration: none; }
 .rv-understood a:hover { text-decoration: underline; }
+/* "In numbers" strip */
+.rv-nums { margin-top: 14px; padding: 14px 18px; }
+.rv-nums-h { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+.rv-nums-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; }
+.rv-num b { display: block; font-size: 26px; line-height: 1.1; color: var(--tx); font-weight: 700; letter-spacing: -.01em; }
+.rv-num span { display: block; font-size: 13px; color: var(--mut); margin-top: 3px; line-height: 1.35; }
+.rv-hook { margin: 6px 0 10px; font-size: 14px; color: var(--warn); }
+@media (max-width: 640px) { .rv-nums-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rv-num b { font-size: 22px; } }
+.field-hint { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 400; color: var(--muted); line-height: 1.4; }

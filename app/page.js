@@ -422,12 +422,13 @@ export default function Home() {
               </span>
               <input
                 type="text"
-                placeholder="e.g. eco-friendly, under £30, gifts"
+                placeholder="e.g. handmade, eco-friendly, gifts under £30"
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
-                maxLength={120}
+                maxLength={300}
                 disabled={loading}
               />
+              <span className="field-hint">The more you tell us about your store, the more accurate your report.</span>
             </label>
           </div>
 

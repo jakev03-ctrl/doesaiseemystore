@@ -129,7 +129,7 @@ export async function POST(req) {
   const url = String(body.url || "").slice(0, 300);
   const category = String(body.category || "").trim().slice(0, 80);
   if (category.length < 2) return fail("Please tell us what you sell (e.g. scented candles).");
-  const extra = String(body.extra || "").trim().slice(0, 120);
+  const extra = String(body.extra || "").trim().slice(0, 300);
   const location = String(body.location || "").trim().slice(0, 60);
   const fresh = body.fresh === true; // "Check again": skip the saved result from earlier today
   const mode = body.mode === "rival" ? "rival" : "mine"; // checking a competitor's store
@@ -202,7 +202,8 @@ export async function POST(req) {
   const shop = await readShop(url, { allowUnreachable: true });
   // Re-checks of the same store ask the same questions (a fair before and after).
   // v3 search (three phases): its questions are written differently, so older saved sets aren't reused.
-  const questionsKey = `questions5:${shop.domain}:${slug(category)}:${mode}`;
+  // v6: questions written with the stricter rules (owner details in at most 2, real features only).
+  const questionsKey = `questions6:${shop.domain}:${slug(category)}:${mode}`;
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
   const check = await runCheck(shop, { category, extra, location, customs, them: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
@@ -227,14 +228,14 @@ export async function POST(req) {
     const prevId = await getJSON(latestKey);
     const prev = prevId ? await getJSON(`report:${prevId}`) : null;
     // Only compare like with like: scores from the old method aren't on the same scale.
-    if (prev && prev.version === 3) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
+    if (prev && prev.version === 3 && prev.method === 6) previous = { id: prev.id, overall: prev.overall, visibility: prev.visibility, dataScore: prev.dataScore, createdAt: prev.createdAt };
   } catch {}
 
   // Score history for this store (last 12 checks), for the "score over time" chart.
   const historyKey = `history:${shop.domain}:${slug(category)}`;
   let history = [];
   try {
-    history = ((await getJSON(historyKey)) || []).filter((h) => h && h.m === 4);
+    history = ((await getJSON(historyKey)) || []).filter((h) => h && h.m === 6);
   } catch {}
 
   const report = {
@@ -252,8 +253,9 @@ export async function POST(req) {
     checks: shop.checks ? summariseChecks(shop.checks) : null,
     costUsd,
     previous,
-    method: 4,
-    history: [...history, { at: new Date().toISOString(), overall: null, m: 4 }].slice(-12),
+    // Question version: "up/down since…" only ever compares checks that used the same kind of questions.
+    method: 6,
+    history: [...history, { at: new Date().toISOString(), overall: null, m: 6 }].slice(-12),
   };
   report.history[report.history.length - 1].overall = overall;
 
