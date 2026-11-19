@@ -93,6 +93,15 @@ async function jobStatus(req, jobId) {
   return NextResponse.json({ status: "running", elapsed: Date.now() - job.startedAt });
 }
 
+// Set when the AI credit runs out: new checks pause until midnight (UK time).
+const PAUSE_KEY = "paused:credit";
+function secondsToMidnight() {
+  const uk = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
+  const next = new Date(uk);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(60, Math.round((next - uk) / 1000));
+}
+
 // How many free checks this visitor has left today (shown under the form).
 export async function GET(req) {
   const jobId = new URL(req.url).searchParams.get("job");
@@ -103,7 +112,8 @@ export async function GET(req) {
   const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
   try {
     const limit = await checkLimit({ deviceId, ip, owner });
-    return reply({ remaining: limit.remaining, limit: limit.limit, owner }, 200, deviceId, deviceId !== existingDevice);
+    const paused = !owner && (await getJSON(PAUSE_KEY).catch(() => null));
+    return reply({ remaining: paused ? 0 : limit.remaining, limit: limit.limit, owner }, 200, deviceId, deviceId !== existingDevice);
   } catch {
     return reply({ remaining: null }, 200, deviceId, deviceId !== existingDevice);
   }
@@ -174,6 +184,12 @@ export async function POST(req) {
       }
     }
 
+    // Paused because the AI credit ran out (the owner can still run a check, e.g. to test after topping up).
+    if (!owner && (await getJSON(PAUSE_KEY).catch(() => null))) {
+      await countEvent("limited");
+      return fail("No more checks today. Please check back tomorrow.", 503);
+    }
+
     const limit = await checkLimit({ deviceId, ip, owner });
     if (!limit.ok && limit.busy) {
       await countEvent("limited");
@@ -210,6 +226,9 @@ export async function POST(req) {
   const savedQuestions = body.newQuestions === true ? null : await getJSON(questionsKey).catch(() => null);
   const check = await runCheck(shop, { category, extra, location, customs, them: mode === "rival", savedQuestions }, cost);
   const costUsd = Math.round(cost.usd * 1000) / 1000;
+
+  // Out of AI credit: stop here; the error handler pauses checks for the rest of the day.
+  if (cost.creditOut) throw new Error("Out of API credit: credit balance too low");
 
   if (check.failed) {
     await countEvent("errors");
@@ -291,6 +310,8 @@ export async function POST(req) {
       try {
         const { report, remaining } = await work();
         await setJSON(`job:${jobId}`, { status: "done", reportId: report.id, remaining }, 60 * 60);
+        // A check worked, so there's credit again (e.g. after the owner topped up): un-pause.
+        await setJSON(PAUSE_KEY, 0, 1).catch(() => {});
       } catch (e) {
         console.error("Scan failed:", e);
         const kind = errorType(e?.message);
@@ -300,8 +321,11 @@ export async function POST(req) {
         }
         if (kind.system) await alertOnFailures(e?.message).catch(() => {});
         const raw = String(e?.message || "");
-        const msg = /credit|billing|balance|quota/i.test(raw)
-          ? "Our checks are taking a short break right now. Please try again a little later. This didn't use up one of your free checks."
+        const noCredit = /credit|billing|balance|quota/i.test(raw);
+        // Out of AI credit: pause new checks until tomorrow, so nobody else waits for a check that can't run.
+        if (noCredit) await setJSON(PAUSE_KEY, { at: Date.now() }, secondsToMidnight()).catch(() => {});
+        const msg = noCredit
+          ? "No more checks today. Please check back tomorrow. This didn't use up one of your free checks."
           : /rate.?limit|429|overloaded|529|too many/i.test(raw)
             ? "Lots of people are checking their stores right now. Please try again in a minute. This didn't use up one of your free checks."
             : raw && !/api|key|anthropic|openai|json|redis|upstash/i.test(raw)

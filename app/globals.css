@@ -243,6 +243,9 @@ table.log td { padding: 10px; border-top: 1px solid var(--line-soft); vertical-a
 .site-footer nav { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
 .site-footer a { color: var(--soft); text-decoration: none; }
 .site-footer a:hover { color: #fff; text-decoration: underline; }
+.site-footer .socials { display: flex; gap: 10px; }
+.site-footer .socials a { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: var(--soft); }
+.site-footer .socials a:hover { color: #fff; background: rgba(110,155,255,.18); text-decoration: none; }
 
 /* ---------- Contact page ---------- */
 .wrap.narrow { max-width: 640px; }
@@ -662,6 +665,7 @@ html[data-theme="light"] input::placeholder,
 html[data-theme="light"] textarea::placeholder { color: #9aa3c0; }
 html[data-theme="light"] .ring-inner { background: #fff; }
 html[data-theme="light"] .topnav a { background: rgba(255, 255, 255, 0.75); }
+html[data-theme="light"] .site-footer .socials a { background: rgba(20, 30, 80, 0.05); border-color: rgba(20, 30, 80, 0.12); }
 html[data-theme="light"] .topnav a:hover,
 html[data-theme="light"] .site-footer a:hover,
 html[data-theme="light"] .recent-item:hover,
