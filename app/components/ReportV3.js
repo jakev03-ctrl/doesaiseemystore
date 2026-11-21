@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { isRecent } from "./recent";
 import EmailReport from "./EmailReport";
+import ReportContents from "./ReportContents";
 import { H2HCard, H2HBox } from "./HeadToHead";
 import { RankBadge, TypeBadge } from "./Badges";
 import { Icon, Ic, Fid, Lvl, Section, Unlock, requestEmail, recheckLink, Step, SearchRow, AnswerLines, LEVELS, LEGEND, VERDICT, money, ord, cx, longDate } from "./ReportV2";
@@ -57,6 +58,18 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
   const site = report.site || { good: [], bad: [] };
   const steps = report.steps || [];
   const instead = report.instead || [];
+  // The contents: one card per section, each with its headline result.
+  const pctTone = (v) => (v >= 40 ? "good" : v > 0 ? "warn" : "bad");
+  const fixes = report.hooks?.fixes ?? steps.length;
+  const topRival = report.figures?.topRival || (instead[0] ? { name: instead[0].name, pct: instead[0].pct } : null);
+  const toc = [
+    { id: "r-questions", title: them ? "Does AI pick them?" : "Does AI pick you?", short: "AI picks", chip: typeof s.recPct === "number" ? (s.recPct ? `Recommended in ${s.recPct}%` : "Not recommended yet") : "", tone: pctTone(s.recPct || 0) },
+    { id: "r-site", title: `${w.Your} website check`, short: "Website", chip: s.readyOf ? `${s.ready} of ${s.readyOf} AI-ready` : "Couldn't check", tone: s.readyOf ? (s.ready / s.readyOf >= 0.7 ? "good" : "warn") : "info" },
+    web && { id: "r-web", title: `${w.Your} online reputation`, short: "Reputation", chip: web.known ? "Known by name ✓" : "Not known by name", tone: web.known ? "good" : "warn" },
+    (instead.length > 0 || R) && { id: "r-instead", title: "Who AI picks instead, and why", short: "Who wins", chip: topRival?.name ? `${topRival.name}${topRival.pct ? ` · ${topRival.pct}%` : ""}` : "", tone: "warn" },
+    steps.length > 0 && { id: "r-steps", title: them ? "How to beat them: action plan" : `${w.Your} action plan`, short: "Action plan", chip: `${fixes} ${fixes === 1 ? "fix" : "fixes"}${report.stepsTime ? ` · first 3: ${report.stepsTime}` : ""}`, tone: "info" },
+  ].filter(Boolean);
+
   const glanceIcons = {
     stand: ["eye", "acc", them ? "Is AI recommending them?" : "Is AI recommending you?"],
     site: ["home", "good", `What AI sees on ${w.your} website`],
@@ -116,6 +129,9 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           {change && <p className={`rv-change ${change.diff > 0 ? "good" : change.diff < 0 ? "bad" : ""}`}>{change.diff > 0 ? `▲ Up ${change.diff}` : change.diff < 0 ? `▼ Down ${Math.abs(change.diff)}` : "No change"} since {change.date} (was {report.previous.overall})</p>}
         </div>
       </div>
+
+      {/* Contents: jump to any section */}
+      <ReportContents items={toc} />
 
       {/* The 4 mini-scores */}
       <div className="rv-minis">
@@ -196,14 +212,14 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           {report.goodNews && (
             <div className="rv-next">
               <p><b>The good news:</b> {report.goodNews}</p>
-              <a href="#r-steps">See what to fix ↓</a>
+              <a href="#r-steps">See {w.your} action plan ↓</a>
             </div>
           )}
         </section>
       )}
 
       {/* 1. Does AI recommend you? */}
-      <Section n={1} id="r-questions" title={them ? "Does AI recommend them?" : "Does AI recommend you?"} sub={`${locked ? "Some of the questions we asked. " : ""}Real shopper questions, asked with live web search. We never named ${name}. The same questions are reused every time ${them ? "they're" : "you're"} checked, so before and after is a fair test.`} lock={locked}>
+      <Section n={1} id="r-questions" title={them ? "Does AI pick them?" : "Does AI pick you?"} sub={`${locked ? "Some of the questions we asked. " : ""}Real shopper questions, asked with live web search. We never named ${name}. The same questions are reused every time ${them ? "they're" : "you're"} checked, so before and after is a fair test.`} lock={locked}>
         <div className="rv-legend">{[...LEGEND, ...((report.searches || []).some((q) => q.level === "none") ? ["none"] : [])].map((l) => <Lvl key={l} level={l} />)}</div>
         {everyday.length > 0 && <div className="rv-grp">Everyday searches · how most shoppers ask</div>}
         {everyday.map((q, i) => <SearchRow key={`e${i}`} q={q} />)}
@@ -223,7 +239,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
       </Section>
 
       {/* 2. What AI sees on your website */}
-      <Section n={2} id="r-site" title={`What AI sees on ${w.your} website`} sub={report.siteUnreachable ? `We tried to read ${w.your} website the way an AI assistant would.` : `We read ${report.pagesRead > 1 ? `${report.pagesRead} pages` : "the website"}${report.productsRead ? ` and ${report.productsRead} products` : ""} the way an AI assistant would.`} tag={s.readyOf ? `${s.ready} of ${s.readyOf} AI-ready` : "Couldn't check"}>
+      <Section n={2} id="r-site" title={`${w.Your} website check`} sub={report.siteUnreachable ? `We tried to read ${w.your} website the way an AI assistant would.` : `We read ${report.pagesRead > 1 ? `${report.pagesRead} pages` : "the website"}${report.productsRead ? ` and ${report.productsRead} products` : ""} the way an AI assistant would.`} tag={s.readyOf ? `${s.ready} of ${s.readyOf} AI-ready` : "Couldn't check"}>
         {report.siteUnreachable && (
           <div className="rv-flag"><Ic name="warn" tone="bad" /><span><b>We couldn't open {w.your} website.</b> It may block automated visitors, or it was down when we checked. AI tools may be turned away in the same way, which would stop them reading {w.your} products and policies. Everything else in this report comes from AI's own answers.</span></div>
         )}
@@ -267,7 +283,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
 
       {/* 3. What the web says */}
       {web && (
-        <Section n={3} id="r-web" title={`What the web says about ${w.you}`} sub={`We asked AI about ${name} by name, the way a curious shopper would, and looked at where ${w.you} turn up online.`} lock={locked}>
+        <Section n={3} id="r-web" title={`${w.Your} online reputation`} sub={`We asked AI about ${name} by name, the way a curious shopper would, and looked at where ${w.you} turn up online.`} lock={locked}>
           <div className={cx("rv-known", web.known ? "good" : "bad")}>
             <Ic name={web.known ? "check" : "warn"} tone={web.known ? "good" : "bad"} />
             <span><b>{web.known ? `AI knows ${name} by name.` : `AI didn't know ${name} by name.`}</b> {web.summary}</span>
@@ -318,7 +334,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
 
       {/* 4. Who AI recommends instead */}
       {(instead.length > 0 || R) && (
-        <Section n={web ? 4 : 3} id="r-instead" title="Who AI recommends instead, and why" sub={`From the same answers. It's here to show what ${w.you} can change, not to size up the market.`} lock={locked}>
+        <Section n={web ? 4 : 3} id="r-instead" title="Who AI picks instead, and why" sub={`From the same answers. It's here to show what ${w.you} can change, not to size up the market.`} lock={locked}>
           {instead.length > 0 && (
             <div className="rv-brs rv-instead">
               {instead.map((x, i) => (
@@ -372,7 +388,7 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
 
       {/* 5. What to fix */}
       {steps.length > 0 && (
-        <Section n={web ? 5 : 4} id="r-steps" title={them ? "How to beat them: what to fix" : "What to fix"} sub="Best first: the most benefit for the least effort. Each one is tied to a factor from our AI Shopping Playbook, and to evidence from this check." lock={locked} tag={report.stepsTime ? `First 3: about ${report.stepsTime}` : ""}>
+        <Section n={web ? 5 : 4} id="r-steps" title={them ? "How to beat them: action plan" : `${w.Your} action plan`} sub="Best first: the most benefit for the least effort. Each one is tied to a factor from our AI Shopping Playbook, and to evidence from this check." lock={locked} tag={report.stepsTime ? `First 3: about ${report.stepsTime}` : ""}>
           {steps.slice(0, 3).map((st, i) => <Step key={i} n={i + 1} s={st} />)}
           {!locked && steps.length > 3 && (
             <div className="no-print">
