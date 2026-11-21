@@ -1564,3 +1564,20 @@ html[data-theme="light"] .rv-tocbar-in { background: rgba(255, 255, 255, 0.95); 
 html[data-theme="light"] .rv-tocbar a { color: #3a4470; background: #f1f4ff; }
 html[data-theme="light"] .rv-tocbar a.on { background: linear-gradient(90deg, #6e9bff, #8f6bff); color: #fff; }
 @media print { .rv-toc, .rv-tocbar { display: none !important; } }
+
+/* A fix: Do this / Why / How you'll know it's working */
+.rv-do { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(110, 155, 255, 0.1); border: 1px solid rgba(110, 155, 255, 0.3); }
+.rv-do ol { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.55; color: inherit; }
+.rv-do ol li + li { margin-top: 3px; }
+.rv-do p { margin: 0; font-size: 14px; line-height: 1.55; }
+.rv-do-k { display: block; font-size: 11.5px; letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; color: #a9c1ff; }
+.rv-why, .rv-works { margin-top: 12px; }
+.rv-why .rv-do-k { color: var(--muted); }
+.rv-works .rv-do-k { color: #5fdc98; }
+.rv-why .ev, .rv-works .ev { margin: 0; }
+html[data-theme="light"] .rv-do { background: #eef3ff; border-color: #c9d6ff; }
+html[data-theme="light"] .rv-do ol, html[data-theme="light"] .rv-do p { color: var(--ink); }
+html[data-theme="light"] .rv-do-k { color: #2f4fd8; }
+html[data-theme="light"] .rv-why .rv-do-k { color: var(--muted); }
+html[data-theme="light"] .rv-works .rv-do-k { color: #128a4e; }
+.rv-step .rv-why .ev, .rv-step .rv-works .ev { margin: 0; }

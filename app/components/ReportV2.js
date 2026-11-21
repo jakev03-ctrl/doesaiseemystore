@@ -648,9 +648,33 @@ function Step({ n, s }) {
       <div className="k2">{n}</div>
       <div>
         <h3>{s.title}<Fid f={s.factor} /></h3>
-        <p className="ev">{s.evidence}</p>
-        {s.how && <div className="how">{s.how}</div>}
-        {s.impact && <div className="imp"><Icon name="arrow" size={13} /> {s.impact}</div>}
+        {s.do?.length ? (
+          <>
+            {/* Newer reports: Do this, then Why, then how you'll know it's working. */}
+            <div className="rv-do">
+              <span className="rv-do-k">Do this</span>
+              {s.do.length > 1 ? <ol>{s.do.map((x, i) => <li key={i}>{x}</li>)}</ol> : <p>{s.do[0]}</p>}
+            </div>
+            {s.evidence && (
+              <div className="rv-why">
+                <span className="rv-do-k">Why</span>
+                <p className="ev">{s.evidence}</p>
+              </div>
+            )}
+            {s.works && (
+              <div className="rv-works">
+                <span className="rv-do-k">How you&apos;ll know it&apos;s working</span>
+                <p className="ev">{s.works}</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="ev">{s.evidence}</p>
+            {s.how && <div className="how">{s.how}</div>}
+            {s.impact && <div className="imp"><Icon name="arrow" size={13} /> {s.impact}</div>}
+          </>
+        )}
       </div>
       <div className="eff">
         <div className="tm">{s.effort}</div>
