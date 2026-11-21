@@ -248,8 +248,21 @@ export default function Home() {
 
   function scan(e) {
     e.preventDefault();
+    // A store name instead of a website link: the nudge under the box says what to do.
+    if (looksLikeName(url)) {
+      setUrlTouched(true);
+      return;
+    }
     runScan({ url, category, location, extra, mode, compareTo: mode === "rival" ? compareTo : "", questions: customs }, fresh);
   }
+
+  // "Bird and Blend" rather than "birdandblend.co.uk": no dot means it isn't a web address.
+  const looksLikeName = (v) => {
+    const t = String(v || "").trim();
+    return t.length >= 2 && !t.includes(".");
+  };
+  const [urlTouched, setUrlTouched] = useState(false);
+  const showNudge = looksLikeName(url) && (urlTouched || /\s/.test(url.trim()) || url.trim().length >= 12);
 
   function switchMode(m) {
     setMode(m);
@@ -357,16 +370,31 @@ export default function Home() {
 
           <div className="fgrid">
             <label>
-              {mode === "rival" ? "Their website" : "Your store's website"}
+              <span>
+                {mode === "rival" ? "Their" : "Your"} <b className="full-word">full</b> website link
+              </span>
               <input
                 type="text"
                 inputMode="url"
-                placeholder={mode === "rival" ? "e.g. theirstore.co.uk" : "e.g. mystore.co.uk"}
+                placeholder={mode === "rival" ? "e.g. www.theirstore.co.uk" : "e.g. www.yourstore.co.uk"}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
+                onBlur={() => setUrlTouched(true)}
+                className={showNudge ? "warn" : ""}
+                aria-invalid={showNudge || undefined}
                 required
                 disabled={loading}
               />
+              {showNudge ? (
+                <span className="url-nudge" role="alert">
+                  <span aria-hidden="true">⚠️</span>
+                  <span>
+                    That looks like a store name. Please enter the <b>website link</b>, e.g. www.yourstore.co.uk
+                  </span>
+                </span>
+              ) : (
+                <span className="field-hint">Copy it from your browser&apos;s address bar.</span>
+              )}
             </label>
             <label>
               {mode === "rival" ? "What do they sell?" : "What do you sell?"}
@@ -428,7 +456,12 @@ export default function Home() {
                 maxLength={300}
                 disabled={loading}
               />
-              <span className="field-hint">The more you tell us about your store, the more accurate your report.</span>
+              <span className="more-info">
+                <span aria-hidden="true">💡</span>
+                <span>
+                  <b>The more you tell us, the better.</b> Extra details make your report more accurate.
+                </span>
+              </span>
             </label>
           </div>
 
