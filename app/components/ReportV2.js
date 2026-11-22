@@ -396,11 +396,13 @@ export default function ReportV2({ report, onRecheck, clientView = false, access
         <Section n={3} id="r-steps" title={them ? "How to beat them: next 3 steps" : "Your next 3 steps"} sub="Each one is tied to a factor from our AI Shopping Playbook, and to evidence from this check." lock={locked} tag={report.stepsTime ? `About ${report.stepsTime}` : ""}>
           {steps.slice(0, 3).map((st, i) => <Step key={i} n={i + 1} s={st} />)}
           {!locked && steps.length > 3 && (
-            <div className="no-print">
-              {allFixes ? steps.slice(3).map((st, i) => <Step key={i} n={i + 4} s={st} />) : (
-                <button type="button" className="rv-more" onClick={() => setAllFixes(true)}>See {steps.length - 3} more {steps.length - 3 === 1 ? "fix" : "fixes"}</button>
-              )}
-            </div>
+            allFixes ? steps.slice(3).map((st, i) => <Step key={i + 3} n={i + 4} s={st} />) : (
+              <>
+                {/* Hidden on screen until "See more" is pressed, but always in the PDF. */}
+                <div className="print-only">{steps.slice(3).map((st, i) => <Step key={i + 3} n={i + 4} s={st} />)}</div>
+                <button type="button" className="rv-more no-print" onClick={() => setAllFixes(true)}>See {steps.length - 3} more {steps.length - 3 === 1 ? "fix" : "fixes"}</button>
+              </>
+            )
           )}
           {locked && <Unlock report={report}>Steps 2 and 3, plus every other fix, are in {w.your} full report.</Unlock>}
         </Section>

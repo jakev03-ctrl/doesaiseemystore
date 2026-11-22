@@ -6,7 +6,7 @@ import { runCheck, buildReportV3 } from "../../../lib/search3";
 import { getJSON, setJSON } from "../../../lib/store";
 import { publicView } from "../../../lib/report";
 import { countEvent, logScan, errorType } from "../../../lib/stats";
-import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan, hash } from "../../../lib/limits";
+import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, checkLimit, recordScan, hash, fullToken } from "../../../lib/limits";
 import { alertOnFailures } from "../../../lib/alerts";
 import { summariseChecks } from "../../../lib/checks";
 import { loadOther, computeH2H } from "../../../lib/h2h";
@@ -82,7 +82,7 @@ async function jobStatus(req, jobId) {
     const report = await getJSON(`report:${job.reportId}`);
     if (!report) return NextResponse.json({ status: "error", error: "Your report has expired. Please run the check again." }, { status: 404 });
     const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
-    return NextResponse.json({ status: "done", report: { ...publicView(report, { full: owner }), remaining: job.remaining } });
+    return NextResponse.json({ status: "done", report: { ...publicView(report, { full: owner }), ...(owner ? { shareToken: fullToken(report.id) } : {}), remaining: job.remaining } });
   }
   if (job.status === "error") {
     // The owner sees the real reason (e.g. "Out of API credit"), visitors see a friendly message.

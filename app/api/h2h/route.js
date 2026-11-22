@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getJSON, setJSON, increment } from "../../../lib/store";
 import { normaliseUrl } from "../../../lib/shop";
 import { loadOther, computeH2H, publicH2H } from "../../../lib/h2h";
-import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, scramble } from "../../../lib/limits";
+import { DEVICE_COOKIE, OWNER_COOKIE, isOwner, scramble, canSeeFull } from "../../../lib/limits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,7 +38,7 @@ export async function POST(req) {
   // Full lists for the owner, or a client with their private link. Everyone else gets the free version.
   const owner = isOwner(req.cookies.get(OWNER_COOKIE)?.value);
   const access = String(body.access || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
-  const client = !owner && access ? (await getJSON(`share:${access}`).catch(() => null)) === id : false;
+  const client = !owner && access ? await canSeeFull(id, access) : false;
   const full = owner || client;
 
   // youAre: "a" when the report is about your store; "b" when it's a competitor's report and you're adding yours.

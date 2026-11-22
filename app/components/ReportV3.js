@@ -21,7 +21,7 @@ const FREE_REPORTS = process.env.NEXT_PUBLIC_FREE_REPORTS !== "0";
 const txt = (x) => (typeof x === "string" ? x : x?.t || "");
 const blurred = (x) => typeof x === "object" && x?.blur;
 
-export default function ReportV3({ report, onRecheck, clientView = false, access = "", example = false }) {
+export default function ReportV3({ report, onRecheck, ownerView = false, clientView = false, access = "", example = false }) {
   const [copied, setCopied] = useState(false);
   const [mine, setMine] = useState(false);
   const [h2h, setH2h] = useState(report.h2h || null);
@@ -40,9 +40,14 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
   const link = typeof window !== "undefined" ? `${window.location.origin}/report/${report.id}` : `/report/${report.id}`;
   const change = report.previous ? { diff: report.overall - report.previous.overall, date: new Date(report.previous.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" }) } : null;
 
+  // Owner sharing: the blurred link is the plain address; the full link adds the owner's private code.
+  const fullLink = report.shareToken ? `${link}?access=${report.shareToken}` : "";
+  const shareLink = !locked && fullLink ? fullLink : link;
+  const showOwnerBar = !example && Boolean(report.id) && !clientView && (ownerView || !locked);
+
   async function copy() {
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(shareLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
@@ -391,11 +396,13 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
         <Section n={web ? 5 : 4} id="r-steps" title={them ? "How to beat them: action plan" : `${w.Your} action plan`} sub="Best first: the most benefit for the least effort. Each one is tied to a factor from our AI Shopping Playbook, and to evidence from this check." lock={locked} tag={report.stepsTime ? `First 3: about ${report.stepsTime}` : ""}>
           {steps.slice(0, 3).map((st, i) => <Step key={i} n={i + 1} s={st} />)}
           {!locked && steps.length > 3 && (
-            <div className="no-print">
-              {allFixes ? steps.slice(3).map((st, i) => <Step key={i} n={i + 4} s={st} />) : (
-                <button type="button" className="rv-more" onClick={() => setAllFixes(true)}>See {steps.length - 3} more {steps.length - 3 === 1 ? "fix" : "fixes"}</button>
-              )}
-            </div>
+            allFixes ? steps.slice(3).map((st, i) => <Step key={i + 3} n={i + 4} s={st} />) : (
+              <>
+                {/* Hidden on screen until "See more" is pressed, but always in the PDF. */}
+                <div className="print-only">{steps.slice(3).map((st, i) => <Step key={i + 3} n={i + 4} s={st} />)}</div>
+                <button type="button" className="rv-more no-print" onClick={() => setAllFixes(true)}>See {steps.length - 3} more {steps.length - 3 === 1 ? "fix" : "fixes"}</button>
+              </>
+            )
           )}
           {(report.snippet || (report.plan || []).length > 0) && (
             <div className={cx("rv-grid2 rv-mt", locked && "rv-blur")}>
@@ -436,12 +443,19 @@ export default function ReportV3({ report, onRecheck, clientView = false, access
           <button type="button" className="rv-btn ghost" onClick={() => window.print()}>Download PDF</button>
         </div>
       )}
-      {!example && !locked && !clientView && report.id && (
-        <div className="rv-card rv-actions no-print">
-          <p><b>Full report (owner view).</b> You're seeing everything because you're signed in as the owner.</p>
+      {showOwnerBar && (
+        <div className="rv-card rv-ownerbar no-print">
+          <div className="rv-ownerbar-top">
+            <p><b>Owner view.</b> {locked ? "This is the blurred version, exactly as everyone else sees it." : "You're seeing the full report."}</p>
+            <div className="rv-seg" role="group" aria-label="Which version to view and share">
+              <a href={`/report/${report.id}?view=blurred`} className={locked ? "on" : ""} aria-current={locked ? "true" : undefined}>Blurred</a>
+              <a href={`/report/${report.id}`} className={!locked ? "on" : ""} aria-current={!locked ? "true" : undefined}>Full</a>
+            </div>
+          </div>
+          <p className="rv-sharenote">{locked ? "Send this link and they'll see the blurred report, on any device. They can ask you for the full one." : fullLink ? "Send this link and they'll see the full report, on any device, for as long as the report exists. Only send it to people you trust." : "Open the full report page to get a shareable full link."}</p>
           <span className="rv-btns">
-            <button type="button" className="rv-btn ghost" onClick={copy}>{copied ? "Copied!" : "Copy link"}</button>
-            <button type="button" className="rv-btn ghost" onClick={() => window.print()}>Download PDF</button>
+            <button type="button" className="rv-btn ghost" onClick={copy}>{copied ? "Copied!" : locked ? "Copy blurred link" : fullLink ? "Copy full link" : "Copy blurred link"}</button>
+            {!locked && <button type="button" className="rv-btn ghost" onClick={() => window.print()}>Download PDF</button>}
           </span>
         </div>
       )}

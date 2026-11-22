@@ -1,7 +1,7 @@
 import Footer from "../../components/Footer";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { OWNER_COOKIE, isOwner } from "../../../lib/limits";
+import { OWNER_COOKIE, isOwner, fullToken, canSeeFull } from "../../../lib/limits";
 import { getJSON } from "../../../lib/store";
 import Report from "../../components/Report";
 import { publicView } from "../../../lib/report";
@@ -39,9 +39,12 @@ export default async function ReportPage({ params, searchParams }) {
   const owner = isOwner(jar.get(OWNER_COOKIE)?.value);
   // A private link we send a client (…?access=…) shows their report in full.
   const access = String(sp.access || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
-  const client = !owner && access ? (await getJSON(`share:${access}`).catch(() => null)) === id : false;
-  const report = await load(id, owner || client);
-  if (!report) notFound();
+  const client = !owner && access ? await canSeeFull(id, access) : false;
+  // The owner can preview the blurred version (…?view=blurred), exactly as everyone else sees it.
+  const preview = owner && sp.view === "blurred";
+  const loaded = await load(id, (owner && !preview) || client);
+  if (!loaded) notFound();
+  const report = owner ? { ...loaded, shareToken: fullToken(id) } : loaded;
 
   return (
     <main className="wrap">
@@ -54,7 +57,7 @@ export default async function ReportPage({ params, searchParams }) {
         </nav>
       </header>
 
-      <Report report={report} shared clientView={client} access={client ? access : ""} />
+      <Report report={report} shared ownerView={owner} clientView={client} access={client ? access : ""} />
 
       <div className="card cta">
         <h3>Does AI see your store?</h3>
