@@ -1,4 +1,4 @@
-import Footer from "../components/Footer";
+import Legal from "../components/Legal";
 
 export const metadata = {
   title: "Privacy | DoesAISeeMyStore",
@@ -11,118 +11,182 @@ export default function Privacy() {
   const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@doesaiseemystore.com";
   const owner = process.env.NEXT_PUBLIC_OWNER_NAME || "Jake";
   const address = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS || "";
+
+  const sections = [
+    {
+      id: "who",
+      title: "Who we are",
+      body: (
+        <p>
+          DoesAISeeMyStore is a small UK business run by {owner}, based in Lancashire{address ? ` (${address})` : ""}.
+          We're responsible for the information described on this page. If you have a question about it, email{" "}
+          <a href={`mailto:${email}`}>{email}</a>.
+        </p>
+      ),
+    },
+    {
+      id: "collect",
+      title: "What we collect, and why",
+      body: (
+        <>
+          <p>We keep this to the minimum we need to run the site.</p>
+          <dl className="legal-list">
+            <dt>The store details you enter</dt>
+            <dd>The website, what it sells, its location and anything extra you add. We use these to run your check and build your report.</dd>
+            <dt>Your report</dt>
+            <dd>Saved so its link keeps working, then deleted (see the table below).</dd>
+            <dt>A device cookie and your IP address</dt>
+            <dd>
+              Only to limit how many free checks can be run each day. We never store your IP address as it is, only a
+              one-way scrambled version combined with a secret key. The cookie is needed for the site to work, so we
+              don't ask for consent for it.
+            </dd>
+            <dt>Anonymous visit statistics</dt>
+            <dd>Things like page views, collected by Vercel Analytics without cookies and without identifying you.</dd>
+            <dt>Your light or dark mode choice and recent checks</dt>
+            <dd>Saved only in your own browser. We never receive them.</dd>
+          </dl>
+        </>
+      ),
+    },
+    {
+      id: "contact",
+      title: "If you contact us or ask for a report",
+      body: (
+        <>
+          <p>
+            We keep the details you give us, such as your name or business name, website, email address and message,
+            so we can reply and send your report.
+          </p>
+          <p>
+            If you ask us to email your report, we use your email address to send that one email. We only keep it if
+            you also tick the box to get tips, and you can unsubscribe at any time by replying to any email.
+          </p>
+          <p>
+            We only show your feedback publicly if you tick the box allowing it. If you received a free full report,
+            your review will always say so.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "keep",
+      title: "How long we keep it",
+      body: (
+        <div className="legal-table" role="table" aria-label="How long we keep information">
+          {[
+            ["Reports", "Up to 90 days, then deleted automatically"],
+            ["Daily check counters", "2 days"],
+            ["Device cookie", "Up to a year"],
+            ["Messages and report requests", "12 months"],
+            ["Feedback", "Up to 2 years"],
+            ["Email for tips (only if you opt in)", "Until you unsubscribe"],
+          ].map(([a, b]) => (
+            <div role="row" key={a}>
+              <span role="cell">{a}</span>
+              <span role="cell">{b}</span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "providers",
+      title: "Who helps us run the service",
+      body: (
+        <>
+          <div className="legal-table" role="table" aria-label="Service providers">
+            {[
+              ["Vercel", "Hosts the website and provides anonymous visit statistics"],
+              ["Upstash", "Our database: reports, enquiries and statistics"],
+              ["AI service providers (US)", "Run the searches for each check. They receive the store details you enter, never your email address"],
+              ["Resend", "Sends our emails, including alerts to us about new enquiries"],
+            ].map(([a, b]) => (
+              <div role="row" key={a}>
+                <span role="cell">{a}</span>
+                <span role="cell">{b}</span>
+              </div>
+            ))}
+          </div>
+          <p>
+            Some of these providers are based outside the UK, including in the United States. They handle information on
+            our behalf under data protection terms with the safeguards UK law requires for international transfers, such
+            as the UK International Data Transfer Addendum or the UK–US Data Bridge.
+          </p>
+          <p>
+            <b>We don't sell your information, and we don't share it with anyone else.</b>
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "basis",
+      title: "Our lawful basis",
+      body: (
+        <dl className="legal-list">
+          <dt>Running your check and saving your report</dt>
+          <dd>Legitimate interests, to provide the service you asked for.</dd>
+          <dt>Daily limits and preventing abuse</dt>
+          <dd>Legitimate interests, to keep the free check fair and the service secure.</dd>
+          <dt>Replying to you and sending reports you've asked for</dt>
+          <dd>Legitimate interests, or taking steps at your request.</dd>
+          <dt>Tips emails</dt>
+          <dd>Your consent, which you can withdraw at any time.</dd>
+          <dt>Anonymous visit statistics</dt>
+          <dd>Legitimate interests, to understand how the site is used.</dd>
+        </dl>
+      ),
+    },
+    {
+      id: "stores",
+      title: "Store information and report links",
+      body: (
+        <>
+          <p>
+            The information we read about a store is already public on that store's own website. We respect each
+            store's robots.txt: if it asks automated tools like ours not to read the site, we don't.
+          </p>
+          <p>
+            Anyone with a report's link can view it. A full report link shows the whole report, so only share links with
+            people you're happy to show.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "rights",
+      title: "Your rights",
+      body: (
+        <>
+          <p>
+            You can ask to see the information we hold about you, have it corrected or deleted, or object to how we use
+            it. Just email <a href={`mailto:${email}`}>{email}</a> or use our <a href="/contact">contact page</a>, and
+            we'll reply within one month at the latest.
+          </p>
+          <p>
+            If you're unhappy with how we've handled your information, please tell us first so we can put it right. You
+            can also complain to the Information Commissioner's Office at <a href="https://ico.org.uk">ico.org.uk</a>.
+          </p>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <main className="wrap">
-      <header className="top">
-        <a href="/" className="logo">
-          DoesAI<b>See</b>MyStore
-        </a>
-        <nav className="topnav" aria-label="Main">
-          <a href="/news">News</a>
-        </nav>
-      </header>
-
-      <article className="card prose">
-        <h1>Privacy</h1>
-        <p className="muted">Last updated: November 2026</p>
-
-        <h3>Who we are</h3>
-        <p>
-          We're DoesAISeeMyStore (details at the bottom of this page), and we're responsible for the information
-          described here. Contact: <a href={`mailto:${email}`}>{email}</a>.
-        </p>
-
-        <h3>What we collect, and why</h3>
-        <ul>
-          <li>
-            <b>The store details you enter</b> (website, what it sells, location and any extra information).
-            We use these to run your check and create your report.
-          </li>
-          <li>
-            <b>Your report.</b> Saved for up to 90 days so its link works, then deleted automatically.
-          </li>
-          <li>
-            <b>A device cookie and your IP address</b>, only to limit how many free checks can be run each day. The
-            IP address is never stored as it is: we keep a one-way scrambled version (a hash combined with a secret
-            key), and the daily counters are deleted after 2 days. The cookie lasts up to a year. It's needed for
-            the site to work, so we don't ask for consent for it.
-          </li>
-          <li>
-            <b>Anonymous visit statistics</b> (such as page views), collected by Vercel Analytics without cookies
-            and without identifying you.
-          </li>
-          <li>
-            <b>Your light or dark mode choice and your recent checks</b> are saved only in your own browser. We
-            never receive them.
-          </li>
-        </ul>
-
-        <h3>If you contact us, request a report or leave feedback</h3>
-        <p>
-          We keep the details you give us (such as your name or business name, website, email address and
-          message) so we can reply and send your report. These are deleted automatically after 12 months.
-          Feedback is kept for up to 2 years. We only show your feedback publicly if you tick the box allowing it,
-          and it will always be labelled "Received a free full report" where that applies.
-        </p>
-
-        <h3>If you ask us to email your report</h3>
-        <p>
-          We use your email address to send that one email. We only keep it if you also tick the optional box
-          to get tips. In that case we keep it until you unsubscribe, which you can do at any time by replying to
-          any email or contacting us.
-        </p>
-
-        <h3>Who helps us run the service</h3>
-        <ul>
-          <li><b>Vercel</b> hosts the website.</li>
-          <li><b>Upstash</b> provides our database (reports, enquiries and statistics).</li>
-          <li>
-            <b>AI service providers</b> based in the United States run the searches for each check. The store
-            details you enter are sent to them to do this. We don't send them your email address.
-          </li>
-          <li><b>Resend</b> sends our emails, including alerts to us about new enquiries.</li>
-        </ul>
-        <p>
-          Some of these providers are based outside the UK, including in the United States. They process
-          information on our behalf under data protection terms that include the safeguards UK law requires for
-          international transfers, such as the UK International Data Transfer Addendum or the UK–US Data Bridge.
-          We don't sell or share your information with anyone else.
-        </p>
-
-        <h3>Our lawful basis</h3>
-        <ul>
-          <li><b>Running your check and saving your report:</b> to provide the service you asked for (legitimate interests).</li>
-          <li><b>Daily limits and preventing abuse:</b> legitimate interests, to keep the free check fair and the service secure.</li>
-          <li><b>Replying to messages and sending reports you've asked for:</b> legitimate interests, or taking steps at your request.</li>
-          <li><b>Tips emails:</b> your consent, which you can withdraw at any time.</li>
-          <li><b>Anonymous visit statistics:</b> legitimate interests, to understand how the site is used.</li>
-        </ul>
-        <p>
-        </p>
-
-        <h3>Store information</h3>
-        <p>
-          The information we read about a store is publicly available on the store's own website. We respect a
-          store's robots.txt: if it asks automated tools like ours not to read the site, we don't.
-        </p>
-
-        <h3>Report links</h3>
-        <p>Anyone with a report's link can view it. Only share it with people you're happy to show.</p>
-
-        <h3>Your rights</h3>
-        <p>
-          You can ask to see the information we hold about you, have it corrected or deleted, or object to how
-          we use it. Just email <a href={`mailto:${email}`}>{email}</a> or use our{" "}
-          <a href="/contact">contact page</a>. If you're unhappy with how we've handled your information, you
-          can complain to the Information Commissioner's Office (ico.org.uk).
-        </p>
-
-        <p className="muted small privacy-who">
-          DoesAISeeMyStore is run by {owner}, based in Lancashire, United Kingdom{address ? ` · ${address}` : ""}.
-        </p>
-      </article>
-
-      <Footer />
-    </main>
+    <Legal
+      kind="Privacy"
+      title="Your privacy"
+      intro="What we collect when you use DoesAISeeMyStore, why we need it, how long we keep it, and what you can ask us to do with it."
+      updated="November 2026"
+      email={email}
+      summary={[
+        "No account needed, and we never ask for card details to run a check.",
+        "We only use what you enter to run your check and build your report.",
+        "Reports are deleted after 90 days. Most other information is deleted automatically too.",
+        "No advertising or tracking cookies. We never sell your information.",
+        "You can ask us to show you, correct or delete your information at any time.",
+      ]}
+      sections={sections}
+    />
   );
 }

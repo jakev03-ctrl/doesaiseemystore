@@ -9,7 +9,7 @@ const themeScript = `try{var t=localStorage.getItem("theme");if(t==="light"||t==
 export const metadata = {
   metadataBase: new URL(process.env.SITE_URL || "https://www.doesaiseemystore.com"),
   title: "Does AI See My Store? | Free AI visibility check",
-  description: "When shoppers ask AI what to buy, does your store come up? See how AI sees your store and the simple changes that help it find you. Free check.",
+  description: "When shoppers ask AI what to buy, does your store come up? See how AI sees your store and the simple changes that help it recommend you. Free check.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "Does AI see your store?",

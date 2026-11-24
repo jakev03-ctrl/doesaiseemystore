@@ -325,7 +325,7 @@ export default function Home() {
             </h1>
             <p className="sub" ref={subRef}>
               When shoppers ask AI what to buy, does your store come up? See how AI sees your store today, and the simple
-              changes that help it find you.
+              changes that help it recommend you.
             </p>
           </div>
 
