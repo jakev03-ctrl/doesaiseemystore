@@ -2,6 +2,11 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import Starfield from "./components/Starfield";
 import ThemeToggle from "./components/ThemeToggle";
+import { Inter, JetBrains_Mono } from "next/font/google";
+
+// Site fonts: Inter for everything, JetBrains Mono for the small technical labels.
+const sans = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
+const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono", weight: ["400", "500", "700"] });
 
 // Sets the saved theme before the page paints, so there's no flash.
 const themeScript = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;else document.documentElement.dataset.theme="dark"}catch(e){document.documentElement.dataset.theme="dark"}`;
@@ -42,11 +47,11 @@ const LD = {
   ],
 };
 
-export const viewport = { width: "device-width", initialScale: 1, themeColor: "#050c22" };
+export const viewport = { width: "device-width", initialScale: 1, themeColor: "#1b2557" };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-GB" data-theme="dark" suppressHydrationWarning>
+    <html lang="en-GB" data-theme="dark" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LD).replace(/</g, "\\u003c") }} />
