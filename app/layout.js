@@ -13,6 +13,8 @@ const themeScript = `try{var t=localStorage.getItem("theme");if(t==="light"||t==
 
 export const metadata = {
   metadataBase: new URL(process.env.SITE_URL || "https://www.doesaiseemystore.com"),
+  // Proves to Trustpilot that we own the site
+  other: { "trustpilot-one-time-domain-verification-id": "181d5846-c44e-46da-baab-43366f0b4aa8" },
   title: "Does AI See My Store? | Free AI visibility check",
   description: "When shoppers ask AI what to buy, does your store come up? See how AI sees your store and the simple changes that help it recommend you. Free check.",
   alternates: { canonical: "/" },
